@@ -9,15 +9,16 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/
 import { ShoppingBag, Banknote, ClipboardList, AlertTriangle } from 'lucide-react';
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { mockTenantStats, mockSalesReportData, mockSales } from '@/lib/mock-data';
+import { npr, getStatusBadgeClasses } from '@/lib/helpers';
+import { useAuthStore } from '@/features/auth/store';
 import type { ChartConfig } from '@/components/ui/chart';
-
-const npr = (n: number) => new Intl.NumberFormat('en-NP').format(n);
 
 const salesChartConfig: ChartConfig = {
   sales: { label: 'Sales (NPR)', color: 'hsl(var(--chart-1))' },
 };
 
 export default function TenantDashboard() {
+  const { user } = useAuthStore();
   const stats = mockTenantStats;
   const recentSales = mockSales.slice(0, 5);
   const chartData = mockSalesReportData.slice(-7).map((d) => ({
@@ -27,7 +28,7 @@ export default function TenantDashboard() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Dashboard" description="Welcome back, Rajesh" />
+      <PageHeader title="Dashboard" description={`Welcome back, ${user?.name?.split(' ')[0] || 'there'}`} />
 
       {/* Stat Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -54,7 +55,8 @@ export default function TenantDashboard() {
           value={stats.lowStockAlerts}
           icon={AlertTriangle}
           trend={{ value: -5, label: 'needs attention' }}
-          iconClassName="bg-amber-100"
+          iconClassName="bg-amber-100 dark:bg-amber-900/30"
+          iconColor="text-amber-600 dark:text-amber-400"
         />
       </div>
 
@@ -115,11 +117,7 @@ export default function TenantDashboard() {
                         {sale.paymentMethod}
                       </Badge>
                       <Badge
-                        className={`
-                          ${sale.status === 'completed' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : ''}
-                          ${sale.status === 'refunded' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : ''}
-                          ${sale.status === 'pending' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' : ''}
-                        `}
+                        className={getStatusBadgeClasses(sale.status)}
                         variant="secondary"
                       >
                         {sale.status}
@@ -156,12 +154,17 @@ export default function TenantDashboard() {
                 tickFormatter={(v) => `NPR ${(v / 1000).toFixed(0)}k`}
               />
               <ChartTooltip content={<ChartTooltipContent />} />
+              <defs>
+                <linearGradient id="salesGradientTenant" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="var(--color-sales)" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="var(--color-sales)" stopOpacity={0} />
+                </linearGradient>
+              </defs>
               <Area
                 type="monotone"
                 dataKey="sales"
                 stroke="var(--color-sales)"
-                fill="var(--color-sales)"
-                fillOpacity={0.15}
+                fill="url(#salesGradientTenant)"
                 strokeWidth={2}
               />
             </AreaChart>

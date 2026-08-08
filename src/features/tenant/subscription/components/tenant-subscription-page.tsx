@@ -10,8 +10,7 @@ import { Check, Crown } from 'lucide-react';
 import { mockPlans, mockTenantStats, mockProducts, mockTenantStaff } from '@/lib/mock-data';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-
-const npr = (n: number) => new Intl.NumberFormat('en-NP').format(n);
+import { npr } from '@/lib/helpers';
 
 export default function TenantSubscriptionPage() {
   const currentPlanName = 'pro';

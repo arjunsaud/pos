@@ -29,6 +29,7 @@ import { Plus, Pencil, Trash2, Package } from 'lucide-react';
 import { mockCategories } from '@/lib/mock-data';
 import { toast } from 'sonner';
 import type { Category } from '@/lib/types';
+import { EmptyState } from '@/components/shared/empty-state';
 
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([...mockCategories]);
@@ -97,11 +98,12 @@ export default function CategoriesPage() {
 
       {/* Grid */}
       {categories.length === 0 ? (
-        <Card>
-          <CardContent className="flex h-48 items-center justify-center text-muted-foreground">
-            No categories found. Click 'Add Category' to create one.
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={Package}
+          title="No categories yet"
+          description="Create your first category to start organizing products."
+          action={{ label: 'Add Category', onClick: openAdd }}
+        />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {categories.map((cat) => (

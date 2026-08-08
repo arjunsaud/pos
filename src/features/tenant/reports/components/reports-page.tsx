@@ -1,8 +1,11 @@
 'use client';
 
+import { useState, useMemo } from 'react';
 import { PageHeader } from '@/components/shared/page-header';
 import { StatCard } from '@/components/shared/stat-card';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Table,
@@ -20,9 +23,8 @@ import {
   mockInventoryReportData,
   mockVATReportData,
 } from '@/lib/mock-data';
+import { npr } from '@/lib/helpers';
 import type { ChartConfig } from '@/components/ui/chart';
-
-const npr = (n: number) => new Intl.NumberFormat('en-NP').format(n);
 
 const salesChartConfig: ChartConfig = {
   sales: { label: 'Sales (NPR)', color: 'hsl(var(--chart-1))' },
@@ -38,16 +40,30 @@ const vatChartConfig: ChartConfig = {
 };
 
 export default function ReportsPage() {
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+
+  // Filter sales report data by date range (mock filter - slice)
+  const filteredSalesData = useMemo(() => {
+    if (!dateFrom && !dateTo) return mockSalesReportData;
+    const sorted = [...mockSalesReportData].sort((a, b) => a.date.localeCompare(b.date));
+    const fromIdx = dateFrom ? sorted.findIndex((d) => d.date >= dateFrom) : 0;
+    const toIdx = dateTo ? sorted.findLastIndex((d) => d.date <= dateTo) : sorted.length - 1;
+    if (fromIdx < 0 || toIdx < 0 || fromIdx > toIdx) return [];
+    return sorted.slice(fromIdx, toIdx + 1);
+  }, [dateFrom, dateTo]);
+
   // Sales Report calculations
-  const salesData = mockSalesReportData.map((d) => ({
+  const salesData = filteredSalesData.map((d) => ({
     date: d.date.slice(5),
     sales: d.sales,
   }));
-  const totalRevenue = mockSalesReportData.reduce((sum, d) => sum + d.sales, 0);
-  const avgDailySales = Math.round(totalRevenue / mockSalesReportData.length);
-  const totalOrders = mockSalesReportData.reduce((sum, d) => sum + d.orders, 0);
-  const bestDay = mockSalesReportData.reduce((best, d) =>
-    d.sales > best.sales ? d : best
+  const totalRevenue = filteredSalesData.reduce((sum, d) => sum + d.sales, 0);
+  const avgDailySales = filteredSalesData.length > 0 ? Math.round(totalRevenue / filteredSalesData.length) : 0;
+  const totalOrders = filteredSalesData.reduce((sum, d) => sum + d.orders, 0);
+  const bestDay = filteredSalesData.reduce(
+    (best, d) => (d.sales > best.sales ? d : best),
+    { date: '—', sales: 0, orders: 0 }
   );
 
   // VAT Report calculations
@@ -60,6 +76,22 @@ export default function ReportsPage() {
     <div className="space-y-6">
       <PageHeader title="Reports & Analytics" />
 
+      {/* Date Range Filter */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex flex-wrap items-end gap-3">
+            <div>
+              <Label className="mb-1.5">From</Label>
+              <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
+            </div>
+            <div>
+              <Label className="mb-1.5">To</Label>
+              <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <Tabs defaultValue="sales">
         <TabsList>
           <TabsTrigger value="sales">Sales Report</TabsTrigger>
@@ -69,6 +101,19 @@ export default function ReportsPage() {
 
         {/* Sales Report */}
         <TabsContent value="sales" className="space-y-6">
+          {/* Summary Stats */}
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <StatCard title="Total Revenue" value={`NPR ${npr(totalRevenue)}`} icon={DollarSign} />
+            <StatCard title="Avg Daily Sales" value={`NPR ${npr(avgDailySales)}`} icon={TrendingUp} />
+            <StatCard title="Total Orders" value={npr(totalOrders)} icon={ShoppingCart} />
+            <StatCard
+              title="Best Day"
+              value={`NPR ${npr(bestDay.sales)}`}
+              icon={Calendar}
+              description={bestDay.date}
+            />
+          </div>
+
           <Card>
             <CardHeader>
               <CardTitle>Daily Sales</CardTitle>
@@ -85,18 +130,6 @@ export default function ReportsPage() {
               </ChartContainer>
             </CardContent>
           </Card>
-
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <StatCard title="Total Revenue" value={`NPR ${npr(totalRevenue)}`} icon={DollarSign} />
-            <StatCard title="Avg Daily Sales" value={`NPR ${npr(avgDailySales)}`} icon={TrendingUp} />
-            <StatCard title="Total Orders" value={npr(totalOrders)} icon={ShoppingCart} />
-            <StatCard
-              title="Best Day"
-              value={`NPR ${npr(bestDay.sales)}`}
-              icon={Calendar}
-              description={bestDay.date}
-            />
-          </div>
         </TabsContent>
 
         {/* Inventory Report */}

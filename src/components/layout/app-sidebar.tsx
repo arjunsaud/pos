@@ -23,6 +23,7 @@ import {
   Menu,
   type LucideIcon,
 } from 'lucide-react';
+import { CommandPalette } from '@/components/layout/command-palette';
 import type { NavSection, UserRole } from '@/lib/types';
 import { useState } from 'react';
 
@@ -186,8 +187,13 @@ export function AppSidebar() {
 
       <SidebarNav menu={menu} />
 
+      {/* Command Palette trigger */}
+      <div className="px-3 pb-2">
+        <CommandPalette />
+      </div>
+
       {/* Bottom */}
-      <div className="border-t p-3">
+      <div className="mt-auto border-t p-3">
         <div className="rounded-lg bg-muted/50 px-3 py-2.5">
           <p className="text-xs font-medium">POS Nepal v2.4.1</p>
           <p className="text-[10px] text-muted-foreground">© 2024 All rights reserved</p>

@@ -36,7 +36,7 @@ import { Plus, Pencil, Power, PowerOff } from 'lucide-react';
 import { mockTenantStaff } from '@/lib/mock-data';
 import { toast } from 'sonner';
 import type { StaffMember, TenantStaffRole } from '@/lib/types';
-import { cn } from '@/lib/utils';
+import { getInitials, getRoleBadgeClasses, getStatusBadgeClasses } from '@/lib/helpers';
 
 const PERMISSIONS = [
   { key: 'pos_access', label: 'POS Access' },
@@ -45,14 +45,6 @@ const PERMISSIONS = [
   { key: 'manage_inventory', label: 'Manage Inventory' },
   { key: 'view_reports', label: 'View Reports' },
 ] as const;
-
-const roleColor = (role: string) => {
-  switch (role) {
-    case 'manager': return 'bg-purple-100 text-purple-700';
-    case 'cashier': return 'bg-sky-100 text-sky-700';
-    default: return '';
-  }
-};
 
 interface StaffForm {
   name: string;
@@ -154,14 +146,6 @@ export default function TenantStaffPage() {
     toast.success('Staff status updated');
   };
 
-  const getInitials = (name: string) =>
-    name
-      .split(' ')
-      .map((n) => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-
   return (
     <div className='space-y-6'>
       <PageHeader title='Staff Management'>
@@ -202,17 +186,13 @@ export default function TenantStaffPage() {
                   <TableCell className='text-muted-foreground'>{member.email}</TableCell>
                   <TableCell>{member.phone}</TableCell>
                   <TableCell>
-                    <Badge className={roleColor(member.role)} variant='secondary'>
+                    <Badge className={getRoleBadgeClasses(member.role)} variant='secondary'>
                       {member.role}
                     </Badge>
                   </TableCell>
                   <TableCell>
                     <Badge
-                      className={cn(
-                        member.status === 'active'
-                          ? 'bg-emerald-100 text-emerald-700'
-                          : 'bg-red-100 text-red-700'
-                      )}
+                      className={getStatusBadgeClasses(member.status)}
                       variant='secondary'
                     >
                       {member.status}

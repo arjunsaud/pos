@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { PageHeader } from '@/components/shared/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -35,6 +35,7 @@ export default function SuperAdminSettings() {
   // Domain state
   const [defaultDomain, setDefaultDomain] = useState('posnepal.com');
   const [sslEnabled, setSslEnabled] = useState(true);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const toggleGateway = (index: number) => {
     setGateways((prev) =>
@@ -77,7 +78,11 @@ export default function SuperAdminSettings() {
               {/* Logo Upload */}
               <div className="grid gap-2">
                 <Label>Platform Logo</Label>
-                <div className="flex h-32 w-full items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/25 bg-muted/30 transition-colors hover:border-muted-foreground/50 cursor-pointer">
+                <input type="file" ref={fileInputRef} className="hidden" accept="image/*" />
+                <div
+                  className="flex h-32 w-full items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/25 bg-muted/30 transition-colors hover:border-muted-foreground/50 cursor-pointer"
+                  onClick={() => toast.info('Image upload is not available in demo mode')}
+                >
                   <div className="flex flex-col items-center gap-2 text-muted-foreground">
                     <Upload className="h-8 w-8" />
                     <p className="text-sm">Click to upload logo</p>
@@ -99,11 +104,12 @@ export default function SuperAdminSettings() {
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="primary-color">Primary Color</Label>
-                  <Input
+                  <input
                     id="primary-color"
-                    value={primaryColor}
+                    type="color"
+                    value={primaryColor === 'Emerald Green' ? '#10b981' : primaryColor}
                     onChange={(e) => setPrimaryColor(e.target.value)}
-                    placeholder="e.g. Emerald Green"
+                    className="h-10 w-20 cursor-pointer rounded-lg border"
                   />
                 </div>
               </div>

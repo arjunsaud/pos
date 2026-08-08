@@ -43,9 +43,7 @@ import {
 import { toast } from 'sonner';
 import { mockTenants } from '@/lib/mock-data';
 import type { Tenant, PlanType, TenantStatus } from '@/lib/types';
-import { cn } from '@/lib/utils';
-
-const nprFormatter = new Intl.NumberFormat('en-NP');
+import { npr, getStatusBadgeClasses } from '@/lib/helpers';
 
 const planBadgeVariant: Record<PlanType, 'secondary' | 'default' | 'outline'> = {
   basic: 'secondary',
@@ -278,11 +276,7 @@ export default function TenantManagement() {
                     </TableCell>
                     <TableCell>
                       <Badge
-                        className={cn(
-                          'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
-                          tenant.status === 'inactive' &&
-                            'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                        )}
+                        className={getStatusBadgeClasses(tenant.status)}
                       >
                         {tenant.status.charAt(0).toUpperCase() + tenant.status.slice(1)}
                       </Badge>
@@ -291,7 +285,7 @@ export default function TenantManagement() {
                       {tenant.productCount}
                     </TableCell>
                     <TableCell className="hidden sm:table-cell">
-                      NPR {nprFormatter.format(tenant.monthlyRevenue)}
+                      NPR {npr(tenant.monthlyRevenue)}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
@@ -412,11 +406,7 @@ export default function TenantManagement() {
                 <div>
                   <p className="text-xs text-muted-foreground">Status</p>
                   <Badge
-                    className={cn(
-                      'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
-                      selectedTenant.status === 'inactive' &&
-                        'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                    )}
+                    className={getStatusBadgeClasses(selectedTenant.status)}
                   >
                     {selectedTenant.status.charAt(0).toUpperCase() + selectedTenant.status.slice(1)}
                   </Badge>
@@ -434,7 +424,7 @@ export default function TenantManagement() {
                 <div>
                   <p className="text-xs text-muted-foreground">Monthly Revenue</p>
                   <p className="text-sm font-medium">
-                    NPR {nprFormatter.format(selectedTenant.monthlyRevenue)}
+                    NPR {npr(selectedTenant.monthlyRevenue)}
                   </p>
                 </div>
               </div>

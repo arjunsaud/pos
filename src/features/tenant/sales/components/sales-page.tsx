@@ -35,19 +35,10 @@ import { mockSales } from '@/lib/mock-data';
 import { toast } from 'sonner';
 import type { Sale } from '@/lib/types';
 import { cn } from '@/lib/utils';
+import { npr, getStatusBadgeClasses } from '@/lib/helpers';
 
-const npr = (n: number) => new Intl.NumberFormat('en-NP').format(n);
 const fmtDate = (d: string) => new Date(d).toLocaleDateString('en-GB');
 const ITEMS_PER_PAGE = 5;
-
-const statusColor = (status: string) => {
-  switch (status) {
-    case 'completed': return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400';
-    case 'refunded': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
-    case 'pending': return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400';
-    default: return '';
-  }
-};
 
 export default function SalesPage() {
   const [sales] = useState<Sale[]>(mockSales);
@@ -77,10 +68,33 @@ export default function SalesPage() {
   const paged = filtered.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
   const totalSales = filtered.reduce((sum, s) => sum + s.total, 0);
 
+  const exportCSV = () => {
+    const headers = ['Invoice #', 'Date', 'Customer', 'PAN', 'Items', 'Subtotal', 'VAT', 'Total', 'Payment', 'Status'];
+    const rows = filtered.map(s => [
+      s.invoiceNumber,
+      s.date,
+      s.customerName,
+      s.customerPAN,
+      String(s.items.length),
+      String(s.subtotal),
+      String(s.vatAmount),
+      String(s.total),
+      s.paymentMethod,
+      s.status,
+    ]);
+    const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'sales-export.csv'; a.click();
+    URL.revokeObjectURL(url);
+    toast.success('CSV exported successfully');
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader title="Sales History">
-        <Button variant="outline" onClick={() => toast.success('Sales data exported')}>
+        <Button variant="outline" onClick={exportCSV}>
           <Download className="h-4 w-4" /> Export
         </Button>
       </PageHeader>
@@ -162,7 +176,7 @@ export default function SalesPage() {
                   <TableCell className="text-center">{sale.items.length}</TableCell>
                   <TableCell><Badge variant="outline">{sale.paymentMethod}</Badge></TableCell>
                   <TableCell>
-                    <Badge className={statusColor(sale.status)} variant="secondary">
+                    <Badge className={getStatusBadgeClasses(sale.status)} variant="secondary">
                       {sale.status}
                     </Badge>
                   </TableCell>
@@ -246,7 +260,7 @@ export default function SalesPage() {
                 </div>
                 <div>
                   <span className="text-muted-foreground">Status:</span>{' '}
-                  <Badge className={statusColor(selectedSale.status)} variant="secondary">
+                  <Badge className={getStatusBadgeClasses(selectedSale.status)} variant="secondary">
                     {selectedSale.status}
                   </Badge>
                 </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { PageHeader } from '@/components/shared/page-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -30,31 +30,102 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Plus, Eye, Printer } from 'lucide-react';
-import { mockSales } from '@/lib/mock-data';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
+import { Plus, Eye, Printer, Search, Minus, X } from 'lucide-react';
+import { mockSales, mockProducts } from '@/lib/mock-data';
 import { toast } from 'sonner';
 import type { Sale } from '@/lib/types';
+import { npr, getStatusBadgeClasses } from '@/lib/helpers';
 
-const npr = (n: number) => new Intl.NumberFormat('en-NP').format(n);
 const fmtDate = (d: string) => new Date(d).toLocaleDateString('en-GB');
 
-const statusColor = (status: string) => {
-  switch (status) {
-    case 'completed': return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400';
-    case 'refunded': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
-    case 'pending': return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400';
-    default: return '';
-  }
-};
-
 export default function BillingPage() {
-  const [sales] = useState<Sale[]>(mockSales);
+  const [sales, setSales] = useState<Sale[]>(mockSales);
   const [search, setSearch] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
+
+  // Create invoice state
+  const [customerName, setCustomerName] = useState('');
+  const [customerPAN, setCustomerPAN] = useState('');
+  const [invoiceItems, setInvoiceItems] = useState<{ productId: string; quantity: number }[]>([]);
+  const [productSearch, setProductSearch] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('Cash');
+  const [discount, setDiscount] = useState('0');
+
+  const resetCreateForm = useCallback(() => {
+    setCustomerName('');
+    setCustomerPAN('');
+    setInvoiceItems([]);
+    setProductSearch('');
+    setPaymentMethod('Cash');
+    setDiscount('0');
+  }, []);
+
+  const filteredProducts = useMemo(() => {
+    const addedIds = new Set(invoiceItems.map((i) => i.productId));
+    return mockProducts.filter(
+      (p) =>
+        p.isActive &&
+        !addedIds.has(p.id) &&
+        (p.name.toLowerCase().includes(productSearch.toLowerCase()) ||
+          p.sku.toLowerCase().includes(productSearch.toLowerCase()))
+    );
+  }, [productSearch, invoiceItems]);
+
+  const invoiceSubtotal = useMemo(
+    () =>
+      invoiceItems.reduce((sum, item) => {
+        const product = mockProducts.find((p) => p.id === item.productId);
+        return sum + (product ? product.price * item.quantity : 0);
+      }, 0),
+    [invoiceItems]
+  );
+
+  const discountAmount = Math.min(Number(discount) || 0, invoiceSubtotal);
+  const vatAmount = ((invoiceSubtotal - discountAmount) * 13) / 100;
+  const grandTotal = invoiceSubtotal - discountAmount + vatAmount;
+
+  const handleCreateInvoice = useCallback(() => {
+    if (invoiceItems.length === 0) {
+      toast.error('Add at least one product to the invoice');
+      return;
+    }
+    const nextNum = String(sales.length + 1).padStart(4, '0');
+    const newSale: Sale = {
+      id: `s-new-${Date.now()}`,
+      invoiceNumber: `INV-2024-${nextNum}`,
+      customerName: customerName.trim() || 'Walk-in Customer',
+      customerPAN: customerPAN.trim(),
+      items: invoiceItems.map((item) => {
+        const product = mockProducts.find((p) => p.id === item.productId)!;
+        return {
+          productName: product.name,
+          quantity: item.quantity,
+          unitPrice: product.price,
+          total: product.price * item.quantity,
+        };
+      }),
+      subtotal: invoiceSubtotal,
+      discount: discountAmount,
+      vatAmount,
+      vatPercent: 13,
+      total: grandTotal,
+      paymentMethod,
+      status: 'completed',
+      date: new Date().toISOString(),
+      staffName: 'Admin',
+    };
+    setSales((prev) => [newSale, ...prev]);
+    resetCreateForm();
+    setCreateOpen(false);
+    setSelectedSale(newSale);
+    toast.success('Invoice created successfully');
+  }, [invoiceItems, sales.length, customerName, customerPAN, invoiceSubtotal, discountAmount, vatAmount, grandTotal, paymentMethod, resetCreateForm]);
 
   const filtered = useMemo(() => {
     return sales.filter((s) => {
@@ -148,7 +219,7 @@ export default function BillingPage() {
                   <TableCell className="text-right font-semibold">NPR {npr(sale.total)}</TableCell>
                   <TableCell><Badge variant="outline">{sale.paymentMethod}</Badge></TableCell>
                   <TableCell>
-                    <Badge className={statusColor(sale.status)} variant="secondary">
+                    <Badge className={getStatusBadgeClasses(sale.status)} variant="secondary">
                       {sale.status}
                     </Badge>
                   </TableCell>
@@ -241,26 +312,194 @@ export default function BillingPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Create Invoice Dialog (simplified) */}
-      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent>
+      {/* Create Invoice Dialog */}
+      <Dialog open={createOpen} onOpenChange={(open) => { if (!open) { resetCreateForm(); } setCreateOpen(open); }}>
+        <DialogContent className="sm:max-w-2xl max-h-[90vh]">
           <DialogHeader>
             <DialogTitle>Create Invoice</DialogTitle>
-            <DialogDescription>Fill in the invoice details</DialogDescription>
+            <DialogDescription>Add products and complete the invoice</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-2">
-            <div className="grid gap-2">
-              <Label>Customer Name</Label>
-              <Input placeholder="Walk-in Customer" />
+
+          <div className="grid gap-5 py-2 overflow-y-auto max-h-[calc(90vh-140px)]">
+            {/* Customer Info */}
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-2">
+                <Label>Customer Name</Label>
+                <Input
+                  placeholder="Walk-in Customer"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label>Customer PAN (optional)</Label>
+                <Input
+                  placeholder="e.g., 301234567"
+                  value={customerPAN}
+                  onChange={(e) => setCustomerPAN(e.target.value)}
+                />
+              </div>
             </div>
+
+            <Separator />
+
+            {/* Product Search & Selection */}
             <div className="grid gap-2">
-              <Label>Customer PAN (optional)</Label>
-              <Input placeholder="e.g., 301234567" />
+              <Label>Search Products</Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  className="pl-9"
+                  placeholder="Search by name or SKU..."
+                  value={productSearch}
+                  onChange={(e) => setProductSearch(e.target.value)}
+                />
+              </div>
+              {productSearch && filteredProducts.length > 0 && (
+                <ScrollArea className="max-h-48 rounded-md border">
+                  <div className="p-2 grid gap-1">
+                    {filteredProducts.slice(0, 8).map((p) => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        className="flex items-center justify-between rounded-md px-3 py-2 text-sm hover:bg-accent transition-colors w-full text-left"
+                        onClick={() => {
+                          setInvoiceItems((prev) => [...prev, { productId: p.id, quantity: 1 }]);
+                          setProductSearch('');
+                        }}
+                      >
+                        <div>
+                          <span className="font-medium">{p.name}</span>
+                          <span className="ml-2 text-xs text-muted-foreground">{p.sku}</span>
+                        </div>
+                        <span className="text-sm font-semibold">NPR {npr(p.price)}</span>
+                      </button>
+                    ))}
+                  </div>
+                </ScrollArea>
+              )}
+              {productSearch && filteredProducts.length === 0 && (
+                <p className="text-sm text-muted-foreground py-2">No products found.</p>
+              )}
             </div>
+
+            {/* Selected Items */}
+            {invoiceItems.length > 0 && (
+              <div className="grid gap-2">
+                <Label>Invoice Items</Label>
+                <div className="rounded-md border">
+                  <ScrollArea className="max-h-52">
+                    <div className="p-2 grid gap-2">
+                      {invoiceItems.map((item) => {
+                        const product = mockProducts.find((p) => p.id === item.productId)!;
+                        return (
+                          <div key={item.productId} className="flex items-center justify-between rounded-md border bg-muted/30 px-3 py-2">
+                            <div className="flex-1 min-w-0">
+                              <div className="text-sm font-medium truncate">{product.name}</div>
+                              <div className="text-xs text-muted-foreground">NPR {npr(product.price)} × {item.quantity} = NPR {npr(product.price * item.quantity)}</div>
+                            </div>
+                            <div className="flex items-center gap-1 ml-3">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                className="h-7 w-7"
+                                onClick={() => {
+                                  if (item.quantity > 1) {
+                                    setInvoiceItems((prev) =>
+                                      prev.map((i) =>
+                                        i.productId === item.productId ? { ...i, quantity: i.quantity - 1 } : i
+                                      )
+                                    );
+                                  }
+                                }}
+                              >
+                                <Minus className="h-3 w-3" />
+                              </Button>
+                              <span className="w-8 text-center text-sm font-medium">{item.quantity}</span>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                className="h-7 w-7"
+                                onClick={() => {
+                                  setInvoiceItems((prev) =>
+                                    prev.map((i) =>
+                                      i.productId === item.productId ? { ...i, quantity: i.quantity + 1 } : i
+                                    )
+                                  );
+                                }}
+                              >
+                                <Plus className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-red-500 hover:text-red-600"
+                                onClick={() => {
+                                  setInvoiceItems((prev) => prev.filter((i) => i.productId !== item.productId));
+                                }}
+                              >
+                                <X className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </ScrollArea>
+                </div>
+              </div>
+            )}
+
+            <Separator />
+
+            {/* Payment & Discount */}
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-2">
+                <Label>Payment Method</Label>
+                <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Cash">Cash</SelectItem>
+                    <SelectItem value="Card">Card</SelectItem>
+                    <SelectItem value="eSewa">eSewa</SelectItem>
+                    <SelectItem value="Khalti">Khalti</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label>Discount (NPR)</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  placeholder="0"
+                  value={discount}
+                  onChange={(e) => setDiscount(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Totals Summary */}
+            {invoiceItems.length > 0 && (
+              <div className="rounded-lg border bg-muted/30 p-4 space-y-2 text-sm">
+                <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>NPR {npr(invoiceSubtotal)}</span></div>
+                {discountAmount > 0 && (
+                  <div className="flex justify-between text-muted-foreground"><span>Discount</span><span>- NPR {npr(discountAmount)}</span></div>
+                )}
+                <div className="flex justify-between"><span className="text-muted-foreground">VAT (13%)</span><span>NPR {npr(vatAmount)}</span></div>
+                <Separator />
+                <div className="flex justify-between text-base font-bold"><span>Grand Total</span><span>NPR {npr(grandTotal)}</span></div>
+              </div>
+            )}
           </div>
+
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancel</Button>
-            <Button onClick={() => { toast.success('Invoice created successfully'); setCreateOpen(false); }}>
+            <Button variant="outline" onClick={() => { resetCreateForm(); setCreateOpen(false); }}>Cancel</Button>
+            <Button onClick={handleCreateInvoice} disabled={invoiceItems.length === 0}>
               Create Invoice
             </Button>
           </DialogFooter>

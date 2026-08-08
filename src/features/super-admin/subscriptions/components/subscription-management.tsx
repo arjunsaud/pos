@@ -33,8 +33,7 @@ import { toast } from 'sonner';
 import { mockPlans, mockTenants } from '@/lib/mock-data';
 import type { PlanType, SubscriptionPlan } from '@/lib/types';
 import { cn } from '@/lib/utils';
-
-const nprFormatter = new Intl.NumberFormat('en-NP');
+import { npr, getStatusBadgeClasses } from '@/lib/helpers';
 
 function PlanCard({ plan, isPro }: { plan: SubscriptionPlan; isPro: boolean }) {
   const planLabel = plan.name.charAt(0).toUpperCase() + plan.name.slice(1);
@@ -69,7 +68,7 @@ function PlanCard({ plan, isPro }: { plan: SubscriptionPlan; isPro: boolean }) {
         <CardDescription className="sr-only">{planLabel} plan details</CardDescription>
         <div className="mt-2">
           <span className="text-3xl font-bold">
-            NPR {nprFormatter.format(plan.price)}
+            NPR {npr(plan.price)}
           </span>
           <span className="text-sm text-muted-foreground">/month</span>
         </div>
@@ -184,18 +183,13 @@ export default function SubscriptionManagement() {
                   </TableCell>
                   <TableCell>
                     <Badge
-                      className={cn(
-                        'border-transparent',
-                        sub.status === 'active'
-                          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                          : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                      )}
+                      className={getStatusBadgeClasses(sub.status)}
                     >
                       {sub.status.charAt(0).toUpperCase() + sub.status.slice(1)}
                     </Badge>
                   </TableCell>
                   <TableCell className="hidden sm:table-cell">
-                    NPR {nprFormatter.format(sub.monthlyRevenue)}
+                    NPR {npr(sub.monthlyRevenue)}
                   </TableCell>
                   <TableCell className="text-right">
                     <Button
@@ -230,9 +224,9 @@ export default function SubscriptionManagement() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="basic">Basic - NPR {nprFormatter.format(999)}/mo</SelectItem>
-                <SelectItem value="pro">Pro - NPR {nprFormatter.format(2999)}/mo</SelectItem>
-                <SelectItem value="enterprise">Enterprise - NPR {nprFormatter.format(7999)}/mo</SelectItem>
+                <SelectItem value="basic">Basic - NPR {npr(999)}/mo</SelectItem>
+                <SelectItem value="pro">Pro - NPR {npr(2999)}/mo</SelectItem>
+                <SelectItem value="enterprise">Enterprise - NPR {npr(7999)}/mo</SelectItem>
               </SelectContent>
             </Select>
           </div>
