@@ -15,7 +15,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog';
 import {
-  Users, UserPlus, Search, Mail, Phone, MapPin, Hash, Calendar, TrendingUp, Star, MoreHorizontal, Pencil, Trash2, Eye,
+  Users, UserPlus, Search, Mail, Phone, MapPin, Hash, Calendar, TrendingUp, Star, MoreHorizontal, Pencil, Trash2, Eye, Download,
 } from 'lucide-react';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -130,9 +130,34 @@ export default function CustomersPage() {
 
   const sortIcon = (field: SortField) => sortField === field ? (sortDir === 'asc' ? '↑' : '↓') : '↕';
 
+  const exportCSV = () => {
+    const headers = ['Name', 'Email', 'Phone', 'PAN', 'Address', 'Total Purchases', 'Total Spent', 'Last Visit', 'Status'];
+    const rows = filtered.map(c => [
+      c.name,
+      c.email,
+      c.phone,
+      c.pan,
+      c.address,
+      String(c.totalPurchases),
+      npr(c.totalSpent),
+      formatDateTime(c.lastVisit),
+      c.isActive ? 'Active' : 'Inactive',
+    ]);
+    const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'customers-export.csv'; a.click();
+    URL.revokeObjectURL(url);
+    toast.success('CSV exported successfully');
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader title="Customers" description="Manage your customer database">
+        <Button variant="outline" size="sm" onClick={exportCSV}>
+          <Download className="h-4 w-4" /> Export CSV
+        </Button>
         <Button onClick={openAdd} className="gap-2">
           <UserPlus className="h-4 w-4" /> Add Customer
         </Button>

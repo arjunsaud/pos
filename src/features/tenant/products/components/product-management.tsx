@@ -222,6 +222,25 @@ export default function ProductManagement() {
 
   const clearSelection = () => setSelectedIds([]);
 
+  const exportCSV = () => {
+    const headers = ['Name', 'SKU', 'Category', 'Price', 'Stock', 'Status'];
+    const rows = filtered.map(p => [
+      p.name,
+      p.sku,
+      p.category,
+      npr(p.price),
+      String(p.stock),
+      p.isActive ? 'Active' : 'Inactive',
+    ]);
+    const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'products-export.csv'; a.click();
+    URL.revokeObjectURL(url);
+    toast.success('CSV exported successfully');
+  };
+
   const toggleActive = (id: string) => {
     setProducts((prev) =>
       prev.map((p) => (p.id === id ? { ...p, isActive: !p.isActive } : p))
@@ -231,6 +250,9 @@ export default function ProductManagement() {
   return (
     <div className="space-y-6">
       <PageHeader title="Products">
+        <Button variant="outline" size="sm" onClick={exportCSV}>
+          <Download className="h-4 w-4" /> Export CSV
+        </Button>
         <Button onClick={openAdd}>
           <Plus className="h-4 w-4" /> Add Product
         </Button>

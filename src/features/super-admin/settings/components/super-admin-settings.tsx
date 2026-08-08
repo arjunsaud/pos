@@ -21,7 +21,8 @@ interface PaymentGateway {
 export default function SuperAdminSettings() {
   // Branding state
   const [platformName, setPlatformName] = useState('POS Nepal');
-  const [primaryColor, setPrimaryColor] = useState('Emerald Green');
+  const [brandTagline, setBrandTagline] = useState('Multi-Tenant POS System');
+  const [primaryColor, setPrimaryColor] = useState('#10b981');
   const [supportEmail, setSupportEmail] = useState('support@posnepal.com');
 
   // Payment state
@@ -69,64 +70,138 @@ export default function SuperAdminSettings() {
 
         {/* Branding Tab */}
         <TabsContent value="branding">
-          <Card>
-            <CardHeader>
-              <CardTitle>Branding Settings</CardTitle>
-              <CardDescription>Customize the platform appearance</CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-6">
-              {/* Logo Upload */}
-              <div className="grid gap-2">
-                <Label>Platform Logo</Label>
-                <input type="file" ref={fileInputRef} className="hidden" accept="image/*" />
-                <div
-                  className="flex h-32 w-full items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/25 bg-muted/30 transition-colors hover:border-muted-foreground/50 cursor-pointer"
-                  onClick={() => toast.info('Image upload is not available in demo mode')}
-                >
-                  <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                    <Upload className="h-8 w-8" />
-                    <p className="text-sm">Click to upload logo</p>
-                    <p className="text-xs">PNG, JPG or SVG (max 2MB)</p>
+          <div className="grid gap-6 md:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>Branding Settings</CardTitle>
+                <CardDescription>Customize the platform appearance</CardDescription>
+              </CardHeader>
+              <CardContent className="grid gap-6">
+                {/* Logo Upload */}
+                <div className="grid gap-2">
+                  <Label>Platform Logo</Label>
+                  <input type="file" ref={fileInputRef} className="hidden" accept="image/*" />
+                  <div
+                    className="flex h-32 w-full items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/25 bg-muted/30 transition-colors hover:border-muted-foreground/50 cursor-pointer"
+                    onClick={() => toast.info('Image upload is not available in demo mode')}
+                  >
+                    <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                      <Upload className="h-8 w-8" />
+                      <p className="text-sm">Click to upload logo</p>
+                      <p className="text-xs">PNG, JPG or SVG (max 2MB)</p>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <Separator />
+                <Separator />
 
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div className="grid gap-2">
+                    <Label htmlFor="platform-name">Platform Name</Label>
+                    <Input
+                      id="platform-name"
+                      value={platformName}
+                      onChange={(e) => setPlatformName(e.target.value)}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="primary-color">Primary Color</Label>
+                    <input
+                      id="primary-color"
+                      type="color"
+                      value={primaryColor}
+                      onChange={(e) => setPrimaryColor(e.target.value)}
+                      className="h-10 w-20 cursor-pointer rounded-lg border"
+                    />
+                  </div>
+                </div>
+
                 <div className="grid gap-2">
-                  <Label htmlFor="platform-name">Platform Name</Label>
+                  <Label htmlFor="brand-tagline">Brand Tagline</Label>
                   <Input
-                    id="platform-name"
-                    value={platformName}
-                    onChange={(e) => setPlatformName(e.target.value)}
+                    id="brand-tagline"
+                    value={brandTagline}
+                    onChange={(e) => setBrandTagline(e.target.value)}
                   />
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="primary-color">Primary Color</Label>
-                  <input
-                    id="primary-color"
-                    type="color"
-                    value={primaryColor === 'Emerald Green' ? '#10b981' : primaryColor}
-                    onChange={(e) => setPrimaryColor(e.target.value)}
-                    className="h-10 w-20 cursor-pointer rounded-lg border"
-                  />
-                </div>
-              </div>
 
-              <div className="grid gap-2 sm:max-w-sm">
-                <Label htmlFor="support-email">Support Email</Label>
-                <Input
-                  id="support-email"
-                  type="email"
-                  value={supportEmail}
-                  onChange={(e) => setSupportEmail(e.target.value)}
+                <div className="grid gap-2 sm:max-w-sm">
+                  <Label htmlFor="support-email">Support Email</Label>
+                  <Input
+                    id="support-email"
+                    type="email"
+                    value={supportEmail}
+                    onChange={(e) => setSupportEmail(e.target.value)}
+                  />
+                </div>
+
+                <Button onClick={saveBranding}>Save Branding</Button>
+              </CardContent>
+            </Card>
+
+            {/* Live Preview Card */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <h3 className="text-sm font-medium">Live Preview</h3>
+                <div
+                  className="h-4 w-4 rounded-full border border-muted-foreground/20"
+                  style={{ backgroundColor: primaryColor }}
                 />
               </div>
 
-              <Button onClick={saveBranding}>Save Branding</Button>
-            </CardContent>
-          </Card>
+              <Card className="rounded-xl border bg-card p-6">
+                <p className="mb-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  Sidebar Header
+                </p>
+                {/* Mini Sidebar Header */}
+                <div
+                  className="mb-6 flex items-center gap-3 rounded-lg p-3 text-white"
+                  style={{ backgroundColor: primaryColor }}
+                >
+                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-white/20 text-xs font-bold">
+                    {platformName.charAt(0) || 'P'}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold leading-tight">
+                      {platformName || 'Store Name'}
+                    </p>
+                    <p className="text-[10px] leading-tight opacity-80">Admin Panel</p>
+                  </div>
+                </div>
+
+                <p className="mb-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  Login Page
+                </p>
+                {/* Mini Login Page */}
+                <div className="rounded-lg border bg-background p-4">
+                  <div className="mb-3 flex flex-col items-center text-center">
+                    <div
+                      className="mb-2 flex h-10 w-10 items-center justify-center rounded-lg text-lg font-bold text-white"
+                      style={{ backgroundColor: primaryColor }}
+                    >
+                      {platformName.charAt(0) || 'P'}
+                    </div>
+                    <p className="text-sm font-semibold">
+                      {platformName || 'Store Name'}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground">
+                      {brandTagline || 'Your tagline here'}
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="h-6 rounded border bg-muted/50" />
+                    <div className="h-6 rounded border bg-muted/50" />
+                    <div
+                      className="h-7 rounded text-center text-[10px] font-medium leading-7 text-white"
+                      style={{ backgroundColor: primaryColor }}
+                    >
+                      Sign In
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            </div>
+          </div>
         </TabsContent>
 
         {/* Payment Tab */}

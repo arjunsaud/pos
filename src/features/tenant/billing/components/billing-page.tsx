@@ -13,6 +13,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  TableFooter,
 } from '@/components/ui/table';
 import {
   Dialog,
@@ -236,6 +237,13 @@ export default function BillingPage() {
                 </TableRow>
               ))}
             </TableBody>
+            <TableFooter>
+              <TableRow>
+                <TableCell colSpan={7} className="font-medium">Total Billed</TableCell>
+                <TableCell className="text-right font-bold">NPR {npr(filtered.reduce((sum, s) => sum + s.total, 0))}</TableCell>
+                <TableCell colSpan={3} />
+              </TableRow>
+            </TableFooter>
           </Table>
           </div>
           <div className="flex items-center justify-between pt-4 px-4">

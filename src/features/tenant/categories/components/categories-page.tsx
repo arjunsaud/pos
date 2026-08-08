@@ -43,7 +43,7 @@ export default function CategoriesPage() {
   const filteredCategories = useMemo(() => {
     if (!search.trim()) return categories;
     const q = search.toLowerCase();
-    return categories.filter(c => c.name.toLowerCase().includes(q));
+    return categories.filter(c => c.name.toLowerCase().includes(q) || c.description.toLowerCase().includes(q));
   }, [categories, search]);
 
   const openAdd = () => {
@@ -116,12 +116,16 @@ export default function CategoriesPage() {
 
       {/* Grid */}
       {filteredCategories.length === 0 ? (
-        <EmptyState
-          icon={Package}
-          title="No categories yet"
-          description="Create your first category to start organizing products."
-          action={{ label: 'Add Category', onClick: openAdd }}
-        />
+        search.trim() ? (
+          <p className="text-center text-muted-foreground">No categories found</p>
+        ) : (
+          <EmptyState
+            icon={Package}
+            title="No categories yet"
+            description="Create your first category to start organizing products."
+            action={{ label: 'Add Category', onClick: openAdd }}
+          />
+        )
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filteredCategories.map((cat) => (

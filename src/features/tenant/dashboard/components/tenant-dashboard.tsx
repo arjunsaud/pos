@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { PageHeader } from '@/components/shared/page-header';
 import { StatCard, StatCardSkeleton, ChartSkeleton } from '@/components/shared/stat-card';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { ShoppingBag, Banknote, ClipboardList, AlertTriangle, Wallet, CreditCard, Smartphone, ArrowUpRight } from 'lucide-react';
@@ -27,15 +28,36 @@ const paymentBreakdown = [
   { method: 'Khalti', amount: 3393, icon: ArrowUpRight, color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-100 dark:bg-purple-900/30', count: 2 },
 ];
 
+const periodOptions = [
+  { value: '7d', label: '7D' },
+  { value: '30d', label: '30D' },
+  { value: '90d', label: '90D' },
+] as const;
+
+type Period = (typeof periodOptions)[number]['value'];
+
+const periodSlice: Record<Period, number> = {
+  '7d': 7,
+  '30d': 30,
+  '90d': 90,
+};
+
 export default function TenantDashboard() {
   const { user } = useAuthStore();
   const [loading, setLoading] = useState(true);
+  const [period, setPeriod] = useState<Period>('7d');
   const stats = mockTenantStats;
   const recentSales = mockSales.slice(0, 5);
-  const chartData = mockSalesReportData.slice(-7).map((d) => ({
-    date: d.date.slice(5),
-    sales: d.sales,
-  }));
+  const chartData = useMemo(
+    () =>
+      mockSalesReportData
+        .slice(-periodSlice[period])
+        .map((d) => ({
+          date: d.date.slice(5),
+          sales: d.sales,
+        })),
+    [period],
+  );
 
   // Simulated loading
   useEffect(() => {
@@ -209,8 +231,21 @@ export default function TenantDashboard() {
 
       {/* Sales Trend Chart */}
       <Card className="transition-shadow hover:shadow-md">
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0">
           <CardTitle>Sales Trend</CardTitle>
+          <div className="ml-auto flex items-center gap-0.5 rounded-md border p-0.5">
+            {periodOptions.map((p) => (
+              <Button
+                key={p.value}
+                variant={period === p.value ? 'default' : 'outline'}
+                size="sm"
+                className="h-7 px-2.5 text-xs rounded-sm shadow-none"
+                onClick={() => setPeriod(p.value)}
+              >
+                {p.label}
+              </Button>
+            ))}
+          </div>
         </CardHeader>
         <CardContent>
           <ChartContainer config={salesChartConfig} className="h-[300px] w-full">

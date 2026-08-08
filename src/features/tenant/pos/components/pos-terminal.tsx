@@ -10,11 +10,11 @@ import { Separator } from '@/components/ui/separator';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
-import { Search, Plus, Minus, X, ShoppingCart, Banknote, CreditCard, Smartphone, Wallet, Receipt, Barcode, Trash2, TrendingUp, Clock, Package, Pause, PlayCircle } from 'lucide-react';
-import { mockProducts, mockCategories } from '@/lib/mock-data';
+import { Search, Plus, Minus, X, ShoppingCart, Banknote, CreditCard, Smartphone, Wallet, Receipt, Barcode, Trash2, TrendingUp, Clock, Package, Pause, PlayCircle, Users } from 'lucide-react';
+import { mockProducts, mockCategories, mockCustomers } from '@/lib/mock-data';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/shared/page-header';
-import type { CartItem, Product, HeldSale } from '@/lib/types';
+import type { CartItem, Product, HeldSale, Customer } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { formatDateTime, npr } from '@/lib/helpers';
 
@@ -39,6 +39,18 @@ export default function POSTerminal() {
   // Hold/Resume state
   const [heldSales, setHeldSales] = useState<HeldSale[]>([]);
   const [heldListOpen, setHeldListOpen] = useState(false);
+  // Customer selection state
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [customerSearch, setCustomerSearch] = useState('');
+  const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
+
+  const filteredCustomers = useMemo(() => {
+    if (!customerSearch.trim()) return mockCustomers;
+    const q = customerSearch.toLowerCase();
+    return mockCustomers.filter((c) =>
+      c.name.toLowerCase().includes(q) || c.phone.toLowerCase().includes(q)
+    );
+  }, [customerSearch]);
 
   const filteredProducts = useMemo(() => {
     return mockProducts.filter((p) => {
@@ -168,7 +180,7 @@ export default function POSTerminal() {
     };
     setLastSale(saleData);
     setReceiptOpen(true);
-    toast.success(`Sale completed! NPR ${npr(saleData.total)} via ${saleData.method}`);
+    toast.success(`Sale completed! NPR ${npr(saleData.total)} via ${saleData.method}${selectedCustomer ? ` for ${selectedCustomer.name}` : ''}`);
     setCart([]);
     setDiscount(0);
   };
@@ -318,10 +330,78 @@ export default function POSTerminal() {
           <Card className="sticky top-20">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <ShoppingCart className="h-5 w-5" />
-                  Cart
-                </CardTitle>
+                <div className="flex items-center gap-2">
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <ShoppingCart className="h-5 w-5" />
+                    Cart
+                  </CardTitle>
+                  {/* Customer Selection */}
+                  <div className="relative">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 gap-1.5 text-xs"
+                      onClick={() => { setShowCustomerDropdown(!showCustomerDropdown); setCustomerSearch(''); }}
+                    >
+                      <Users className="h-3 w-3" />
+                      {selectedCustomer ? selectedCustomer.name : 'Walk-in'}
+                    </Button>
+                    {showCustomerDropdown && (
+                      <>
+                        <div className="fixed inset-0 z-40" onClick={() => setShowCustomerDropdown(false)} />
+                        <div className="absolute right-0 top-full mt-1 z-50 w-64 rounded-lg border bg-popover p-2 shadow-md">
+                          <div className="relative">
+                            <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                            <Input
+                              placeholder="Search by name or phone..."
+                              value={customerSearch}
+                              onChange={(e) => setCustomerSearch(e.target.value)}
+                              className="h-8 pl-8 text-xs"
+                              autoFocus
+                            />
+                          </div>
+                          <div className="max-h-48 overflow-y-auto mt-1">
+                            {filteredCustomers.length === 0 ? (
+                              <div className="px-2 py-3 text-center text-xs text-muted-foreground">No customers found</div>
+                            ) : (
+                              filteredCustomers.map((customer) => (
+                                <div
+                                  key={customer.id}
+                                  className="flex items-center justify-between px-2 py-1.5 rounded-md text-sm hover:bg-accent cursor-pointer transition-colors"
+                                  onClick={() => {
+                                    setSelectedCustomer(customer);
+                                    setShowCustomerDropdown(false);
+                                    setCustomerSearch('');
+                                  }}
+                                >
+                                  <div className="min-w-0">
+                                    <div className="text-xs font-medium truncate">{customer.name}</div>
+                                    <div className="text-[11px] text-muted-foreground">{customer.phone}</div>
+                                  </div>
+                                  {customer.pan && (
+                                    <Badge variant="secondary" className="text-[10px] px-1.5 shrink-0 ml-1">PAN</Badge>
+                                  )}
+                                </div>
+                              ))
+                            )}
+                          </div>
+                          <Separator className="my-1" />
+                          <div
+                            className="flex items-center justify-between px-2 py-1.5 rounded-md text-sm hover:bg-accent cursor-pointer transition-colors text-muted-foreground"
+                            onClick={() => {
+                              setSelectedCustomer(null);
+                              setShowCustomerDropdown(false);
+                              setCustomerSearch('');
+                            }}
+                          >
+                            <span className="text-xs">Clear (Walk-in Customer)</span>
+                            <X className="h-3 w-3" />
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
                 {cart.length > 0 && (
                   <div className="flex items-center gap-2">
                     <Badge variant="secondary">{cart.reduce((s, i) => s + i.quantity, 0)} items</Badge>
@@ -535,6 +615,17 @@ export default function POSTerminal() {
                   <p className="text-xs text-muted-foreground">Kathmandu, Nepal · PAN: 309876543</p>
                   <p className="text-xs text-muted-foreground">Tel: +977-9801234567</p>
                 </div>
+                {/* Customer Info */}
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">Customer</span>
+                  <span className="font-medium">{selectedCustomer ? selectedCustomer.name : 'Walk-in Customer'}</span>
+                </div>
+                {selectedCustomer?.pan && (
+                  <div className="flex justify-between text-xs">
+                    <span className="text-muted-foreground">PAN</span>
+                    <span>{selectedCustomer.pan}</span>
+                  </div>
+                )}
                 <Separator />
                 <div className="flex justify-between text-xs text-muted-foreground">
                   <span>{formatDateTime(lastSale.time)}</span>

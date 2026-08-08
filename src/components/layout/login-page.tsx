@@ -162,6 +162,9 @@ export function LoginPage() {
                   Sign In as {selectedRole ? roles.find(r => r.role === selectedRole)?.title : '...'}
                   {selectedRole && <ArrowRight className="h-4 w-4" />}
                 </Button>
+                {selectedRole && (
+                  <p className="text-center text-[11px] text-muted-foreground">Press Enter to sign in</p>
+                )}
               </motion.div>
 
               <p className="text-center text-[11px] text-muted-foreground">
@@ -178,7 +181,7 @@ export function LoginPage() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.7 }}
         >
-          © 2024 POS Nepal · Multi-Tenant SaaS Platform
+          © 2025 POS Nepal · Multi-Tenant SaaS Platform
         </motion.p>
       </div>
     </div>

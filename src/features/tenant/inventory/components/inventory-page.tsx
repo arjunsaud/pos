@@ -16,35 +16,85 @@ import {
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
-import { Package, DollarSign, AlertTriangle, Plus, Search } from 'lucide-react';
+import { Package, DollarSign, AlertTriangle, Plus, Search, Download } from 'lucide-react';
 import { mockInventory, mockStockMovements, mockProducts } from '@/lib/mock-data';
 import { cn } from '@/lib/utils';
 import { npr, getStockBadgeClasses, getStockStatus } from '@/lib/helpers';
 import { toast } from 'sonner';
 import type { StockMovement } from '@/lib/types';
 
+type InventorySortField = 'name' | 'category' | 'stock' | 'price';
+
 export default function InventoryPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [adjustOpen, setAdjustOpen] = useState(false);
   const [adjustForm, setAdjustForm] = useState({ productId: '', type: 'in' as 'in' | 'out', quantity: '', reason: '' });
   const [page, setPage] = useState(1);
+  const [sortField, setSortField] = useState<InventorySortField>('name');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
 
   const totalProducts = mockProducts.length;
   const totalStockValue = mockProducts.reduce((sum, p) => sum + p.stock * p.costPrice, 0);
   const lowStockItems = mockInventory.filter((item) => item.currentStock <= item.minStock).length;
 
+  const productMap = useMemo(() => {
+    const map = new Map<string, { category: string; price: number }>();
+    mockProducts.forEach(p => map.set(p.id, { category: p.category, price: p.price }));
+    return map;
+  }, []);
+
   const filteredInventory = useMemo(() => {
-    if (!searchQuery) return mockInventory;
-    const q = searchQuery.toLowerCase();
-    return mockInventory.filter(
-      (item) =>
-        item.productName.toLowerCase().includes(q) || item.sku.toLowerCase().includes(q)
-    );
-  }, [searchQuery]);
+    const enriched = mockInventory.map(item => {
+      const product = productMap.get(item.productId);
+      return { ...item, category: product?.category ?? '', price: product?.price ?? 0 };
+    });
+    let result = enriched;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(
+        (item) =>
+          item.productName.toLowerCase().includes(q) || item.sku.toLowerCase().includes(q)
+      );
+    }
+    result.sort((a, b) => {
+      let cmp = 0;
+      if (sortField === 'name') cmp = a.productName.localeCompare(b.productName);
+      else if (sortField === 'category') cmp = a.category.localeCompare(b.category);
+      else if (sortField === 'stock') cmp = a.currentStock - b.currentStock;
+      else cmp = a.price - b.price;
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+    return result;
+  }, [searchQuery, sortField, sortDir, productMap]);
 
   const ITEMS_PER_PAGE = 10;
   const totalPages = Math.ceil(filteredInventory.length / ITEMS_PER_PAGE);
   const pagedInventory = filteredInventory.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
+
+  const handleSort = (field: InventorySortField) => {
+    if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    else { setSortField(field); setSortDir('asc'); }
+  };
+  const sortIcon = (field: InventorySortField) => sortField === field ? (sortDir === 'asc' ? '↑' : '↓') : '↕';
+
+  const exportCSV = () => {
+    const headers = ['Product Name', 'Category', 'Current Stock', 'Reorder Level', 'Price', 'Status'];
+    const rows = filteredInventory.map(item => [
+      item.productName,
+      item.category,
+      String(item.currentStock),
+      String(item.minStock),
+      npr(item.price),
+      getStockStatus(item.currentStock, item.minStock),
+    ]);
+    const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'inventory-export.csv'; a.click();
+    URL.revokeObjectURL(url);
+    toast.success('CSV exported successfully');
+  };
 
   const handleStockAdjust = () => {
     if (!adjustForm.productId || !adjustForm.quantity || Number(adjustForm.quantity) <= 0) {
@@ -60,6 +110,9 @@ export default function InventoryPage() {
   return (
     <div className="space-y-6">
       <PageHeader title="Inventory" description="Monitor and manage stock levels">
+        <Button variant="outline" size="sm" onClick={exportCSV}>
+          <Download className="h-4 w-4" /> Export CSV
+        </Button>
         <Button className="gap-2" onClick={() => setAdjustOpen(true)}>
           <Plus className="h-4 w-4" /> Stock Adjustment
         </Button>
@@ -93,10 +146,12 @@ export default function InventoryPage() {
                 <Table>
                   <TableHeader>
                     <TableRow className="transition-colors hover:bg-muted/50">
-                      <TableHead>Product</TableHead>
+                      <TableHead className="cursor-pointer select-none" onClick={() => handleSort('name')}>Product <span className="ml-1 text-[10px] opacity-60">{sortIcon('name')}</span></TableHead>
                       <TableHead>SKU</TableHead>
-                      <TableHead className="text-center">Current Stock</TableHead>
-                      <TableHead className="text-center hidden sm:table-cell">Min Stock</TableHead>
+                      <TableHead className="cursor-pointer select-none" onClick={() => handleSort('category')}>Category <span className="ml-1 text-[10px] opacity-60">{sortIcon('category')}</span></TableHead>
+                      <TableHead className="text-center cursor-pointer select-none" onClick={() => handleSort('stock')}>Stock <span className="ml-1 text-[10px] opacity-60">{sortIcon('stock')}</span></TableHead>
+                      <TableHead className="text-right cursor-pointer select-none hidden sm:table-cell" onClick={() => handleSort('price')}>Price <span className="ml-1 text-[10px] opacity-60">{sortIcon('price')}</span></TableHead>
+                      <TableHead className="text-center hidden md:table-cell">Min Stock</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="hidden md:table-cell">Last Updated</TableHead>
                     </TableRow>
@@ -106,12 +161,14 @@ export default function InventoryPage() {
                       <TableRow key={item.id} className="transition-colors hover:bg-muted/50">
                         <TableCell className="font-medium">{item.productName}</TableCell>
                         <TableCell className="text-muted-foreground text-xs font-mono">{item.sku}</TableCell>
+                        <TableCell>{item.category}</TableCell>
                         <TableCell className="text-center">
                           <span className={cn('font-bold', item.currentStock <= 0 && 'text-red-600 dark:text-red-400', item.currentStock > 0 && item.currentStock <= item.minStock && 'text-amber-600 dark:text-amber-400')}>
                             {item.currentStock}
                           </span>
                         </TableCell>
-                        <TableCell className="text-center hidden sm:table-cell">{item.minStock}</TableCell>
+                        <TableCell className="text-right hidden sm:table-cell">NPR {npr(item.price)}</TableCell>
+                        <TableCell className="text-center hidden md:table-cell">{item.minStock}</TableCell>
                         <TableCell>
                           <Badge className={getStockBadgeClasses(item.currentStock, item.minStock)} variant="secondary">
                             {getStockStatus(item.currentStock, item.minStock)}

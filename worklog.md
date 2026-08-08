@@ -1,9 +1,9 @@
 # POS Nepal - Multi-Tenant POS, Inventory & Billing System
 
-## Current Project Status (as of Round 5 Development Session)
+## Current Project Status (as of Round 6 Development Session)
 
 ### Assessment
-The project is in a **production-quality UI prototype state** with **18 feature pages** across 3 roles. This session added 5 major new features (Customer Management, POS Hold/Resume, Payment Pie Chart, Loading Skeletons, Command Palette Keyboard Nav), significant styling polish across all pages, and column sorting. The codebase is well-organized with shared utilities consistently used.
+The project is in a **production-quality UI prototype state** with **18 feature pages** across 3 roles. Round 6 focused on **11 improvements**: quick date presets, POS customer selection, dashboard period toggles, column sorting expansion, CSV export expansion, settings live preview, and styling polish. The codebase compiles cleanly with 0 ESLint errors and no runtime errors.
 
 ### Architecture
 - **Framework**: Next.js 16 (App Router) + TypeScript 5
@@ -30,10 +30,10 @@ src/
       activity-logs/components/activity-logs.tsx
       content/components/content-management.tsx
       settings/components/super-admin-settings.tsx
-    tenant/ (11 pages)  ← NEW: customers page added
+    tenant/ (11 pages)
       dashboard/components/tenant-dashboard.tsx
       pos/components/pos-terminal.tsx
-      customers/components/customers-page.tsx   ← NEW
+      customers/components/customers-page.tsx
       billing/components/billing-page.tsx
       products/components/product-management.tsx
       inventory/components/inventory-page.tsx
@@ -55,100 +55,80 @@ src/
       page-header.tsx        # Reusable page header
       empty-state.tsx        # Reusable empty state with icon + action
   lib/
-    types/index.ts          # Complete TypeScript types (+ Customer, HeldSale)
-    mock-data/index.ts       # All mock data (+ 10 customers)
+    types/index.ts          # Complete TypeScript types (Customer, HeldSale)
+    mock-data/index.ts       # All mock data (10 customers)
     helpers.ts               # 11 shared utils
     utils.ts                 # Tailwind merge + clsx
 ```
 
-### What Was Done This Session (Round 5)
+### What Was Done This Session (Round 6)
 
-#### New Features (5)
-1. **Customer Management (CRUD)**: Full page at `features/tenant/customers/` with:
-   - 10 mock customers with Nepal-specific data (PAN, addresses in Kathmandu)
-   - 4 stat cards (Total, Active, Revenue, Avg Spend)
-   - Searchable/sortable/paginated table (8/page)
-   - Column sorting: Name, Purchases, Total Spent, Last Visit (click headers)
-   - Add/Edit customer dialog with validation
-   - Customer detail view dialog with contact info grid, stats row, dates
-   - Activate/deactivate toggle, delete action
-   - Row hover reveals action dropdown menu
-   - Added `NavSection 'customers'` to types, sidebar, command palette, page.tsx
+#### New Features (4)
+1. **POS Customer Selection**: Enhanced POS terminal with:
+   - Customer search/select dropdown in cart header (Users icon button)
+   - Filters mock customers by name or phone
+   - Shows selected customer name in cart area, PAN badge on receipt
+   - "Clear (Walk-in Customer)" option to deselect
+   - Click-outside-to-close via transparent overlay
+   - Customer info included in Complete Sale toast
 
-2. **POS Hold/Resume Sale**: Enhanced POS terminal with:
-   - "Hold" button (amber-styled) saves current cart as a held sale
-   - "Resume Held Sale" button appears when cart is empty and sales are held
-   - Held sales dialog shows item count, product names, total, held time
-   - Resume auto-holds current cart if not empty
-   - Delete/discard individual held sales
-   - Held sale count badge in page header and POS area
-   - New `HeldSale` type in types/index.ts
+2. **Quick Date Presets — Reports Page**: 4 preset buttons (Today, Last 7 Days, Last 30 Days, This Month)
+   - Active preset highlighted with variant="default"
+   - Manual date change clears the preset selection
+   - Works alongside existing date range inputs
 
-3. **Payment Method Pie Chart (Reports)**: New "Payment Breakdown" tab in Reports:
-   - Donut chart using Recharts PieChart with 4 payment methods
-   - Side panel with progress bars showing percentage breakdown
-   - ChartConfig for all 4 chart colors
-   - Total collected today summary row
+3. **Quick Date Presets — Sales Page**: Same 4 presets applied to the sales filter bar
+   - Presets auto-set dateFrom/dateTo state
+   - Resets page to 1 on filter change
 
-4. **Loading Skeletons (Both Dashboards)**:
-   - Super Admin Dashboard: 800ms simulated loading → StatCardSkeleton × 4 + activity/chart placeholders
-   - Tenant Dashboard: 800ms simulated loading → StatCardSkeleton × 4 + two-column cards + ChartSkeleton
-   - Uses existing StatCardSkeleton, ChartSkeleton from stat-card.tsx
+4. **Dashboard Period Toggles (7D/30D/90D)**:
+   - Tenant Dashboard: Toggle buttons on Sales Trend chart card header
+   - Super Admin Dashboard: Same toggle on Revenue Overview chart card
+   - Dynamic data slicing based on selected period
+   - Active period button uses variant="default"
 
-5. **Command Palette Keyboard Navigation**:
-   - ↑/↓ arrow keys navigate through filtered results
-   - Enter selects highlighted item
-   - Mouse hover also highlights items
-   - Active index clamped to valid range (no out-of-bounds)
-   - "↵" indicator shown on highlighted items
-   - ESC closes (already existed)
-   - Fixed React 19 lint issues (no setState in effect, no ref during render)
+#### Functionality Enhancements (5)
+1. **Column Sorting — Inventory Page**: Sortable by Product Name, Category, Stock, Price with ↑↓↕ indicators
+2. **Column Sorting — Tenant Management**: Sortable by Tenant Name, Plan, Status, Products Count (plan uses custom order: basic→pro→enterprise)
+3. **CSV Export — Inventory Page**: Exports Product Name, Category, Stock, Reorder Level, Price, Status
+4. **CSV Export — Customers Page**: Exports Name, Email, Phone, PAN, Address, Purchases, Spent, Last Visit, Status
+5. **CSV Export — Products Page**: Exports Name, SKU, Category, Price, Stock, Status
 
-#### Functionality Enhancements (3)
-1. **Column Sorting - Sales Page**: Date and Total columns are clickable with sort indicators (↑↓↕)
-2. **Column Sorting - Customers Page**: Name, Purchases, Total Spent, Last Visit columns sortable
-3. **Daily Cash Register Summary**: New section on Tenant Dashboard showing:
-   - 4 payment method cards (Cash, Card, eSewa, Khalti) with icons, amounts, transaction counts
-   - "Total Collected Today" summary bar
-   - Top Products ranking with gold/silver/bronze medal colors for top 3
+#### Styling & UX Improvements (4)
+1. **Sales Page Cards**: Added `transition-shadow hover:shadow-md` to filter and table cards
+2. **Sales Page Table Rows**: Added `transition-colors hover:bg-muted/50` to data rows
+3. **Login Page**: Updated copyright to 2025, added "Press Enter to sign in" hint when role is selected
+4. **Billing Page Table Footer**: Added TableFooter showing "Total Billed" sum of all filtered invoices
 
-#### Styling Improvements (Systematic)
-1. **Card Hover Shadows**: Added `transition-shadow hover:shadow-md` to ~15 content Cards across 9 pages (billing, reports, dashboards, inventory, tenants, staff, subscriptions, activity-logs, products)
-2. **Table Row Hover**: Added `transition-colors hover:bg-muted/50` to ~20 TableRows across 8 pages
-3. **POS Cart Items**: Added `hover:bg-muted` to cart items for subtle hover feedback
-4. **Dashboard Cards**: All dashboard cards now have `transition-shadow hover:shadow-md`
-5. **Report Tab Cards**: All chart/table cards have hover shadow transitions
-
-#### Type System Updates
-- Added `Customer` interface with 12 fields (id, name, email, phone, pan, address, totalPurchases, totalSpent, lastVisit, createdAt, isActive)
-- Added `HeldSale` interface (id, cart, customerName, heldAt, total)
-- Added `'customers'` to `NavSection` union type
-
-#### Mock Data Updates
-- Added 10 customers with realistic Nepal data (business names, Kathmandu addresses, PAN numbers, .com.np emails)
-- Customer types include: retail stores, hotels, restaurants, bakeries, wholesalers, cafes
+#### Settings Enhancement (1)
+1. **Live Branding Preview**: 2-column layout in branding tab
+   - Mini sidebar header mockup (logo initial, brand name, subtitle)
+   - Mini login page mockup (logo, name, tagline, inputs, sign-in button)
+   - All elements update in real-time with brandName, brandTagline, primaryColor state
+   - Color swatch showing current primary color
 
 #### Verification Results
 - ✅ ESLint: 0 errors, 0 warnings
-- ✅ Dev server: Compiles successfully, GET / returns 200
-- ✅ All new types properly integrated
-- ✅ Command palette: Fixed React 19 strict lint rules (refs-during-render, set-state-in-effect, static-components)
+- ✅ Dev server: All compiles clean, GET / returns 200
+- ✅ No runtime errors in dev.log
 
 ### Cumulative Feature Count
 - **18 feature pages** across 3 roles (Super Admin × 7, Tenant Admin × 11, Staff × 2)
 - **6 shared components** (StatCard, PageHeader, EmptyState, NotificationPanel, CommandPalette, Skeletons)
 - **11 shared utility functions** in helpers.ts
-- **4 shared layout features** (mobile drawer, notification panel, command palette with keyboard nav, login animations)
-- **2 new types** (Customer, HeldSale)
-- **10 mock customers**
+- **6 shared layout features** (mobile drawer, notification panel, command palette, login animations, branding preview, period toggles)
+- **Pages with column sorting**: Sales, Customers, Inventory, Tenants (4 pages)
+- **Pages with CSV export**: Sales, Reports (3 tabs), Inventory, Customers, Products (7 export points)
+- **Pages with date presets**: Reports, Sales (2 pages)
+- **Pages with table footers**: Sales, Billing (2 pages)
 
 ### Remaining Issues (Very Low Priority)
 
 #### Could Improve
 - No error boundary wrapper around the app
-- Settings page branding/domain inputs don't visually update anything
 - Create Invoice additions are local to billing page only (not reflected in dashboard stats)
-- Some files still have mixed quote styles
+- Products page uses local `npr()` instead of shared `@/lib/helpers` import
+- Inventory page table footer with stock value total
 
 #### Nice-to-Have
 - Drag-and-drop reordering for categories or products
@@ -157,18 +137,18 @@ src/
 - Printable receipt for POS with proper page breaks
 - Bar chart for top categories in reports
 - Mobile responsive polish for all pages (comprehensive audit)
-- Customer selection in POS (link customer to sale)
-- Daily/weekly/monthly toggle on dashboard charts
-- Export PDF for reports (in addition to CSV)
+- Export PDF for invoices and reports
+- Bulk actions for products (delete, status toggle)
+- Keyboard shortcut for POS barcode input autofocus
 
 ### Priority for Next Phase
 1. Add error boundary to page.tsx
-2. Enhance printable receipt layout with proper page breaks
-3. Add customer selection in POS (attach customer to sale)
-4. Add date range presets (Today, This Week, This Month) to reports
-5. Comprehensive mobile responsive audit and fixes
-6. Add data table column sorting to remaining pages (inventory, billing, tenants)
-7. Settings page: make branding inputs show live preview
-8. Add "Walk-in Customer" quick-select in billing create flow
-9. Daily/weekly/monthly chart period toggle
-10. Export PDF for invoices and reports
+2. Comprehensive mobile responsive audit and fixes
+3. Enhance printable receipt layout with proper page breaks
+4. Export PDF for invoices and reports
+5. Add bulk actions to products page
+6. Products page: migrate local npr() to shared helpers import
+7. Add inventory table footer with total stock value
+8. Add dark mode system preference detection
+9. Bar chart for top categories in reports
+10. Keyboard navigation improvements for POS

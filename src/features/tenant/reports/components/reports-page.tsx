@@ -55,9 +55,67 @@ const paymentPieData = [
   { name: 'khalti', value: 3393, fill: 'var(--color-khalti)' },
 ];
 
+function formatDate(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+const datePresets = [
+  { label: 'Today', key: 'today' },
+  { label: 'Last 7 Days', key: '7d' },
+  { label: 'Last 30 Days', key: '30d' },
+  { label: 'This Month', key: 'month' },
+] as const;
+
 export default function ReportsPage() {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  const [datePreset, setDatePreset] = useState('');
+
+  const applyPreset = (key: string) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    let from: Date;
+    let to: Date = new Date(today);
+
+    switch (key) {
+      case 'today':
+        from = new Date(today);
+        break;
+      case '7d': {
+        from = new Date(today);
+        from.setDate(from.getDate() - 6);
+        break;
+      }
+      case '30d': {
+        from = new Date(today);
+        from.setDate(from.getDate() - 29);
+        break;
+      }
+      case 'month': {
+        from = new Date(today.getFullYear(), today.getMonth(), 1);
+        break;
+      }
+      default:
+        return;
+    }
+
+    setDateFrom(formatDate(from));
+    setDateTo(formatDate(to));
+    setDatePreset(key);
+  };
+
+  const handleDateFromChange = (value: string) => {
+    setDateFrom(value);
+    setDatePreset('');
+  };
+
+  const handleDateToChange = (value: string) => {
+    setDateTo(value);
+    setDatePreset('');
+  };
 
   // Filter sales report data by date range (mock filter - slice)
   const filteredSalesData = useMemo(() => {
@@ -122,15 +180,27 @@ export default function ReportsPage() {
 
       {/* Date Range Filter */}
       <Card className="transition-shadow hover:shadow-md">
-        <CardContent className="p-4">
+        <CardContent className="space-y-3 p-4">
+          <div className="flex flex-wrap gap-2">
+            {datePresets.map((preset) => (
+              <Button
+                key={preset.key}
+                variant={datePreset === preset.key ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => applyPreset(preset.key)}
+              >
+                {preset.label}
+              </Button>
+            ))}
+          </div>
           <div className="flex flex-wrap items-end gap-3">
             <div>
               <Label className="mb-1.5">From</Label>
-              <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
+              <Input type="date" value={dateFrom} onChange={(e) => handleDateFromChange(e.target.value)} />
             </div>
             <div>
               <Label className="mb-1.5">To</Label>
-              <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
+              <Input type="date" value={dateTo} onChange={(e) => handleDateToChange(e.target.value)} />
             </div>
           </div>
         </CardContent>

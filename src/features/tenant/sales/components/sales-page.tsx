@@ -38,13 +38,17 @@ import { cn } from '@/lib/utils';
 import { npr, getStatusBadgeClasses } from '@/lib/helpers';
 
 const fmtDate = (d: string) => new Date(d).toLocaleDateString('en-GB');
+const formatDate = (d: Date) => d.toISOString().slice(0, 10);
 const ITEMS_PER_PAGE = 5;
+
+const DATE_PRESETS = ['Today', 'Last 7 Days', 'Last 30 Days', 'This Month'] as const;
 
 export default function SalesPage() {
   const [sales] = useState<Sale[]>(mockSales);
   const [search, setSearch] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  const [datePreset, setDatePreset] = useState('');
   const [paymentFilter, setPaymentFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [page, setPage] = useState(1);
@@ -76,6 +80,36 @@ export default function SalesPage() {
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
   const paged = filtered.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
   const totalSales = filtered.reduce((sum, s) => sum + s.total, 0);
+
+  const applyPreset = (preset: string) => {
+    const today = new Date();
+    const from = new Date();
+    if (preset === 'Today') {
+      // from is already today
+    } else if (preset === 'Last 7 Days') {
+      from.setDate(from.getDate() - 6);
+    } else if (preset === 'Last 30 Days') {
+      from.setDate(from.getDate() - 29);
+    } else if (preset === 'This Month') {
+      from.setDate(1);
+    }
+    setDateFrom(formatDate(from));
+    setDateTo(formatDate(today));
+    setDatePreset(preset);
+    setPage(1);
+  };
+
+  const handleDateFromChange = (value: string) => {
+    setDateFrom(value);
+    setDatePreset('');
+    setPage(1);
+  };
+
+  const handleDateToChange = (value: string) => {
+    setDateTo(value);
+    setDatePreset('');
+    setPage(1);
+  };
 
   const handleSort = (field: 'date' | 'total') => {
     if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
@@ -115,8 +149,21 @@ export default function SalesPage() {
       </PageHeader>
 
       {/* Filters */}
-      <Card>
-        <CardContent className="flex flex-wrap items-end gap-3 p-4">
+      <Card className="transition-shadow hover:shadow-md">
+        <CardContent className="p-4">
+          <div className="flex flex-wrap gap-2 mb-3">
+            {DATE_PRESETS.map((preset) => (
+              <Button
+                key={preset}
+                variant={datePreset === preset ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => applyPreset(preset)}
+              >
+                {preset}
+              </Button>
+            ))}
+          </div>
+          <div className="flex flex-wrap items-end gap-3">
           <div className="flex-1" style={{ minWidth: '180px' }}>
             <Label className="mb-1.5">Search</Label>
             <Input
@@ -127,11 +174,11 @@ export default function SalesPage() {
           </div>
           <div>
             <Label className="mb-1.5">From</Label>
-            <Input type="date" value={dateFrom} onChange={(e) => { setDateFrom(e.target.value); setPage(1); }} />
+            <Input type="date" value={dateFrom} onChange={(e) => handleDateFromChange(e.target.value)} />
           </div>
           <div>
             <Label className="mb-1.5">To</Label>
-            <Input type="date" value={dateTo} onChange={(e) => { setDateTo(e.target.value); setPage(1); }} />
+            <Input type="date" value={dateTo} onChange={(e) => handleDateToChange(e.target.value)} />
           </div>
           <div>
             <Label className="mb-1.5">Payment</Label>
@@ -162,11 +209,12 @@ export default function SalesPage() {
               </SelectContent>
             </Select>
           </div>
+          </div>
         </CardContent>
       </Card>
 
       {/* Table */}
-      <Card>
+      <Card className="transition-shadow hover:shadow-md">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
           <Table>
@@ -184,7 +232,7 @@ export default function SalesPage() {
             </TableHeader>
             <TableBody>
               {paged.map((sale) => (
-                <TableRow key={sale.id}>
+                <TableRow key={sale.id} className="transition-colors hover:bg-muted/50">
                   <TableCell className="font-medium">{sale.invoiceNumber}</TableCell>
                   <TableCell className="text-muted-foreground">{fmtDate(sale.date)}</TableCell>
                   <TableCell>{sale.customerName}</TableCell>

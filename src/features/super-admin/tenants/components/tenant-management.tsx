@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { PageHeader } from '@/components/shared/page-header';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -55,6 +55,8 @@ type StatusFilter = 'all' | 'active' | 'inactive';
 
 const ITEMS_PER_PAGE = 5;
 
+type TenantSortField = 'name' | 'plan' | 'status' | 'products';
+
 export default function TenantManagement() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
@@ -62,6 +64,8 @@ export default function TenantManagement() {
   const [addOpen, setAddOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
+  const [sortField, setSortField] = useState<TenantSortField>('name');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
 
   // Add form state
   const [formName, setFormName] = useState('');
@@ -73,18 +77,36 @@ export default function TenantManagement() {
   // Local tenant list for toggle/delete
   const [tenants, setTenants] = useState<Tenant[]>(mockTenants);
 
-  const filteredTenants = tenants.filter((t) => {
-    const matchesSearch = t.name.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus =
-      statusFilter === 'all' || t.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  const filteredTenants = useMemo(() => {
+    let result = tenants.filter((t) => {
+      const matchesSearch = t.name.toLowerCase().includes(search.toLowerCase());
+      const matchesStatus =
+        statusFilter === 'all' || t.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+    const planOrder: Record<PlanType, number> = { basic: 0, pro: 1, enterprise: 2 };
+    result.sort((a, b) => {
+      let cmp = 0;
+      if (sortField === 'name') cmp = a.name.localeCompare(b.name);
+      else if (sortField === 'plan') cmp = planOrder[a.plan] - planOrder[b.plan];
+      else if (sortField === 'status') cmp = a.status.localeCompare(b.status);
+      else cmp = a.productCount - b.productCount;
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+    return result;
+  }, [tenants, search, statusFilter, sortField, sortDir]);
 
   const totalPages = Math.ceil(filteredTenants.length / ITEMS_PER_PAGE);
   const pagedTenants = filteredTenants.slice(
     page * ITEMS_PER_PAGE,
     (page + 1) * ITEMS_PER_PAGE
   );
+
+  const handleSort = (field: TenantSortField) => {
+    if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    else { setSortField(field); setSortDir('asc'); }
+  };
+  const sortIcon = (field: TenantSortField) => sortField === field ? (sortDir === 'asc' ? '↑' : '↓') : '↕';
 
   const handleAddTenant = () => {
     const newTenant: Tenant = {
@@ -246,11 +268,11 @@ export default function TenantManagement() {
           <Table>
             <TableHeader>
               <TableRow className="transition-colors hover:bg-muted/50">
-                <TableHead>Name</TableHead>
+                <TableHead className="cursor-pointer select-none" onClick={() => handleSort('name')}>Name <span className="ml-1 text-[10px] opacity-60">{sortIcon('name')}</span></TableHead>
                 <TableHead className="hidden md:table-cell">Email</TableHead>
-                <TableHead>Plan</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="hidden sm:table-cell">Products</TableHead>
+                <TableHead className="cursor-pointer select-none" onClick={() => handleSort('plan')}>Plan <span className="ml-1 text-[10px] opacity-60">{sortIcon('plan')}</span></TableHead>
+                <TableHead className="cursor-pointer select-none" onClick={() => handleSort('status')}>Status <span className="ml-1 text-[10px] opacity-60">{sortIcon('status')}</span></TableHead>
+                <TableHead className="hidden sm:table-cell cursor-pointer select-none" onClick={() => handleSort('products')}>Products <span className="ml-1 text-[10px] opacity-60">{sortIcon('products')}</span></TableHead>
                 <TableHead className="hidden sm:table-cell">Revenue</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>

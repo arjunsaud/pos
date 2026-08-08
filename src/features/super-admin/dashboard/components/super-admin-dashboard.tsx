@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { PageHeader } from '@/components/shared/page-header';
 import { StatCard, StatCardSkeleton, ChartSkeleton } from '@/components/shared/stat-card';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Building2, CreditCard, TrendingUp, IndianRupee } from 'lucide-react';
@@ -21,13 +22,32 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-const last7DaysData = mockSalesReportData.slice(-7).map((d) => ({
-  ...d,
-  date: new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-}));
+const periodOptions = [
+  { value: '7d', label: '7D' },
+  { value: '30d', label: '30D' },
+  { value: '90d', label: '90D' },
+] as const;
+
+type Period = (typeof periodOptions)[number]['value'];
+
+const periodSlice: Record<Period, number> = {
+  '7d': 7,
+  '30d': 30,
+  '90d': 90,
+};
 
 export default function SuperAdminDashboard() {
   const [loading, setLoading] = useState(true);
+  const [period, setPeriod] = useState<Period>('7d');
+
+  const chartData = useMemo(
+    () =>
+      mockSalesReportData.slice(-periodSlice[period]).map((d) => ({
+        ...d,
+        date: new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      })),
+    [period],
+  );
 
   useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 600);
@@ -128,12 +148,25 @@ export default function SuperAdminDashboard() {
 
         {/* Revenue Overview Chart */}
         <Card className="transition-shadow hover:shadow-md">
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
             <CardTitle>Revenue Overview</CardTitle>
+            <div className="ml-auto flex items-center gap-0.5 rounded-md border p-0.5">
+              {periodOptions.map((p) => (
+                <Button
+                  key={p.value}
+                  variant={period === p.value ? 'default' : 'outline'}
+                  size="sm"
+                  className="h-7 px-2.5 text-xs rounded-sm shadow-none"
+                  onClick={() => setPeriod(p.value)}
+                >
+                  {p.label}
+                </Button>
+              ))}
+            </div>
           </CardHeader>
           <CardContent>
             <ChartContainer config={chartConfig} className="h-[300px] w-full">
-              <AreaChart data={last7DaysData}>
+              <AreaChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis
                   dataKey="date"
