@@ -17,7 +17,9 @@ import {
 } from '@/components/ui/table';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
-import { TrendingUp, DollarSign, ShoppingCart, Calendar } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { TrendingUp, DollarSign, ShoppingCart, Calendar, Download } from 'lucide-react';
+import { toast } from 'sonner';
 import {
   mockSalesReportData,
   mockInventoryReportData,
@@ -52,6 +54,34 @@ export default function ReportsPage() {
     if (fromIdx < 0 || toIdx < 0 || fromIdx > toIdx) return [];
     return sorted.slice(fromIdx, toIdx + 1);
   }, [dateFrom, dateTo]);
+
+  const exportCSV = (headers: string[], rows: string[][], filename: string) => {
+    const csv = [headers, ...rows].map((r) => r.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename; a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`${filename} exported`);
+  };
+
+  const exportSalesCSV = () => {
+    const headers = ['Date', 'Sales (NPR)', 'Orders'];
+    const rows = filteredSalesData.map((d) => [d.date, String(d.sales), String(d.orders)]);
+    exportCSV(headers, rows, 'sales-report.csv');
+  };
+
+  const exportInventoryCSV = () => {
+    const headers = ['Category', 'Total Products', 'Total Value (NPR)', 'Low Stock'];
+    const rows = mockInventoryReportData.map((d) => [d.category, String(d.totalProducts), String(d.totalValue), String(d.lowStock)]);
+    exportCSV(headers, rows, 'inventory-report.csv');
+  };
+
+  const exportVATCSV = () => {
+    const headers = ['Month', 'Taxable Amount', 'VAT Collected', 'VAT Paid'];
+    const rows = mockVATReportData.map((d) => [d.month, String(d.taxableAmount), String(d.vatCollected), String(d.vatPaid)]);
+    exportCSV(headers, rows, 'vat-report.csv');
+  };
 
   // Sales Report calculations
   const salesData = filteredSalesData.map((d) => ({
@@ -101,6 +131,11 @@ export default function ReportsPage() {
 
         {/* Sales Report */}
         <TabsContent value="sales" className="space-y-6">
+          <div className="flex justify-end">
+            <Button variant="outline" size="sm" onClick={exportSalesCSV}>
+              <Download className="h-4 w-4" /> Export CSV
+            </Button>
+          </div>
           {/* Summary Stats */}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <StatCard title="Total Revenue" value={`NPR ${npr(totalRevenue)}`} icon={DollarSign} />
@@ -134,6 +169,11 @@ export default function ReportsPage() {
 
         {/* Inventory Report */}
         <TabsContent value="inventory" className="space-y-6">
+          <div className="flex justify-end">
+            <Button variant="outline" size="sm" onClick={exportInventoryCSV}>
+              <Download className="h-4 w-4" /> Export CSV
+            </Button>
+          </div>
           <Card>
             <CardHeader>
               <CardTitle>Inventory Value by Category</CardTitle>
@@ -187,6 +227,11 @@ export default function ReportsPage() {
 
         {/* VAT Report */}
         <TabsContent value="vat" className="space-y-6">
+          <div className="flex justify-end">
+            <Button variant="outline" size="sm" onClick={exportVATCSV}>
+              <Download className="h-4 w-4" /> Export CSV
+            </Button>
+          </div>
           <Card>
             <CardHeader>
               <CardTitle>VAT Collected vs VAT Paid</CardTitle>

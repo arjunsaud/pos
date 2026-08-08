@@ -41,6 +41,7 @@ function formatTimestamp(timestamp: string): string {
 export default function ActivityLogs() {
   const [typeFilter, setTypeFilter] = useState<LogType>('all');
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
 
   const filteredLogs = mockActivityLogs.filter((log) => {
     const matchesType = typeFilter === 'all' || log.type === typeFilter;
@@ -51,6 +52,10 @@ export default function ActivityLogs() {
       log.user.toLowerCase().includes(search.toLowerCase());
     return matchesType && matchesSearch;
   });
+
+  const ITEMS_PER_PAGE = 8;
+  const totalPages = Math.ceil(filteredLogs.length / ITEMS_PER_PAGE);
+  const paged = filteredLogs.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
 
   return (
     <div className="space-y-6">
@@ -101,14 +106,14 @@ export default function ActivityLogs() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredLogs.length === 0 ? (
+              {paged.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
                     No activity logs found.
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredLogs.map((log) => (
+                paged.map((log) => (
                   <TableRow key={log.id}>
                     <TableCell>
                       <span
@@ -131,6 +136,16 @@ export default function ActivityLogs() {
               )}
             </TableBody>
           </Table>
+          </div>
+          <div className="flex items-center justify-between pt-4 px-4">
+            <p className="text-sm text-muted-foreground">
+              Showing {filteredLogs.length > 0 ? ((page - 1) * ITEMS_PER_PAGE) + 1 : 0}-{Math.min(page * ITEMS_PER_PAGE, filteredLogs.length)} of {filteredLogs.length}
+            </p>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>Previous</Button>
+              <span className="text-sm font-medium">{page} / {totalPages || 1}</span>
+              <Button variant="outline" size="sm" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages}>Next</Button>
+            </div>
           </div>
         </CardContent>
       </Card>

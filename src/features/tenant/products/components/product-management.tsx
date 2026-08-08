@@ -41,7 +41,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Plus, Pencil, Trash2, AlertTriangle } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Plus, Pencil, Trash2, AlertTriangle, Download, X } from 'lucide-react';
 import { mockProducts, mockCategories } from '@/lib/mock-data';
 import { toast } from 'sonner';
 import type { Product } from '@/lib/types';
@@ -81,6 +82,8 @@ export default function ProductManagement() {
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState<ProductForm>(emptyForm);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const filtered = useMemo(() => {
     return products.filter((p) => {
@@ -91,6 +94,10 @@ export default function ProductManagement() {
       return matchesSearch && matchesCategory;
     });
   }, [products, search, categoryFilter]);
+
+  const ITEMS_PER_PAGE = 8;
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+  const paged = filtered.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
 
   const openAdd = () => {
     setEditId(null);
@@ -166,6 +173,55 @@ export default function ProductManagement() {
     setDeleteId(null);
   };
 
+  const allPageIds = paged.map((p) => p.id);
+  const allPageSelected = allPageIds.length > 0 && allPageIds.every((id) => selectedIds.includes(id));
+
+  const toggleSelectAll = () => {
+    if (allPageSelected) {
+      setSelectedIds((prev) => prev.filter((id) => !allPageIds.includes(id)));
+    } else {
+      setSelectedIds((prev) => [...new Set([...prev, ...allPageIds])]);
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+    );
+  };
+
+  const handleBulkDelete = () => {
+    setProducts((prev) => prev.filter((p) => !selectedIds.includes(p.id)));
+    toast.success(`${selectedIds.length} product(s) deleted successfully`);
+    setSelectedIds([]);
+  };
+
+  const handleExportSelected = () => {
+    const selectedProducts = products.filter((p) => selectedIds.includes(p.id));
+    const headers = ['Name', 'SKU', 'Price', 'Cost Price', 'Category', 'Stock', 'Unit', 'Active'];
+    const rows = selectedProducts.map((p) => [
+      p.name,
+      p.sku,
+      String(p.price),
+      String(p.costPrice),
+      p.category,
+      String(p.stock),
+      p.unit,
+      p.isActive ? 'Yes' : 'No',
+    ]);
+    const csv = [headers, ...rows].map((r) => r.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'selected-products.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success('selected-products.csv exported');
+  };
+
+  const clearSelection = () => setSelectedIds([]);
+
   const toggleActive = (id: string) => {
     setProducts((prev) =>
       prev.map((p) => (p.id === id ? { ...p, isActive: !p.isActive } : p))
@@ -179,6 +235,28 @@ export default function ProductManagement() {
           <Plus className="h-4 w-4" /> Add Product
         </Button>
       </PageHeader>
+
+      {/* Bulk Action Bar */}
+      {selectedIds.length > 0 && (
+        <div className="flex items-center gap-3 rounded-lg border bg-muted/50 p-3">
+          <Badge variant="secondary" className="font-semibold">
+            {selectedIds.length} selected
+          </Badge>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => setDeleteId('bulk')}
+          >
+            <Trash2 className="h-4 w-4" /> Delete Selected
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleExportSelected}>
+            <Download className="h-4 w-4" /> Export Selected
+          </Button>
+          <Button variant="ghost" size="sm" className="ml-auto" onClick={clearSelection}>
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
 
       {/* Filters */}
       <Card>
@@ -217,6 +295,13 @@ export default function ProductManagement() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-12">
+                  <Checkbox
+                    checked={allPageSelected}
+                    onCheckedChange={toggleSelectAll}
+                    aria-label="Select all on this page"
+                  />
+                </TableHead>
                 <TableHead>Product Name</TableHead>
                 <TableHead>SKU</TableHead>
                 <TableHead className="text-right">Price</TableHead>
@@ -229,11 +314,18 @@ export default function ProductManagement() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((product) => {
+              {paged.map((product) => {
                 const isLow = product.stock > 0 && product.stock <= product.minStock;
                 const isOut = product.stock <= 0;
                 return (
-                  <TableRow key={product.id}>
+                  <TableRow key={product.id} data-state={selectedIds.includes(product.id) ? 'selected' : undefined}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedIds.includes(product.id)}
+                        onCheckedChange={() => toggleSelect(product.id)}
+                        aria-label={`Select ${product.name}`}
+                      />
+                    </TableCell>
                     <TableCell className="font-medium">{product.name}</TableCell>
                     <TableCell className="text-muted-foreground">{product.sku}</TableCell>
                     <TableCell className="text-right">NPR {npr(product.price)}</TableCell>
@@ -285,6 +377,16 @@ export default function ProductManagement() {
               })}
             </TableBody>
           </Table>
+          </div>
+          <div className="flex items-center justify-between pt-4 px-4">
+            <p className="text-sm text-muted-foreground">
+              Showing {filtered.length > 0 ? ((page - 1) * ITEMS_PER_PAGE) + 1 : 0}-{Math.min(page * ITEMS_PER_PAGE, filtered.length)} of {filtered.length}
+            </p>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>Previous</Button>
+              <span className="text-sm font-medium">{page} / {totalPages || 1}</span>
+              <Button variant="outline" size="sm" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages}>Next</Button>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -362,15 +464,22 @@ export default function ProductManagement() {
       <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Product</AlertDialogTitle>
+            <AlertDialogTitle>
+              {deleteId === 'bulk' ? `Delete ${selectedIds.length} Product(s)` : 'Delete Product'}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this product? This action cannot be undone.
+              {deleteId === 'bulk'
+                ? `Are you sure you want to delete ${selectedIds.length} selected product(s)? This action cannot be undone.`
+                : 'Are you sure you want to delete this product? This action cannot be undone.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
-              Delete
+            <AlertDialogAction
+              onClick={deleteId === 'bulk' ? handleBulkDelete : handleDelete}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {deleteId === 'bulk' ? 'Delete All' : 'Delete'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

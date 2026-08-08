@@ -42,6 +42,7 @@ const fmtDate = (d: string) => new Date(d).toLocaleDateString('en-GB');
 
 export default function BillingPage() {
   const [sales, setSales] = useState<Sale[]>(mockSales);
+  const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
@@ -140,6 +141,10 @@ export default function BillingPage() {
     });
   }, [sales, search, dateFrom, dateTo, statusFilter]);
 
+  const ITEMS_PER_PAGE = 5;
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+  const paged = filtered.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
+
   return (
     <div className="space-y-6">
       <PageHeader title="Billing & Invoices">
@@ -207,7 +212,7 @@ export default function BillingPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((sale) => (
+              {paged.map((sale) => (
                 <TableRow key={sale.id}>
                   <TableCell className="font-medium">{sale.invoiceNumber}</TableCell>
                   <TableCell>{fmtDate(sale.date)}</TableCell>
@@ -232,6 +237,16 @@ export default function BillingPage() {
               ))}
             </TableBody>
           </Table>
+          </div>
+          <div className="flex items-center justify-between pt-4 px-4">
+            <p className="text-sm text-muted-foreground">
+              Showing {filtered.length > 0 ? ((page - 1) * ITEMS_PER_PAGE) + 1 : 0}-{Math.min(page * ITEMS_PER_PAGE, filtered.length)} of {filtered.length}
+            </p>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>Previous</Button>
+              <span className="text-sm font-medium">{page} / {totalPages || 1}</span>
+              <Button variant="outline" size="sm" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages}>Next</Button>
+            </div>
           </div>
         </CardContent>
       </Card>

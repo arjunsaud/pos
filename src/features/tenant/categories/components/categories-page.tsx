@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { PageHeader } from '@/components/shared/page-header';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -25,7 +25,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Plus, Pencil, Trash2, Package } from 'lucide-react';
+import { Plus, Pencil, Trash2, Package, Search } from 'lucide-react';
 import { mockCategories } from '@/lib/mock-data';
 import { toast } from 'sonner';
 import type { Category } from '@/lib/types';
@@ -38,6 +38,13 @@ export default function CategoriesPage() {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+
+  const filteredCategories = useMemo(() => {
+    if (!search.trim()) return categories;
+    const q = search.toLowerCase();
+    return categories.filter(c => c.name.toLowerCase().includes(q));
+  }, [categories, search]);
 
   const openAdd = () => {
     setEditId(null);
@@ -96,8 +103,19 @@ export default function CategoriesPage() {
         </Button>
       </PageHeader>
 
+      {/* Search */}
+      <div className="relative max-w-sm">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          placeholder="Search categories..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="pl-9"
+        />
+      </div>
+
       {/* Grid */}
-      {categories.length === 0 ? (
+      {filteredCategories.length === 0 ? (
         <EmptyState
           icon={Package}
           title="No categories yet"
@@ -106,7 +124,7 @@ export default function CategoriesPage() {
         />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {categories.map((cat) => (
+          {filteredCategories.map((cat) => (
             <Card key={cat.id} className="relative">
               <CardContent className="p-4">
                 <div className="flex items-start justify-between">

@@ -27,6 +27,7 @@ export default function InventoryPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [adjustOpen, setAdjustOpen] = useState(false);
   const [adjustForm, setAdjustForm] = useState({ productId: '', type: 'in' as 'in' | 'out', quantity: '', reason: '' });
+  const [page, setPage] = useState(1);
 
   const totalProducts = mockProducts.length;
   const totalStockValue = mockProducts.reduce((sum, p) => sum + p.stock * p.costPrice, 0);
@@ -40,6 +41,10 @@ export default function InventoryPage() {
         item.productName.toLowerCase().includes(q) || item.sku.toLowerCase().includes(q)
     );
   }, [searchQuery]);
+
+  const ITEMS_PER_PAGE = 10;
+  const totalPages = Math.ceil(filteredInventory.length / ITEMS_PER_PAGE);
+  const pagedInventory = filteredInventory.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
 
   const handleStockAdjust = () => {
     if (!adjustForm.productId || !adjustForm.quantity || Number(adjustForm.quantity) <= 0) {
@@ -97,7 +102,7 @@ export default function InventoryPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredInventory.map((item) => (
+                    {pagedInventory.map((item) => (
                       <TableRow key={item.id}>
                         <TableCell className="font-medium">{item.productName}</TableCell>
                         <TableCell className="text-muted-foreground text-xs font-mono">{item.sku}</TableCell>
@@ -119,6 +124,16 @@ export default function InventoryPage() {
                     ))}
                   </TableBody>
                 </Table>
+              </div>
+              <div className="flex items-center justify-between pt-4 px-4">
+                <p className="text-sm text-muted-foreground">
+                  Showing {filteredInventory.length > 0 ? ((page - 1) * ITEMS_PER_PAGE) + 1 : 0}-{Math.min(page * ITEMS_PER_PAGE, filteredInventory.length)} of {filteredInventory.length}
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>Previous</Button>
+                  <span className="text-sm font-medium">{page} / {totalPages || 1}</span>
+                  <Button variant="outline" size="sm" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages}>Next</Button>
+                </div>
               </div>
             </CardContent>
           </Card>

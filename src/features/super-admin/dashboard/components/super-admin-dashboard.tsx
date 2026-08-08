@@ -8,32 +8,9 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/
 import { Building2, CreditCard, TrendingUp, IndianRupee } from 'lucide-react';
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { mockSuperAdminStats, mockSalesReportData } from '@/lib/mock-data';
+import { formatRelativeTime, getLogDotColor, npr } from '@/lib/helpers';
 import type { ActivityLog } from '@/lib/types';
 import type { ChartConfig } from '@/components/ui/chart';
-import { cn } from '@/lib/utils';
-
-const nprFormatter = new Intl.NumberFormat('en-NP');
-
-function formatRelativeTime(timestamp: string): string {
-  const now = new Date();
-  const time = new Date(timestamp);
-  const diffMs = now.getTime() - time.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMins / 60);
-  const diffDays = Math.floor(diffHours / 24);
-
-  if (diffMins < 1) return 'Just now';
-  if (diffMins < 60) return `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`;
-  if (diffHours < 24) return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
-  return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
-}
-
-const dotColorMap: Record<string, string> = {
-  success: 'bg-emerald-500',
-  info: 'bg-blue-500',
-  warning: 'bg-amber-500',
-  error: 'bg-red-500',
-};
 
 const chartConfig = {
   sales: {
@@ -65,18 +42,25 @@ export default function SuperAdminDashboard() {
           value={mockSuperAdminStats.activeSubscriptions}
           icon={CreditCard}
           description="Currently active"
+          iconClassName="bg-emerald-100 dark:bg-emerald-900/30"
+          iconColor="text-emerald-600 dark:text-emerald-400"
         />
         <StatCard
           title="Total Revenue"
-          value={`NPR ${nprFormatter.format(mockSuperAdminStats.totalRevenue)}`}
+          value={`NPR ${npr(mockSuperAdminStats.totalRevenue)}`}
           icon={IndianRupee}
           description="Monthly recurring"
+          iconClassName="bg-amber-100 dark:bg-amber-900/30"
+          iconColor="text-amber-600 dark:text-amber-400"
+          className="border-l-4 border-l-amber-500"
         />
         <StatCard
           title="Revenue Growth"
           value={`${mockSuperAdminStats.revenueGrowth}%`}
           icon={TrendingUp}
           description="Compared to last month"
+          iconClassName="bg-blue-100 dark:bg-blue-900/30"
+          iconColor="text-blue-600 dark:text-blue-400"
         />
       </div>
 
@@ -95,7 +79,7 @@ export default function SuperAdminDashboard() {
                       <span
                         className={cn(
                           'inline-block h-2.5 w-2.5 rounded-full',
-                          dotColorMap[activity.type]
+                          getLogDotColor(activity.type)
                         )}
                       />
                     </div>

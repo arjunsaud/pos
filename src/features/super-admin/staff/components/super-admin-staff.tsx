@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { PageHeader } from '@/components/shared/page-header';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -33,7 +33,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Plus, Pencil, Power } from 'lucide-react';
+import { Plus, Pencil, Power, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { mockSuperAdminStaff } from '@/lib/mock-data';
 import type { StaffMember, SuperAdminStaffRole } from '@/lib/types';
@@ -68,6 +68,16 @@ export default function SuperAdminStaff() {
   const [addOpen, setAddOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [editingStaff, setEditingStaff] = useState<StaffMember | null>(null);
+
+  const [search, setSearch] = useState('');
+
+  const filteredStaff = useMemo(() => {
+    if (!search.trim()) return staff;
+    const q = search.toLowerCase();
+    return staff.filter(
+      (m) => m.name.toLowerCase().includes(q) || m.email.toLowerCase().includes(q)
+    );
+  }, [staff, search]);
 
   // Form state
   const [formName, setFormName] = useState('');
@@ -229,6 +239,15 @@ export default function SuperAdminStaff() {
   return (
     <div className="space-y-6">
       <PageHeader title="Staff Management">
+        <div className="relative w-48">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Search name or email..."
+            className="pl-9 h-9"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
         <Dialog open={addOpen} onOpenChange={(open) => { setAddOpen(open); if (!open) resetForm(); }}>
           <DialogTrigger asChild>
             <Button>
@@ -271,7 +290,7 @@ export default function SuperAdminStaff() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {staff.map((member) => (
+              {filteredStaff.map((member) => (
                 <TableRow key={member.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">

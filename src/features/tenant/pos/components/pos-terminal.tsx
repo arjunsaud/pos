@@ -10,7 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
-import { Search, Plus, Minus, X, ShoppingCart, Banknote, CreditCard, Smartphone, Wallet, Receipt, Barcode, Trash2 } from 'lucide-react';
+import { Search, Plus, Minus, X, ShoppingCart, Banknote, CreditCard, Smartphone, Wallet, Receipt, Barcode, Trash2, TrendingUp, Clock, Package } from 'lucide-react';
 import { mockProducts, mockCategories } from '@/lib/mock-data';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/shared/page-header';
@@ -140,6 +140,37 @@ export default function POSTerminal() {
           {cart.length} items · NPR {npr(total)}
         </Badge>
       </PageHeader>
+
+      {/* Quick Stats Bar */}
+      <div className="grid grid-cols-3 gap-3">
+        <div className="flex items-center gap-2.5 rounded-xl border bg-card p-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
+            <TrendingUp className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[11px] text-muted-foreground">Today&apos;s Sales</p>
+            <p className="text-sm font-bold">NPR {npr(35200)}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2.5 rounded-xl border bg-card p-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30">
+            <ShoppingCart className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[11px] text-muted-foreground">Items Sold</p>
+            <p className="text-sm font-bold">47</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2.5 rounded-xl border bg-card p-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-purple-100 dark:bg-purple-900/30">
+            <Clock className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[11px] text-muted-foreground">Avg. Order</p>
+            <p className="text-sm font-bold">NPR {npr(749)}</p>
+          </div>
+        </div>
+      </div>
 
       <div className="flex flex-col gap-4 lg:flex-row lg:gap-6">
         {/* Left: Products */}
