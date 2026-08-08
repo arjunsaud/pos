@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { Check, Crown } from 'lucide-react';
-import { mockPlans, mockTenantStats } from '@/lib/mock-data';
+import { mockPlans, mockTenantStats, mockProducts, mockTenantStaff } from '@/lib/mock-data';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -16,7 +16,9 @@ const npr = (n: number) => new Intl.NumberFormat('en-NP').format(n);
 export default function TenantSubscriptionPage() {
   const currentPlanName = 'pro';
   const currentPlan = mockPlans.find((p) => p.name === currentPlanName)!;
-  const renewalDate = '2024-07-15';
+  const now = new Date();
+  now.setMonth(now.getMonth() + 1);
+  const renewalDate = now.toISOString().slice(0, 10);
 
   return (
     <div className='space-y-6'>
@@ -133,16 +135,16 @@ export default function TenantSubscriptionPage() {
           <div className='space-y-2'>
             <div className='flex items-center justify-between text-sm'>
               <span className='font-medium'>Products</span>
-              <span className='text-muted-foreground'>245 / 500</span>
+              <span className='text-muted-foreground'>{mockProducts.length} / 500</span>
             </div>
-            <Progress value={(245 / 500) * 100} />
+            <Progress value={(mockProducts.length / 500) * 100} />
           </div>
           <div className='space-y-2'>
             <div className='flex items-center justify-between text-sm'>
               <span className='font-medium'>Staff</span>
-              <span className='text-muted-foreground'>3 / 5</span>
+              <span className='text-muted-foreground'>{mockTenantStaff.length} / 5</span>
             </div>
-            <Progress value={(3 / 5) * 100} />
+            <Progress value={(mockTenantStaff.length / 5) * 100} />
           </div>
         </CardContent>
       </Card>

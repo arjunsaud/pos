@@ -7,39 +7,45 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { Search, Plus, Minus, X, ShoppingCart, Banknote, CreditCard, Smartphone, Wallet } from 'lucide-react';
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle,
+} from '@/components/ui/dialog';
+import { Search, Plus, Minus, X, ShoppingCart, Banknote, CreditCard, Smartphone, Wallet, Receipt, Barcode, Trash2 } from 'lucide-react';
 import { mockProducts, mockCategories } from '@/lib/mock-data';
 import { toast } from 'sonner';
+import { PageHeader } from '@/components/shared/page-header';
 import type { CartItem, Product } from '@/lib/types';
 import { cn } from '@/lib/utils';
-
-const npr = (n: number) => new Intl.NumberFormat('en-NP').format(n);
+import { formatDateTime, npr } from '@/lib/helpers';
 
 const PAYMENT_METHODS = [
-  { id: 'cash', label: 'Cash', icon: Banknote },
-  { id: 'card', label: 'Card', icon: CreditCard },
-  { id: 'esewa', label: 'eSewa', icon: Smartphone },
-  { id: 'khalti', label: 'Khalti', icon: Wallet },
+  { id: 'cash', label: 'Cash', icon: Banknote, color: 'text-emerald-600 dark:text-emerald-400' },
+  { id: 'card', label: 'Card', icon: CreditCard, color: 'text-blue-600 dark:text-blue-400' },
+  { id: 'esewa', label: 'eSewa', icon: Smartphone, color: 'text-green-600 dark:text-green-400' },
+  { id: 'khalti', label: 'Khalti', icon: Wallet, color: 'text-purple-600 dark:text-purple-400' },
 ] as const;
 
 type PaymentMethodId = (typeof PAYMENT_METHODS)[number]['id'];
 
 export default function POSTerminal() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [barcodeInput, setBarcodeInput] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [cart, setCart] = useState<CartItem[]>([]);
   const [discount, setDiscount] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethodId>('cash');
-
-  const activeProducts = mockProducts.filter((p) => p.isActive);
+  const [receiptOpen, setReceiptOpen] = useState(false);
+  const [lastSale, setLastSale] = useState<{ items: CartItem[]; subtotal: number; discount: number; vat: number; total: number; method: string; time: string } | null>(null);
 
   const filteredProducts = useMemo(() => {
-    return activeProducts.filter((p) => {
-      const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
+    return mockProducts.filter((p) => {
+      if (!p.isActive) return false;
+      const q = searchQuery.toLowerCase();
+      const matchesSearch = !q || p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q);
       const matchesCategory = selectedCategory === 'All' || p.category === selectedCategory;
       return matchesSearch && matchesCategory;
     });
-  }, [activeProducts, searchQuery, selectedCategory]);
+  }, [searchQuery, selectedCategory]);
 
   const categories = ['All', ...mockCategories.map((c) => c.name)];
 
@@ -89,228 +95,349 @@ export default function POSTerminal() {
   const vat = taxableAmount * 0.13;
   const total = taxableAmount + vat;
 
+  const handleBarcodeScan = () => {
+    if (!barcodeInput.trim()) return;
+    const product = mockProducts.find(p => p.sku.toLowerCase() === barcodeInput.trim().toLowerCase());
+    if (product) {
+      addToCart(product);
+      toast.success(`Added ${product.name} to cart`);
+    } else {
+      toast.error(`Product not found: ${barcodeInput}`);
+    }
+    setBarcodeInput('');
+  };
+
   const handleCompleteSale = () => {
     if (cart.length === 0) {
       toast.error('Cart is empty');
       return;
     }
-    toast.success(`Sale completed! NPR ${npr(total)} via ${PAYMENT_METHODS.find((m) => m.id === paymentMethod)?.label}`);
+    const method = PAYMENT_METHODS.find((m) => m.id === paymentMethod);
+    const saleData = {
+      items: [...cart],
+      subtotal,
+      discount: discountAmount,
+      vat: Math.round(vat * 100) / 100,
+      total: Math.round(total * 100) / 100,
+      method: method?.label || 'Cash',
+      time: new Date().toISOString(),
+    };
+    setLastSale(saleData);
+    setReceiptOpen(true);
+    toast.success(`Sale completed! NPR ${npr(saleData.total)} via ${saleData.method}`);
     setCart([]);
     setDiscount(0);
   };
 
   return (
-    <div className="flex flex-col gap-4 lg:flex-row lg:gap-6">
-      {/* Left Side: Products */}
-      <div className="flex-1 space-y-4">
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search products..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9"
-          />
+    <div className="space-y-4">
+      <PageHeader
+        title="POS Terminal"
+        description="Process sales and accept payments"
+      >
+        <Badge variant="outline" className="hidden sm:flex gap-1.5">
+          <ShoppingCart className="h-3 w-3" />
+          {cart.length} items · NPR {npr(total)}
+        </Badge>
+      </PageHeader>
+
+      <div className="flex flex-col gap-4 lg:flex-row lg:gap-6">
+        {/* Left: Products */}
+        <div className="flex-1 space-y-4">
+          {/* Search + Barcode */}
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search products..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <div className="relative w-44 hidden sm:block">
+              <Barcode className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Scan barcode/PLU"
+                value={barcodeInput}
+                onChange={(e) => setBarcodeInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleBarcodeScan()}
+                className="pl-9"
+              />
+            </div>
+          </div>
+
+          {/* Category Pills */}
+          <ScrollArea className="w-full">
+            <div className="flex gap-2 pb-1">
+              {categories.map((cat) => (
+                <Button
+                  key={cat}
+                  variant={selectedCategory === cat ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setSelectedCategory(cat)}
+                  className="shrink-0"
+                >
+                  {cat}
+                </Button>
+              ))}
+            </div>
+          </ScrollArea>
+
+          {/* Product Grid */}
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-3">
+            {filteredProducts.map((product) => {
+              const isOutOfStock = product.stock <= 0;
+              const isLowStock = product.stock > 0 && product.stock <= product.minStock;
+              return (
+                <Card
+                  key={product.id}
+                  className={cn(
+                    'cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5',
+                    isOutOfStock && 'cursor-not-allowed opacity-50',
+                    isLowStock && !isOutOfStock && 'border-amber-400 dark:border-amber-600'
+                  )}
+                  onClick={() => !isOutOfStock && addToCart(product)}
+                >
+                  <CardContent className="p-3">
+                    <div className="space-y-2">
+                      <div className="flex items-start justify-between gap-1">
+                        <div className="text-sm font-medium leading-tight min-w-0">
+                          {product.name}
+                        </div>
+                        {isLowStock && !isOutOfStock && (
+                          <Badge variant="secondary" className="shrink-0 bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 text-[10px] px-1.5">
+                            Low
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="text-lg font-bold">NPR {npr(product.price)}</div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-muted-foreground">Stock: {product.stock}</span>
+                        {!isOutOfStock ? (
+                          <Button size="sm" className="h-7 text-xs gap-1">
+                            <Plus className="h-3 w-3" /> Add
+                          </Button>
+                        ) : (
+                          <Badge variant="destructive" className="text-[10px]">Out</Badge>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
         </div>
 
-        {/* Category Pills */}
-        <ScrollArea className="w-full">
-          <div className="flex gap-2 pb-1">
-            {categories.map((cat) => (
-              <Button
-                key={cat}
-                variant={selectedCategory === cat ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setSelectedCategory(cat)}
-                className="shrink-0"
-              >
-                {cat}
-              </Button>
-            ))}
-          </div>
-        </ScrollArea>
-
-        {/* Product Grid */}
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {filteredProducts.map((product) => {
-            const isOutOfStock = product.stock <= 0;
-            const isLowStock = product.stock > 0 && product.stock <= product.minStock;
-            return (
-              <Card
-                key={product.id}
-                className={cn(
-                  'cursor-pointer transition-all hover:shadow-md',
-                  isOutOfStock && 'cursor-not-allowed opacity-50',
-                  isLowStock && 'border-amber-400'
-                )}
-                onClick={() => !isOutOfStock && addToCart(product)}
-              >
-                <CardContent className="p-3">
-                  <div className="space-y-2">
-                    <div className="text-sm font-medium leading-tight">{product.name}</div>
-                    <div className="text-base font-bold">NPR {npr(product.price)}</div>
-                    <div className="text-xs text-muted-foreground">
-                      Stock: {product.stock} {product.unit}
-                    </div>
-                    {isOutOfStock && (
-                      <Badge variant="destructive" className="text-xs">Out of Stock</Badge>
-                    )}
-                    {isLowStock && (
-                      <Badge className="bg-amber-100 text-amber-700" variant="secondary">
-                        Low Stock
-                      </Badge>
-                    )}
-                    {!isOutOfStock && (
-                      <Button size="sm" className="h-8 w-full text-xs">
-                        <Plus className="h-3 w-3" /> Add
-                      </Button>
-                    )}
+        {/* Right: Cart */}
+        <div className="w-full lg:w-[400px]">
+          <Card className="sticky top-20">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <ShoppingCart className="h-5 w-5" />
+                  Cart
+                </CardTitle>
+                {cart.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary">{cart.reduce((s, i) => s + i.quantity, 0)} items</Badge>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => { setCart([]); setDiscount(0); }}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
                   </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+                )}
+              </div>
+            </CardHeader>
+
+            <CardContent className="space-y-4">
+              {/* Cart Items - MERGED single list */}
+              <ScrollArea className="max-h-72">
+                {cart.length === 0 ? (
+                  <div className="flex h-32 flex-col items-center justify-center gap-2 text-sm text-muted-foreground">
+                    <ShoppingCart className="h-8 w-8 opacity-30" />
+                    Cart is empty
+                  </div>
+                ) : (
+                  <div className="space-y-2 pr-3">
+                    {cart.map((item) => (
+                      <div key={item.product.id} className="flex items-center gap-2 rounded-lg bg-muted/50 p-2">
+                        <div className="min-w-0 flex-1">
+                          <div className="text-sm font-medium leading-tight truncate">{item.product.name}</div>
+                          <div className="text-xs text-muted-foreground">NPR {npr(item.product.price)} each</div>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={() => updateQuantity(item.product.id, -1)}
+                          >
+                            <Minus className="h-3 w-3" />
+                          </Button>
+                          <span className="w-7 text-center text-sm font-medium">{item.quantity}</span>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={() => updateQuantity(item.product.id, 1)}
+                          >
+                            <Plus className="h-3 w-3" />
+                          </Button>
+                        </div>
+                        <div className="w-20 text-right text-sm font-semibold shrink-0">
+                          NPR {npr(item.product.price * item.quantity)}
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 shrink-0 text-muted-foreground hover:text-destructive"
+                          onClick={() => removeFromCart(item.product.id)}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </ScrollArea>
+
+              {/* Totals */}
+              {cart.length > 0 && (
+                <>
+                  <Separator />
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Subtotal</span>
+                      <span>NPR {npr(subtotal)}</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-muted-foreground">Discount</span>
+                      <Input
+                        type="number"
+                        min={0}
+                        value={discount || ''}
+                        onChange={(e) => setDiscount(Math.max(0, Number(e.target.value)))}
+                        placeholder="0"
+                        className="h-8 w-28 text-right"
+                      />
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">VAT (13%)</span>
+                      <span>NPR {npr(Math.round(vat * 100) / 100)}</span>
+                    </div>
+                    <Separator />
+                    <div className="flex justify-between text-lg font-bold">
+                      <span>Total</span>
+                      <span>NPR {npr(Math.round(total * 100) / 100)}</span>
+                    </div>
+                  </div>
+
+                  {/* Payment Methods */}
+                  <div className="space-y-2">
+                    <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Payment Method</div>
+                    <div className="grid grid-cols-2 gap-2">
+                      {PAYMENT_METHODS.map((method) => {
+                        const Icon = method.icon;
+                        return (
+                          <Button
+                            key={method.id}
+                            variant={paymentMethod === method.id ? 'default' : 'outline'}
+                            className={cn('h-10 justify-start gap-2',
+                              paymentMethod === method.id && 'shadow-sm'
+                            )}
+                            onClick={() => setPaymentMethod(method.id)}
+                          >
+                            <Icon className="h-4 w-4" />
+                            {method.label}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Complete Sale */}
+                  <Button className="h-12 w-full text-base font-semibold gap-2" onClick={handleCompleteSale}>
+                    <Receipt className="h-5 w-5" />
+                    Complete Sale
+                  </Button>
+                </>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
 
-      {/* Right Side: Cart */}
-      <div className="w-full lg:w-[380px]">
-        <Card className="sticky top-4">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
-                <ShoppingCart className="h-5 w-5" />
-                Cart
-              </CardTitle>
-              {cart.length > 0 && (
-                <Badge variant="secondary">{cart.length} items</Badge>
-              )}
-            </div>
-          </CardHeader>
-
-          <CardContent className="space-y-4">
-            {/* Cart Items */}
-            <ScrollArea className="max-h-64">
-              {cart.length === 0 ? (
-                <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">
-                  Cart is empty
+      {/* Receipt Dialog */}
+      <Dialog open={receiptOpen} onOpenChange={setReceiptOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Receipt className="h-5 w-5" />
+              Sale Receipt
+            </DialogTitle>
+          </DialogHeader>
+          {lastSale && (
+            <div className="space-y-4">
+              <div className="rounded-lg border bg-muted/30 p-4 space-y-3 text-sm">
+                <div className="text-center space-y-1">
+                  <p className="font-bold text-base">ABC Store</p>
+                  <p className="text-xs text-muted-foreground">Kathmandu, Nepal · PAN: 309876543</p>
+                  <p className="text-xs text-muted-foreground">Tel: +977-9801234567</p>
                 </div>
-              ) : (
-                <div className="space-y-3">
-                  {cart.map((item) => (
-                    <div key={item.product.id} className="flex items-start gap-2">
-                      <div className="min-w-0 flex-1">
-                        <div className="text-sm font-medium leading-tight">{item.product.name}</div>
-                        <div className="text-xs text-muted-foreground">
-                          NPR {npr(item.product.price)} each
-                        </div>
+                <Separator />
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>{formatDateTime(lastSale.time)}</span>
+                  <span>{lastSale.method}</span>
+                </div>
+                <Separator />
+                {/* Items */}
+                <div className="space-y-1.5">
+                  {lastSale.items.map((item, i) => (
+                    <div key={i} className="flex justify-between text-sm">
+                      <div className="flex-1 min-w-0">
+                        <span className="truncate block">{item.product.name}</span>
+                        <span className="text-xs text-muted-foreground">{item.quantity} × NPR {npr(item.product.price)}</span>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 shrink-0"
-                        onClick={() => removeFromCart(item.product.id)}
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
+                      <span className="font-medium shrink-0 ml-2">NPR {npr(item.product.price * item.quantity)}</span>
                     </div>
                   ))}
                 </div>
-              )}
-            </ScrollArea>
-
-            {/* Quantity Controls per item */}
-            {cart.length > 0 && (
-              <div className="space-y-2">
                 <Separator />
-                {cart.map((item) => (
-                  <div key={item.product.id} className="flex items-center justify-between text-sm">
-                    <span className="flex-1 truncate pr-2">{item.product.name}</span>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-7 w-7"
-                        onClick={() => updateQuantity(item.product.id, -1)}
-                      >
-                        <Minus className="h-3 w-3" />
-                      </Button>
-                      <span className="w-8 text-center font-medium">{item.quantity}</span>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-7 w-7"
-                        onClick={() => updateQuantity(item.product.id, 1)}
-                      >
-                        <Plus className="h-3 w-3" />
-                      </Button>
-                      <span className="w-20 text-right font-medium">
-                        NPR {npr(item.product.price * item.quantity)}
-                      </span>
-                    </div>
+                {/* Totals */}
+                <div className="space-y-1.5 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Subtotal</span>
+                    <span>NPR {npr(lastSale.subtotal)}</span>
                   </div>
-                ))}
+                  {lastSale.discount > 0 && (
+                    <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
+                      <span>Discount</span>
+                      <span>- NPR {npr(lastSale.discount)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">VAT (13%)</span>
+                    <span>NPR {npr(lastSale.vat)}</span>
+                  </div>
+                  <Separator />
+                  <div className="flex justify-between text-base font-bold">
+                    <span>Total</span>
+                    <span>NPR {npr(lastSale.total)}</span>
+                  </div>
+                </div>
                 <Separator />
+                <div className="text-center text-xs text-muted-foreground pt-1">
+                  Thank you for shopping with us!
+                </div>
               </div>
-            )}
-
-            {/* Totals */}
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Subtotal</span>
-                <span>NPR {npr(subtotal)}</span>
-              </div>
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-muted-foreground">Discount</span>
-                <Input
-                  type="number"
-                  min={0}
-                  value={discount || ''}
-                  onChange={(e) => setDiscount(Math.max(0, Number(e.target.value)))}
-                  placeholder="0"
-                  className="h-8 w-24 text-right"
-                />
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">VAT (13%)</span>
-                <span>NPR {npr(Math.round(vat * 100) / 100)}</span>
-              </div>
-              <Separator />
-              <div className="flex justify-between text-base font-bold">
-                <span>Total</span>
-                <span>NPR {npr(Math.round(total * 100) / 100)}</span>
-              </div>
+              <Button className="w-full" variant="outline" onClick={() => setReceiptOpen(false)}>
+                Close Receipt
+              </Button>
             </div>
-
-            {/* Payment Methods */}
-            <div className="space-y-2">
-              <div className="text-sm font-medium">Payment Method</div>
-              <div className="grid grid-cols-2 gap-2">
-                {PAYMENT_METHODS.map((method) => {
-                  const Icon = method.icon;
-                  return (
-                    <Button
-                      key={method.id}
-                      variant={paymentMethod === method.id ? 'default' : 'outline'}
-                      className="h-10 justify-start gap-2"
-                      onClick={() => setPaymentMethod(method.id)}
-                    >
-                      <Icon className="h-4 w-4" />
-                      {method.label}
-                    </Button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Complete Sale */}
-            <Button className="h-12 w-full text-base font-semibold" onClick={handleCompleteSale}>
-              Complete Sale
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

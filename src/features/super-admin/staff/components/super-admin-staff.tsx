@@ -257,6 +257,7 @@ export default function SuperAdminStaff() {
       {/* Staff Table */}
       <Card>
         <CardContent className="p-0">
+          <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -322,6 +323,7 @@ export default function SuperAdminStaff() {
               ))}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
 

@@ -162,6 +162,7 @@ export default function SubscriptionManagement() {
           <CardTitle>Tenant Subscriptions</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
+          <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -209,6 +210,7 @@ export default function SubscriptionManagement() {
               ))}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
 

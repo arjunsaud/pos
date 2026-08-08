@@ -2,9 +2,10 @@
 
 import { useAuthStore, useNavStore } from '@/features/auth/store';
 import { LoginPage } from '@/components/layout/login-page';
-import { AppSidebar, MobileBottomNav } from '@/components/layout/app-sidebar';
+import { AppSidebar, MobileBottomNav, MobileSidebarTrigger } from '@/components/layout/app-sidebar';
 import { AppNavbar } from '@/components/layout/app-navbar';
 import { AnimatePresence, motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
 
 // Super Admin pages
 import SuperAdminDashboard from '@/features/super-admin/dashboard/components/super-admin-dashboard';
@@ -63,10 +64,8 @@ export default function HomePage() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar - hidden on mobile for staff, shown on md+ for all roles */}
         <AppSidebar />
 
-        {/* Main content area */}
         <div className="flex flex-1 flex-col overflow-hidden">
           <AppNavbar />
 
@@ -89,12 +88,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Mobile bottom nav for staff */}
       {isStaff && <MobileBottomNav />}
     </div>
   );
-}
-
-function cn(...classes: (string | undefined | false)[]) {
-  return classes.filter(Boolean).join(' ');
 }

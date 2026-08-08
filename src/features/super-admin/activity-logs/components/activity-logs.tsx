@@ -29,7 +29,7 @@ const dotColorMap: Record<string, string> = {
 
 function formatTimestamp(timestamp: string): string {
   const date = new Date(timestamp);
-  return date.toLocaleDateString('en-US', {
+  return date.toLocaleString('en-US', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
@@ -89,6 +89,7 @@ export default function ActivityLogs() {
       {/* Logs Table */}
       <Card>
         <CardContent className="p-0">
+          <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -130,6 +131,7 @@ export default function ActivityLogs() {
               )}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

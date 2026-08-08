@@ -9,6 +9,7 @@ import { Building2, CreditCard, TrendingUp, IndianRupee } from 'lucide-react';
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { mockSuperAdminStats, mockSalesReportData } from '@/lib/mock-data';
 import type { ActivityLog } from '@/lib/types';
+import type { ChartConfig } from '@/components/ui/chart';
 import { cn } from '@/lib/utils';
 
 const nprFormatter = new Intl.NumberFormat('en-NP');

@@ -1,6 +1,7 @@
 'use client';
 
 import { useAuthStore } from '@/features/auth/store';
+import { MobileSidebarTrigger } from '@/components/layout/app-sidebar';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -10,10 +11,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Bell, LogOut, Moon, Sun, User, Settings, Store } from 'lucide-react';
+import { LogOut, Moon, Sun, User, Settings, Store } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { getInitials } from '@/lib/helpers';
+import { NotificationPanel } from '@/components/layout/notification-panel';
 
 export function AppNavbar() {
   const { user, logout } = useAuthStore();
@@ -21,12 +24,7 @@ export function AppNavbar() {
 
   if (!user) return null;
 
-  const initials = user.name
-    .split(' ')
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
+  const initials = getInitials(user.name);
 
   const roleLabel = {
     'super-admin': 'Super Admin',
@@ -37,15 +35,21 @@ export function AppNavbar() {
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 md:px-6">
       <div className="flex flex-1 items-center gap-2">
-        {user.tenantName && (
-          <Badge variant="outline" className="hidden sm:flex items-center gap-1.5 text-xs font-normal">
-            <Store className="h-3 w-3" />
-            {user.tenantName}
-          </Badge>
-        )}
+        {/* Mobile sidebar trigger */}
+        <MobileSidebarTrigger />
+
+        {/* Breadcrumb / Tenant name */}
+        <div className="flex items-center gap-2">
+          {user.tenantName && (
+            <Badge variant="outline" className="hidden sm:flex items-center gap-1.5 text-xs font-normal">
+              <Store className="h-3 w-3" />
+              {user.tenantName}
+            </Badge>
+          )}
+        </div>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5 sm:gap-2">
         {/* Theme Toggle */}
         <Button
           variant="ghost"
@@ -59,12 +63,7 @@ export function AppNavbar() {
         </Button>
 
         {/* Notifications */}
-        <Button variant="ghost" size="icon" className="relative h-9 w-9">
-          <Bell className="h-4 w-4" />
-          <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground">
-            3
-          </span>
-        </Button>
+        <NotificationPanel />
 
         {/* User Menu */}
         <DropdownMenu>

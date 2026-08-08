@@ -1,12 +1,12 @@
 'use client';
 
 import { useAuthStore, useNavStore } from '@/features/auth/store';
-import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import {
   LayoutDashboard,
-  Users,
   CreditCard,
   Activity,
   FileText,
@@ -20,9 +20,11 @@ import {
   UserCog,
   Store,
   Monitor,
+  Menu,
   type LucideIcon,
 } from 'lucide-react';
 import type { NavSection, UserRole } from '@/lib/types';
+import { useState } from 'react';
 
 interface SidebarItem {
   label: string;
@@ -119,9 +121,51 @@ const menuMap: Record<UserRole, SidebarGroup[]> = {
   'staff': staffMenu,
 };
 
+// ---------- Sidebar navigation items ----------
+function SidebarNav({ menu, onClose }: { menu: SidebarGroup[]; onClose?: () => void }) {
+  const { currentSection, setCurrentSection } = useNavStore();
+
+  return (
+    <ScrollArea className="flex-1 py-3">
+      <nav className="space-y-4 px-3">
+        {menu.map((group) => (
+          <div key={group.title}>
+            <h4 className="mb-1.5 px-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              {group.title}
+            </h4>
+            <div className="space-y-0.5">
+              {group.items.map((item) => {
+                const isActive = currentSection === item.section;
+                return (
+                  <button
+                    key={item.section}
+                    onClick={() => {
+                      setCurrentSection(item.section);
+                      onClose?.();
+                    }}
+                    className={cn(
+                      'flex w-full items-center gap-3 rounded-lg px-2.5 py-2.5 text-sm font-medium transition-all',
+                      isActive
+                        ? 'bg-primary text-primary-foreground shadow-sm'
+                        : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                    )}
+                  >
+                    <item.icon className="h-4 w-4 shrink-0" />
+                    <span>{item.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </nav>
+    </ScrollArea>
+  );
+}
+
+// ---------- Desktop Sidebar ----------
 export function AppSidebar() {
   const { user } = useAuthStore();
-  const { currentSection, setCurrentSection } = useNavStore();
 
   if (!user) return null;
 
@@ -129,8 +173,8 @@ export function AppSidebar() {
 
   return (
     <aside className="hidden md:flex w-64 flex-col border-r bg-sidebar text-sidebar-foreground">
-      {/* Logo / Brand */}
-      <div className="flex h-14 items-center gap-2 border-b px-4">
+      {/* Logo */}
+      <div className="flex h-14 items-center gap-2.5 border-b px-4">
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
           <Monitor className="h-4 w-4" />
         </div>
@@ -140,40 +184,9 @@ export function AppSidebar() {
         </div>
       </div>
 
-      {/* Navigation */}
-      <ScrollArea className="flex-1 py-3">
-        <nav className="space-y-4 px-3">
-          {menu.map((group) => (
-            <div key={group.title}>
-              <h4 className="mb-1.5 px-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                {group.title}
-              </h4>
-              <div className="space-y-0.5">
-                {group.items.map((item) => {
-                  const isActive = currentSection === item.section;
-                  return (
-                    <button
-                      key={item.section}
-                      onClick={() => setCurrentSection(item.section)}
-                      className={cn(
-                        'flex w-full items-center gap-3 rounded-md px-2.5 py-2 text-sm font-medium transition-colors',
-                        isActive
-                          ? 'bg-accent text-accent-foreground'
-                          : 'text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground'
-                      )}
-                    >
-                      <item.icon className="h-4 w-4 shrink-0" />
-                      <span>{item.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
-        </nav>
-      </ScrollArea>
+      <SidebarNav menu={menu} />
 
-      {/* Bottom info */}
+      {/* Bottom */}
       <div className="border-t p-3">
         <div className="rounded-lg bg-muted/50 px-3 py-2.5">
           <p className="text-xs font-medium">POS Nepal v2.4.1</p>
@@ -184,7 +197,49 @@ export function AppSidebar() {
   );
 }
 
-// Mobile bottom nav for staff
+// ---------- Mobile Sidebar Trigger (used in navbar) ----------
+export function MobileSidebarTrigger() {
+  const { user } = useAuthStore();
+  const [open, setOpen] = useState(false);
+
+  if (!user || user.role === 'staff') return null;
+
+  const menu = menuMap[user.role];
+
+  return (
+    <>
+      <Button variant="ghost" size="icon" className="md:hidden h-9 w-9" onClick={() => setOpen(true)}>
+        <Menu className="h-5 w-5" />
+        <span className="sr-only">Open menu</span>
+      </Button>
+
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetContent side="left" className="w-72 p-0">
+          <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+          {/* Logo */}
+          <div className="flex h-14 items-center gap-2.5 border-b px-4">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+              <Monitor className="h-4 w-4" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm font-bold leading-none">POS Nepal</span>
+              <span className="text-[10px] text-muted-foreground">Multi-Tenant System</span>
+            </div>
+          </div>
+          <SidebarNav menu={menu} onClose={() => setOpen(false)} />
+          <div className="border-t p-3">
+            <div className="rounded-lg bg-muted/50 px-3 py-2.5">
+              <p className="text-xs font-medium">POS Nepal v2.4.1</p>
+              <p className="text-[10px] text-muted-foreground">© 2024 All rights reserved</p>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+    </>
+  );
+}
+
+// ---------- Mobile bottom nav for staff ----------
 export function MobileBottomNav() {
   const { user } = useAuthStore();
   const { currentSection, setCurrentSection } = useNavStore();

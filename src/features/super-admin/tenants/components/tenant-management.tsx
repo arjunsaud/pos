@@ -34,7 +34,6 @@ import { Badge } from '@/components/ui/badge';
 import {
   Plus,
   Search,
-  MoreHorizontal,
   Eye,
   ToggleLeft,
   Trash2,
@@ -90,6 +89,20 @@ export default function TenantManagement() {
   );
 
   const handleAddTenant = () => {
+    const newTenant: Tenant = {
+      id: `t${Date.now()}`,
+      name: formName,
+      email: formEmail,
+      phone: formPhone,
+      domain: formDomain,
+      plan: formPlan,
+      status: 'active',
+      createdAt: new Date().toISOString().slice(0, 10),
+      ownerName: formName,
+      productCount: 0,
+      monthlyRevenue: 0,
+    };
+    setTenants(prev => [newTenant, ...prev]);
     toast.success('Tenant added successfully (mock)');
     setAddOpen(false);
     setFormName('');
@@ -231,6 +244,7 @@ export default function TenantManagement() {
       {/* Tenant Table */}
       <Card>
         <CardContent className="p-0">
+          <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -310,6 +324,7 @@ export default function TenantManagement() {
               )}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
 

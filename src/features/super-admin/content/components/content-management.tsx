@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
-import { Facebook, Instagram, MessageCircle, Upload, Eye } from 'lucide-react';
+import { Facebook, Instagram, MessageCircle, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function ContentManagement() {
