@@ -4,6 +4,7 @@ import { useAuthStore, useNavStore } from '@/features/auth/store';
 import { LoginPage } from '@/components/layout/login-page';
 import { AppSidebar, MobileBottomNav, MobileSidebarTrigger } from '@/components/layout/app-sidebar';
 import { AppNavbar } from '@/components/layout/app-navbar';
+import { ErrorBoundary } from '@/components/shared/error-boundary';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
@@ -75,17 +76,19 @@ export default function HomePage() {
             'flex-1 overflow-y-auto p-4 md:p-6',
             isStaff ? 'pb-20 md:pb-6' : 'pb-6'
           )}>
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={currentSection}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.2, ease: 'easeInOut' }}
-              >
-                {CurrentPage && <CurrentPage />}
-              </motion.div>
-            </AnimatePresence>
+            <ErrorBoundary>
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentSection}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.2, ease: 'easeInOut' }}
+                >
+                  {CurrentPage && <CurrentPage />}
+                </motion.div>
+              </AnimatePresence>
+            </ErrorBoundary>
           </main>
         </div>
       </div>

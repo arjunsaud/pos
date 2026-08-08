@@ -7,12 +7,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { Building2, CreditCard, TrendingUp, IndianRupee } from 'lucide-react';
+import { Building2, CreditCard, TrendingUp, IndianRupee, Store, Activity, Settings } from 'lucide-react';
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { mockSuperAdminStats, mockSalesReportData } from '@/lib/mock-data';
 import { formatRelativeTime, getLogDotColor, npr } from '@/lib/helpers';
+import { useNavStore } from '@/features/auth/store';
 import { cn } from '@/lib/utils';
-import type { ActivityLog } from '@/lib/types';
+import type { ActivityLog, NavSection } from '@/lib/types';
 import type { ChartConfig } from '@/components/ui/chart';
 
 const chartConfig = {
@@ -36,6 +37,53 @@ const periodSlice: Record<Period, number> = {
   '90d': 90,
 };
 
+const quickActions = [
+  { label: 'Add Tenant', description: 'Register a new tenant', icon: Store, section: 'tenants' as NavSection, color: 'bg-emerald-100 dark:bg-emerald-900/30', iconColor: 'text-emerald-600 dark:text-emerald-400' },
+  { label: 'View Logs', description: 'Audit & activity logs', icon: Activity, section: 'activity-logs' as NavSection, color: 'bg-blue-100 dark:bg-blue-900/30', iconColor: 'text-blue-600 dark:text-blue-400' },
+  { label: 'Manage Plans', description: 'Subscription management', icon: CreditCard, section: 'super-admin-subscriptions' as NavSection, color: 'bg-amber-100 dark:bg-amber-900/30', iconColor: 'text-amber-600 dark:text-amber-400' },
+  { label: 'System Settings', description: 'Platform configuration', icon: Settings, section: 'super-admin-settings' as NavSection, color: 'bg-purple-100 dark:bg-purple-900/30', iconColor: 'text-purple-600 dark:text-purple-400' },
+];
+
+function QuickActionsCard() {
+  const setCurrentSection = useNavStore((s) => s.setCurrentSection);
+  return (
+    <Card className="transition-shadow hover:shadow-md">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base">Quick Actions</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          {quickActions.map((action) => {
+            const Icon = action.icon;
+            return (
+              <button
+                key={action.section}
+                onClick={() => setCurrentSection(action.section)}
+                className="group flex flex-col items-center gap-2.5 rounded-xl border p-4 text-center transition-all duration-200 hover:shadow-md hover:-translate-y-0.5"
+              >
+                <div className={cn('flex h-11 w-11 items-center justify-center rounded-xl transition-transform duration-200 group-hover:scale-110', action.color)}>
+                  <Icon className={cn('h-5 w-5', action.iconColor)} />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold">{action.label}</p>
+                  <p className="text-xs text-muted-foreground">{action.description}</p>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+const activityBorderColor: Record<string, string> = {
+  success: 'border-l-emerald-500',
+  info: 'border-l-blue-500',
+  warning: 'border-l-amber-500',
+  error: 'border-l-red-500',
+};
+
 export default function SuperAdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<Period>('7d');
@@ -47,6 +95,16 @@ export default function SuperAdminDashboard() {
         date: new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
       })),
     [period],
+  );
+
+  const totalRevenue = useMemo(
+    () => chartData.reduce((sum, d) => sum + d.sales, 0),
+    [chartData],
+  );
+
+  const avgDaily = useMemo(
+    () => (totalRevenue / (chartData.length || 1)),
+    [totalRevenue, chartData.length],
   );
 
   useEffect(() => {
@@ -111,6 +169,9 @@ export default function SuperAdminDashboard() {
         />
       </div>
 
+      {/* Quick Actions */}
+      <QuickActionsCard />
+
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Recent Activity */}
         <Card className="transition-shadow hover:shadow-md">
@@ -119,14 +180,20 @@ export default function SuperAdminDashboard() {
           </CardHeader>
           <CardContent>
             <ScrollArea className="max-h-80">
-              <div className="space-y-4 pr-4">
+              <div className="space-y-2 pr-4">
                 {mockSuperAdminStats.recentActivity.map((activity: ActivityLog) => (
-                  <div key={activity.id} className="flex items-start gap-3">
-                    <div className="mt-1.5 shrink-0">
+                  <div
+                    key={activity.id}
+                    className={cn(
+                      'flex items-start gap-3 rounded-lg border border-l-4 p-3 transition-colors hover:bg-muted/50',
+                      activityBorderColor[activity.type] || 'border-l-gray-400',
+                    )}
+                  >
+                    <div className="mt-1 shrink-0">
                       <span
                         className={cn(
                           'inline-block h-2.5 w-2.5 rounded-full',
-                          getLogDotColor(activity.type)
+                          getLogDotColor(activity.type),
                         )}
                       />
                     </div>
@@ -135,7 +202,7 @@ export default function SuperAdminDashboard() {
                       <p className="mt-0.5 text-xs text-muted-foreground truncate">
                         {activity.details}
                       </p>
-                      <p className="mt-1 text-xs text-muted-foreground">
+                      <p className="mt-1 text-[11px] text-muted-foreground">
                         {formatRelativeTime(activity.timestamp)}
                       </p>
                     </div>
@@ -165,6 +232,17 @@ export default function SuperAdminDashboard() {
             </div>
           </CardHeader>
           <CardContent>
+            {/* Summary stats above chart */}
+            <div className="mb-4 flex items-center gap-3">
+              <div className="flex items-center gap-2 rounded-lg border bg-muted/50 px-3 py-1.5">
+                <span className="text-xs text-muted-foreground">Total Revenue</span>
+                <span className="text-sm font-semibold">NPR {npr(totalRevenue)}</span>
+              </div>
+              <div className="flex items-center gap-2 rounded-lg border bg-muted/50 px-3 py-1.5">
+                <span className="text-xs text-muted-foreground">Avg Daily</span>
+                <span className="text-sm font-semibold">NPR {npr(avgDaily)}</span>
+              </div>
+            </div>
             <ChartContainer config={chartConfig} className="h-[300px] w-full">
               <AreaChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />

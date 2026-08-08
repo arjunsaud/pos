@@ -8,11 +8,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { ShoppingBag, Banknote, ClipboardList, AlertTriangle, Wallet, CreditCard, Smartphone, ArrowUpRight } from 'lucide-react';
+import { ShoppingBag, Banknote, ClipboardList, AlertTriangle, Wallet, CreditCard, Smartphone, ArrowUpRight, ShoppingCart, FileText, Package, BarChart3 } from 'lucide-react';
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { mockTenantStats, mockSalesReportData, mockSales } from '@/lib/mock-data';
 import { npr, getStatusBadgeClasses } from '@/lib/helpers';
-import { useAuthStore } from '@/features/auth/store';
+import { useAuthStore, useNavStore } from '@/features/auth/store';
 import { cn } from '@/lib/utils';
 import type { ChartConfig } from '@/components/ui/chart';
 
@@ -41,6 +41,46 @@ const periodSlice: Record<Period, number> = {
   '30d': 30,
   '90d': 90,
 };
+
+const quickActions = [
+  { label: 'New Sale', description: 'Start a new transaction', icon: ShoppingCart, section: 'pos' as const, color: 'bg-emerald-100 dark:bg-emerald-900/30', iconColor: 'text-emerald-600 dark:text-emerald-400' },
+  { label: 'Create Invoice', description: 'Generate a new invoice', icon: FileText, section: 'billing' as const, color: 'bg-blue-100 dark:bg-blue-900/30', iconColor: 'text-blue-600 dark:text-blue-400' },
+  { label: 'Add Product', description: 'Add to product catalog', icon: Package, section: 'products' as const, color: 'bg-amber-100 dark:bg-amber-900/30', iconColor: 'text-amber-600 dark:text-amber-400' },
+  { label: 'View Reports', description: 'Analyze sales data', icon: BarChart3, section: 'reports' as const, color: 'bg-purple-100 dark:bg-purple-900/30', iconColor: 'text-purple-600 dark:text-purple-400' },
+];
+
+function QuickActionsCard() {
+  const setCurrentSection = useNavStore((s) => s.setCurrentSection);
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base">Quick Actions</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          {quickActions.map((action) => {
+            const Icon = action.icon;
+            return (
+              <button
+                key={action.section}
+                onClick={() => setCurrentSection(action.section)}
+                className="group flex flex-col items-center gap-2.5 rounded-xl border p-4 text-center transition-all duration-200 hover:shadow-md hover:-translate-y-0.5"
+              >
+                <div className={cn('flex h-11 w-11 items-center justify-center rounded-xl transition-transform duration-200 group-hover:scale-110', action.color)}>
+                  <Icon className={cn('h-5 w-5', action.iconColor)} />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold">{action.label}</p>
+                  <p className="text-xs text-muted-foreground">{action.description}</p>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function TenantDashboard() {
   const { user } = useAuthStore();
@@ -95,18 +135,21 @@ export default function TenantDashboard() {
           value={`NPR ${npr(stats.dailySales)}`}
           icon={ShoppingBag}
           trend={{ value: stats.dailySalesGrowth, label: 'from yesterday' }}
+          className="border-l-4 border-l-emerald-500"
         />
         <StatCard
           title="Monthly Revenue"
           value={`NPR ${npr(stats.monthlyRevenue)}`}
           icon={Banknote}
           trend={{ value: stats.monthlyRevenueGrowth, label: 'from last month' }}
+          className="border-l-4 border-l-blue-500"
         />
         <StatCard
           title="Total Orders"
           value={npr(stats.totalOrders)}
           icon={ClipboardList}
           trend={{ value: stats.totalOrdersGrowth, label: 'from last month' }}
+          className="border-l-4 border-l-purple-500"
         />
         <StatCard
           title="Low Stock Alerts"
@@ -115,12 +158,16 @@ export default function TenantDashboard() {
           trend={{ value: -5, label: 'needs attention' }}
           iconClassName="bg-amber-100 dark:bg-amber-900/30"
           iconColor="text-amber-600 dark:text-amber-400"
+          className="border-l-4 border-l-amber-500"
         />
       </div>
 
+      {/* Quick Actions */}
+      <QuickActionsCard />
+
       {/* Daily Cash Register Summary */}
       <Card className="overflow-hidden">
-        <CardHeader className="pb-3">
+        <CardHeader className="pb-3 bg-gradient-to-b from-muted/50 to-transparent">
           <CardTitle className="flex items-center gap-2 text-base">
             <Wallet className="h-4 w-4" />
             Today's Cash Register
@@ -160,29 +207,44 @@ export default function TenantDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {stats.topProducts.map((product, idx) => (
-                <div
-                  key={product.name}
-                  className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className={cn(
-                      'flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold',
-                      idx === 0 ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
-                      idx === 1 ? 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400' :
-                      idx === 2 ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' :
-                      'bg-primary/10 text-primary'
-                    )}>
-                      {idx + 1}
-                    </span>
-                    <span className="text-sm font-medium">{product.name}</span>
+              {stats.topProducts.map((product, idx) => {
+                const topRevenue = stats.topProducts[0].revenue;
+                const pct = Math.round((product.revenue / topRevenue) * 100);
+                return (
+                  <div key={product.name} className="space-y-2">
+                    <div className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50">
+                      <div className="flex items-center gap-3">
+                        <span className={cn(
+                          'flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold',
+                          idx === 0 ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
+                          idx === 1 ? 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400' :
+                          idx === 2 ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' :
+                          'bg-primary/10 text-primary'
+                        )}>
+                          {idx + 1}
+                        </span>
+                        <span className="text-sm font-medium">{product.name}</span>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm font-semibold">NPR {npr(product.revenue)}</div>
+                        <div className="text-xs text-muted-foreground">{product.sold} units</div>
+                      </div>
+                    </div>
+                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                      <div
+                        className={cn(
+                          'h-full rounded-full transition-all duration-500',
+                          idx === 0 ? 'bg-amber-500' :
+                          idx === 1 ? 'bg-gray-400' :
+                          idx === 2 ? 'bg-orange-400' :
+                          'bg-primary/60'
+                        )}
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-sm font-semibold">NPR {npr(product.revenue)}</div>
-                    <div className="text-xs text-muted-foreground">{product.sold} units</div>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </CardContent>
         </Card>
@@ -198,7 +260,13 @@ export default function TenantDashboard() {
                 {recentSales.map((sale) => (
                   <div
                     key={sale.id}
-                    className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50"
+                    className={cn(
+                      'flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50',
+                      sale.paymentMethod === 'Cash' && 'border-l-4 border-l-emerald-500',
+                      sale.paymentMethod === 'Card' && 'border-l-4 border-l-blue-500',
+                      sale.paymentMethod === 'eSewa' && 'border-l-4 border-l-green-500',
+                      sale.paymentMethod === 'Khalti' && 'border-l-4 border-l-purple-500',
+                    )}
                   >
                     <div className="min-w-0 flex-1">
                       <div className="text-sm font-medium">{sale.invoiceNumber}</div>
@@ -231,7 +299,7 @@ export default function TenantDashboard() {
 
       {/* Sales Trend Chart */}
       <Card className="transition-shadow hover:shadow-md">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 border-b border-dashed">
           <CardTitle>Sales Trend</CardTitle>
           <div className="ml-auto flex items-center gap-0.5 rounded-md border p-0.5">
             {periodOptions.map((p) => (

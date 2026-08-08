@@ -130,10 +130,13 @@ function SidebarNav({ menu, onClose }: { menu: SidebarGroup[]; onClose?: () => v
 
   return (
     <ScrollArea className="flex-1 py-3">
-      <nav className="space-y-4 px-3">
-        {menu.map((group) => (
+      <nav className="space-y-1 px-3">
+        {menu.map((group, groupIdx) => (
           <div key={group.title}>
-            <h4 className="mb-1.5 px-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <h4 className={cn(
+              'px-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70',
+              groupIdx > 0 ? 'mt-5 pt-4 border-t border-border/50' : 'mb-2'
+            )}>
               {group.title}
             </h4>
             <div className="space-y-0.5">
@@ -147,14 +150,20 @@ function SidebarNav({ menu, onClose }: { menu: SidebarGroup[]; onClose?: () => v
                       onClose?.();
                     }}
                     className={cn(
-                      'flex w-full items-center gap-3 rounded-lg px-2.5 py-2.5 text-sm font-medium transition-all',
+                      'relative flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-sm font-medium transition-all duration-150',
                       isActive
-                        ? 'bg-primary text-primary-foreground shadow-sm'
-                        : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                        ? 'bg-primary/10 text-primary font-semibold'
+                        : 'text-muted-foreground hover:bg-accent/60 hover:text-accent-foreground'
                     )}
                   >
-                    <item.icon className="h-4 w-4 shrink-0" />
-                    <span>{item.label}</span>
+                    {isActive && (
+                      <div className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r-full bg-primary" />
+                    )}
+                    <item.icon className={cn(
+                      'h-4 w-4 shrink-0 transition-colors',
+                      isActive ? 'text-primary' : ''
+                    )} />
+                    <span className="truncate">{item.label}</span>
                   </button>
                 );
               })}
@@ -198,7 +207,7 @@ export function AppSidebar() {
       <div className="mt-auto border-t p-3">
         <div className="rounded-lg bg-muted/50 px-3 py-2.5">
           <p className="text-xs font-medium">POS Nepal v2.4.1</p>
-          <p className="text-[10px] text-muted-foreground">© 2024 All rights reserved</p>
+          <p className="text-[10px] text-muted-foreground">© 2025 All rights reserved</p>
         </div>
       </div>
     </aside>
@@ -238,7 +247,7 @@ export function MobileSidebarTrigger() {
           <div className="border-t p-3">
             <div className="rounded-lg bg-muted/50 px-3 py-2.5">
               <p className="text-xs font-medium">POS Nepal v2.4.1</p>
-              <p className="text-[10px] text-muted-foreground">© 2024 All rights reserved</p>
+              <p className="text-[10px] text-muted-foreground">© 2025 All rights reserved</p>
             </div>
           </div>
         </SheetContent>
@@ -257,7 +266,7 @@ export function MobileBottomNav() {
   const menu = menuMap[user.role].flatMap(g => g.items);
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 flex md:hidden h-16 items-center justify-around border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 flex md:hidden h-16 items-center justify-around border-t bg-background/95 backdrop-blur-lg supports-[backdrop-filter]:bg-background/60">
       {menu.slice(0, 5).map((item) => {
         const isActive = currentSection === item.section;
         return (
@@ -265,12 +274,20 @@ export function MobileBottomNav() {
             key={item.section}
             onClick={() => setCurrentSection(item.section)}
             className={cn(
-              'flex flex-col items-center gap-1 px-2 py-1 text-[10px] font-medium transition-colors',
+              'relative flex flex-col items-center gap-0.5 px-3 py-1.5 text-[10px] font-medium transition-all duration-150',
               isActive ? 'text-primary' : 'text-muted-foreground'
             )}
           >
-            <item.icon className={cn('h-5 w-5', isActive && 'text-primary')} />
-            <span>{item.label}</span>
+            <div className={cn(
+              'flex h-8 w-8 items-center justify-center rounded-xl transition-all duration-150',
+              isActive ? 'bg-primary/10' : ''
+            )}>
+              <item.icon className={cn('h-4.5 w-4.5 transition-colors', isActive && 'text-primary')} />
+            </div>
+            <span className={cn(isActive && 'font-semibold')}>{item.label}</span>
+            {isActive && (
+              <div className="absolute -top-px left-1/2 -translate-x-1/2 h-0.5 w-8 rounded-full bg-primary" />
+            )}
           </button>
         );
       })}

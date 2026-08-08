@@ -40,6 +40,13 @@ export const useAuthStore = create<AuthState>((set) => ({
       },
     };
     set({ user: users[role], isAuthenticated: true });
+    // Navigate to the correct default section for the role
+    const defaults: Record<UserRole, NavSection> = {
+      'super-admin': 'super-admin-dashboard',
+      'tenant-admin': 'tenant-dashboard',
+      'staff': 'pos',
+    };
+    useNavStore.getState().setCurrentSection(defaults[role]);
   },
   logout: () => set({ user: null, isAuthenticated: false }),
 }));
@@ -48,9 +55,18 @@ export const useAuthStore = create<AuthState>((set) => ({
 interface NavState {
   currentSection: NavSection;
   setCurrentSection: (section: NavSection) => void;
+  resetToDefault: (role: UserRole) => void;
 }
 
 export const useNavStore = create<NavState>((set) => ({
   currentSection: 'super-admin-dashboard',
   setCurrentSection: (section: NavSection) => set({ currentSection: section }),
+  resetToDefault: (role: UserRole) => {
+    const defaults: Record<UserRole, NavSection> = {
+      'super-admin': 'super-admin-dashboard',
+      'tenant-admin': 'tenant-dashboard',
+      'staff': 'pos',
+    };
+    set({ currentSection: defaults[role] });
+  },
 }));

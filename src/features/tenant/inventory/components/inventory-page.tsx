@@ -14,7 +14,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog';
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import { Package, DollarSign, AlertTriangle, Plus, Search, Download } from 'lucide-react';
 import { mockInventory, mockStockMovements, mockProducts } from '@/lib/mock-data';
@@ -38,15 +38,15 @@ export default function InventoryPage() {
   const lowStockItems = mockInventory.filter((item) => item.currentStock <= item.minStock).length;
 
   const productMap = useMemo(() => {
-    const map = new Map<string, { category: string; price: number }>();
-    mockProducts.forEach(p => map.set(p.id, { category: p.category, price: p.price }));
+    const map = new Map<string, { category: string; price: number; costPrice: number }>();
+    mockProducts.forEach(p => map.set(p.id, { category: p.category, price: p.price, costPrice: p.costPrice }));
     return map;
   }, []);
 
   const filteredInventory = useMemo(() => {
     const enriched = mockInventory.map(item => {
       const product = productMap.get(item.productId);
-      return { ...item, category: product?.category ?? '', price: product?.price ?? 0 };
+      return { ...item, category: product?.category ?? '', price: product?.price ?? 0, costPrice: product?.costPrice ?? 0 };
     });
     let result = enriched;
     if (searchQuery) {
@@ -66,6 +66,10 @@ export default function InventoryPage() {
     });
     return result;
   }, [searchQuery, sortField, sortDir, productMap]);
+
+  const maxStock = Math.max(...filteredInventory.map(i => i.currentStock), 1);
+  const filteredTotalStockValue = filteredInventory.reduce((sum, i) => sum + i.currentStock * i.costPrice, 0);
+  const filteredTotalItems = filteredInventory.reduce((sum, i) => sum + i.currentStock, 0);
 
   const ITEMS_PER_PAGE = 10;
   const totalPages = Math.ceil(filteredInventory.length / ITEMS_PER_PAGE);
@@ -149,7 +153,7 @@ export default function InventoryPage() {
                       <TableHead className="cursor-pointer select-none" onClick={() => handleSort('name')}>Product <span className="ml-1 text-[10px] opacity-60">{sortIcon('name')}</span></TableHead>
                       <TableHead>SKU</TableHead>
                       <TableHead className="cursor-pointer select-none" onClick={() => handleSort('category')}>Category <span className="ml-1 text-[10px] opacity-60">{sortIcon('category')}</span></TableHead>
-                      <TableHead className="text-center cursor-pointer select-none" onClick={() => handleSort('stock')}>Stock <span className="ml-1 text-[10px] opacity-60">{sortIcon('stock')}</span></TableHead>
+                      <TableHead className="text-center cursor-pointer select-none min-w-[100px]" onClick={() => handleSort('stock')}>Stock <span className="ml-1 text-[10px] opacity-60">{sortIcon('stock')}</span></TableHead>
                       <TableHead className="text-right cursor-pointer select-none hidden sm:table-cell" onClick={() => handleSort('price')}>Price <span className="ml-1 text-[10px] opacity-60">{sortIcon('price')}</span></TableHead>
                       <TableHead className="text-center hidden md:table-cell">Min Stock</TableHead>
                       <TableHead>Status</TableHead>
@@ -166,6 +170,17 @@ export default function InventoryPage() {
                           <span className={cn('font-bold', item.currentStock <= 0 && 'text-red-600 dark:text-red-400', item.currentStock > 0 && item.currentStock <= item.minStock && 'text-amber-600 dark:text-amber-400')}>
                             {item.currentStock}
                           </span>
+                          <div className="mt-1 h-1.5 w-full rounded-full bg-muted">
+                            <div
+                              className={cn(
+                                'h-1.5 rounded-full transition-all',
+                                getStockStatus(item.currentStock, item.minStock) === 'In Stock' && 'bg-emerald-500',
+                                getStockStatus(item.currentStock, item.minStock) === 'Low Stock' && 'bg-amber-500',
+                                getStockStatus(item.currentStock, item.minStock) === 'Out of Stock' && 'bg-red-500',
+                              )}
+                              style={{ width: `${Math.max((item.currentStock / maxStock) * 100, item.currentStock > 0 ? 2 : 0)}%` }}
+                            />
+                          </div>
                         </TableCell>
                         <TableCell className="text-right hidden sm:table-cell">NPR {npr(item.price)}</TableCell>
                         <TableCell className="text-center hidden md:table-cell">{item.minStock}</TableCell>
@@ -180,6 +195,13 @@ export default function InventoryPage() {
                       </TableRow>
                     ))}
                   </TableBody>
+                  <TableFooter>
+                    <TableRow>
+                      <TableCell colSpan={3} className="font-medium">Total Stock Value</TableCell>
+                      <TableCell className="text-center font-bold">{filteredTotalItems.toLocaleString()} units</TableCell>
+                      <TableCell colSpan={4} className="font-bold">NPR {npr(filteredTotalStockValue)}</TableCell>
+                    </TableRow>
+                  </TableFooter>
                 </Table>
               </div>
               <div className="flex items-center justify-between pt-4 px-4">

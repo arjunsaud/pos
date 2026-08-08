@@ -16,7 +16,7 @@ import { toast } from 'sonner';
 import { PageHeader } from '@/components/shared/page-header';
 import type { CartItem, Product, HeldSale, Customer } from '@/lib/types';
 import { cn } from '@/lib/utils';
-import { formatDateTime, npr } from '@/lib/helpers';
+import { formatDateTime, npr, nprFull } from '@/lib/helpers';
 
 const PAYMENT_METHODS = [
   { id: 'cash', label: 'Cash', icon: Banknote, color: 'text-emerald-600 dark:text-emerald-400' },
@@ -487,12 +487,12 @@ export default function POSTerminal() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">VAT (13%)</span>
-                      <span>NPR {npr(Math.round(vat * 100) / 100)}</span>
+                      <span>NPR {nprFull(vat)}</span>
                     </div>
                     <Separator />
                     <div className="flex justify-between text-lg font-bold">
                       <span>Total</span>
-                      <span>NPR {npr(Math.round(total * 100) / 100)}</span>
+                      <span>NPR {nprFull(total)}</span>
                     </div>
                   </div>
 
@@ -659,12 +659,12 @@ export default function POSTerminal() {
                   )}
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">VAT (13%)</span>
-                    <span>NPR {npr(lastSale.vat)}</span>
+                    <span>NPR {nprFull(lastSale.vat)}</span>
                   </div>
                   <Separator />
                   <div className="flex justify-between text-base font-bold">
                     <span>Total</span>
-                    <span>NPR {npr(lastSale.total)}</span>
+                    <span>NPR {nprFull(lastSale.total)}</span>
                   </div>
                 </div>
                 <Separator />

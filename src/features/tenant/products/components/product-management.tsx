@@ -47,8 +47,7 @@ import { mockProducts, mockCategories } from '@/lib/mock-data';
 import { toast } from 'sonner';
 import type { Product } from '@/lib/types';
 import { cn } from '@/lib/utils';
-
-const npr = (n: number) => new Intl.NumberFormat('en-NP').format(n);
+import { npr } from '@/lib/helpers';
 
 interface ProductForm {
   name: string;

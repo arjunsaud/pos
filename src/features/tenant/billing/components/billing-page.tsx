@@ -37,7 +37,7 @@ import { Plus, Eye, Printer, Search, Minus, X } from 'lucide-react';
 import { mockSales, mockProducts } from '@/lib/mock-data';
 import { toast } from 'sonner';
 import type { Sale } from '@/lib/types';
-import { npr, getStatusBadgeClasses } from '@/lib/helpers';
+import { npr, nprFull, getStatusBadgeClasses } from '@/lib/helpers';
 
 const fmtDate = (d: string) => new Date(d).toLocaleDateString('en-GB');
 
@@ -221,8 +221,8 @@ export default function BillingPage() {
                   <TableCell>{sale.customerPAN || '—'}</TableCell>
                   <TableCell className="text-center">{sale.items.length}</TableCell>
                   <TableCell className="text-right">NPR {npr(sale.subtotal)}</TableCell>
-                  <TableCell className="text-right">NPR {npr(sale.vatAmount)}</TableCell>
-                  <TableCell className="text-right font-semibold">NPR {npr(sale.total)}</TableCell>
+                  <TableCell className="text-right">NPR {nprFull(sale.vatAmount)}</TableCell>
+                  <TableCell className="text-right font-semibold">NPR {nprFull(sale.total)}</TableCell>
                   <TableCell><Badge variant="outline">{sale.paymentMethod}</Badge></TableCell>
                   <TableCell>
                     <Badge className={getStatusBadgeClasses(sale.status)} variant="secondary">
@@ -240,7 +240,7 @@ export default function BillingPage() {
             <TableFooter>
               <TableRow>
                 <TableCell colSpan={7} className="font-medium">Total Billed</TableCell>
-                <TableCell className="text-right font-bold">NPR {npr(filtered.reduce((sum, s) => sum + s.total, 0))}</TableCell>
+                <TableCell className="text-right font-bold">NPR {nprFull(filtered.reduce((sum, s) => sum + s.total, 0))}</TableCell>
                 <TableCell colSpan={3} />
               </TableRow>
             </TableFooter>
@@ -320,8 +320,8 @@ export default function BillingPage() {
                 {selectedSale.discount > 0 && (
                   <div className="flex justify-between text-muted-foreground"><span>Discount</span><span>- NPR {npr(selectedSale.discount)}</span></div>
                 )}
-                <div className="flex justify-between"><span>VAT (13%)</span><span>NPR {npr(selectedSale.vatAmount)}</span></div>
-                <div className="flex justify-between border-t pt-1 text-base font-bold"><span>Grand Total</span><span>NPR {npr(selectedSale.total)}</span></div>
+                <div className="flex justify-between"><span>VAT (13%)</span><span>NPR {nprFull(selectedSale.vatAmount)}</span></div>
+                <div className="flex justify-between border-t pt-1 text-base font-bold"><span>Grand Total</span><span>NPR {nprFull(selectedSale.total)}</span></div>
                 <div className="mt-1 flex justify-between text-muted-foreground"><span>Payment</span><span>{selectedSale.paymentMethod}</span></div>
               </div>
 
@@ -513,9 +513,9 @@ export default function BillingPage() {
                 {discountAmount > 0 && (
                   <div className="flex justify-between text-muted-foreground"><span>Discount</span><span>- NPR {npr(discountAmount)}</span></div>
                 )}
-                <div className="flex justify-between"><span className="text-muted-foreground">VAT (13%)</span><span>NPR {npr(vatAmount)}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">VAT (13%)</span><span>NPR {nprFull(vatAmount)}</span></div>
                 <Separator />
-                <div className="flex justify-between text-base font-bold"><span>Grand Total</span><span>NPR {npr(grandTotal)}</span></div>
+                <div className="flex justify-between text-base font-bold"><span>Grand Total</span><span>NPR {nprFull(grandTotal)}</span></div>
               </div>
             )}
           </div>

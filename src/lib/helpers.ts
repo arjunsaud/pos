@@ -7,6 +7,7 @@ import type { PlanType, TenantStaffRole, SuperAdminStaffRole } from '@/lib/types
 
 // ---------- Currency ----------
 export const npr = (n: number) => new Intl.NumberFormat('en-NP').format(Math.round(n * 100) / 100);
+export const nprFull = (n: number) => new Intl.NumberFormat('en-NP', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
 
 // ---------- Time ----------
 export function formatRelativeTime(timestamp: string): string {
