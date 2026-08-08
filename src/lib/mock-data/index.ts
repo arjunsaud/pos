@@ -17,6 +17,7 @@ import type {
   VATReportData,
   SuperAdminStats,
   TenantStats,
+  Customer,
 } from '@/lib/types';
 
 // ---------- Tenants ----------
@@ -186,6 +187,20 @@ export const mockVATReportData: VATReportData[] = [
   { month: '2024-04', taxableAmount: 356000, vatCollected: 46280, vatPaid: 22000 },
   { month: '2024-05', taxableAmount: 398000, vatCollected: 51740, vatPaid: 25000 },
   { month: '2024-06', taxableAmount: 423500, vatCollected: 55055, vatPaid: 28000 },
+];
+
+// ---------- Customers ----------
+export const mockCustomers: Customer[] = [
+  { id: 'c1', name: 'Kumar Hardware', email: 'kumar@hardware.com.np', phone: '+977-9841234567', pan: '301234567', address: 'Putalisadak, Kathmandu', totalPurchases: 47, totalSpent: 245600, lastVisit: '2024-06-15T11:15:00', createdAt: '2024-01-10', isActive: true },
+  { id: 'c2', name: 'Hotel Himalayan', email: 'orders@hotelhimalayan.com', phone: '+977-9851234567', pan: '402345678', address: 'Thamel, Kathmandu', totalPurchases: 32, totalSpent: 189400, lastVisit: '2024-06-14T14:30:00', createdAt: '2024-01-20', isActive: true },
+  { id: 'c3', name: 'Thapa Enterprises', email: 'thapa@enterprises.com.np', phone: '+977-9861234567', pan: '503456789', address: 'Baneshwor, Kathmandu', totalPurchases: 18, totalSpent: 89500, lastVisit: '2024-06-12T11:00:00', createdAt: '2024-02-05', isActive: true },
+  { id: 'c4', name: 'Gurung Bakery', email: 'gurung@bakery.com.np', phone: '+977-9871234567', pan: '604567890', address: 'Lazimpat, Kathmandu', totalPurchases: 56, totalSpent: 124300, lastVisit: '2024-06-15T09:00:00', createdAt: '2023-11-15', isActive: true },
+  { id: 'c5', name: 'Shrestha Restaurant', email: 'shrestha@restaurant.com', phone: '+977-9801234580', pan: '705678901', address: 'Pulchowk, Lalitpur', totalPurchases: 29, totalSpent: 67800, lastVisit: '2024-06-13T16:30:00', createdAt: '2024-03-01', isActive: true },
+  { id: 'c6', name: 'Magar Traders', email: 'magar@traders.com.np', phone: '+977-9811234580', pan: '806789012', address: 'Kalanki, Kathmandu', totalPurchases: 8, totalSpent: 34200, lastVisit: '2024-06-10T12:00:00', createdAt: '2024-04-10', isActive: true },
+  { id: 'c7', name: 'Dorje Corner Store', email: 'dorje@corner.com.np', phone: '+977-9821234580', pan: '907890123', address: 'Jorpati, Kathmandu', totalPurchases: 41, totalSpent: 156700, lastVisit: '2024-06-14T10:00:00', createdAt: '2023-12-05', isActive: true },
+  { id: 'c8', name: 'Tamang Electronics', email: 'tamang@electronics.com', phone: '+977-9831234580', pan: '', address: 'New Road, Kathmandu', totalPurchases: 3, totalSpent: 12500, lastVisit: '2024-05-28T14:00:00', createdAt: '2024-05-01', isActive: false },
+  { id: 'c9', name: 'Rai Wholesale', email: 'rai@wholesale.com.np', phone: '+977-9841234580', pan: '118901234', address: 'Teku, Kathmandu', totalPurchases: 65, totalSpent: 432100, lastVisit: '2024-06-15T16:00:00', createdAt: '2023-10-20', isActive: true },
+  { id: 'c10', name: 'Limbu Cafe', email: 'limbu@cafe.com.np', phone: '+977-9851234580', pan: '', address: 'Boudha, Kathmandu', totalPurchases: 12, totalSpent: 28900, lastVisit: '2024-06-11T09:30:00', createdAt: '2024-04-25', isActive: true },
 ];
 
 // ---------- Dashboard Stats ----------

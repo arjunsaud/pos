@@ -16,9 +16,9 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Cell, Pie, PieChart, Legend } from 'recharts';
 import { Button } from '@/components/ui/button';
-import { TrendingUp, DollarSign, ShoppingCart, Calendar, Download } from 'lucide-react';
+import { TrendingUp, DollarSign, ShoppingCart, Calendar, Download, PieChart as PieChartIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   mockSalesReportData,
@@ -40,6 +40,20 @@ const vatChartConfig: ChartConfig = {
   vatCollected: { label: 'VAT Collected', color: 'hsl(var(--chart-1))' },
   vatPaid: { label: 'VAT Paid', color: 'hsl(var(--chart-3))' },
 };
+
+const pieChartConfig = {
+  cash: { label: 'Cash', color: 'hsl(var(--chart-1))' },
+  card: { label: 'Card', color: 'hsl(var(--chart-2))' },
+  esewa: { label: 'eSewa', color: 'hsl(var(--chart-3))' },
+  khalti: { label: 'Khalti', color: 'hsl(var(--chart-4))' },
+} satisfies ChartConfig;
+
+const paymentPieData = [
+  { name: 'cash', value: 18750, fill: 'var(--color-cash)' },
+  { name: 'card', value: 8464, fill: 'var(--color-card)' },
+  { name: 'esewa', value: 4593, fill: 'var(--color-esewa)' },
+  { name: 'khalti', value: 3393, fill: 'var(--color-khalti)' },
+];
 
 export default function ReportsPage() {
   const [dateFrom, setDateFrom] = useState('');
@@ -107,7 +121,7 @@ export default function ReportsPage() {
       <PageHeader title="Reports & Analytics" />
 
       {/* Date Range Filter */}
-      <Card>
+      <Card className="transition-shadow hover:shadow-md">
         <CardContent className="p-4">
           <div className="flex flex-wrap items-end gap-3">
             <div>
@@ -125,6 +139,7 @@ export default function ReportsPage() {
       <Tabs defaultValue="sales">
         <TabsList>
           <TabsTrigger value="sales">Sales Report</TabsTrigger>
+          <TabsTrigger value="payment">Payment Breakdown</TabsTrigger>
           <TabsTrigger value="inventory">Inventory Report</TabsTrigger>
           <TabsTrigger value="vat">VAT Report</TabsTrigger>
         </TabsList>
@@ -149,7 +164,7 @@ export default function ReportsPage() {
             />
           </div>
 
-          <Card>
+          <Card className="transition-shadow hover:shadow-md">
             <CardHeader>
               <CardTitle>Daily Sales</CardTitle>
             </CardHeader>
@@ -167,6 +182,84 @@ export default function ReportsPage() {
           </Card>
         </TabsContent>
 
+        {/* Payment Breakdown (NEW) */}
+        <TabsContent value="payment" className="space-y-6">
+          <div className="grid gap-6 md:grid-cols-2">
+            <Card className="transition-shadow hover:shadow-md">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <PieChartIcon className="h-4 w-4" />
+                  Payment Method Distribution
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="flex items-center justify-center">
+                <ChartContainer config={pieChartConfig} className="h-[300px] w-full">
+                  <PieChart>
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Pie
+                      data={paymentPieData}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={100}
+                      strokeWidth={2}
+                      stroke="hsl(var(--background))"
+                    >
+                      {paymentPieData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                      ))}
+                    </Pie>
+                  </PieChart>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+
+            <Card className="transition-shadow hover:shadow-md">
+              <CardHeader>
+                <CardTitle>Payment Summary</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {paymentPieData.map((p) => {
+                    const total = paymentPieData.reduce((s, d) => s + d.value, 0);
+                    const pct = Math.round((p.value / total) * 100);
+                    const labels: Record<string, { label: string; color: string }> = {
+                      cash: { label: 'Cash', color: 'bg-[hsl(var(--chart-1))]' },
+                      card: { label: 'Card', color: 'bg-[hsl(var(--chart-2))]' },
+                      esewa: { label: 'eSewa', color: 'bg-[hsl(var(--chart-3))]' },
+                      khalti: { label: 'Khalti', color: 'bg-[hsl(var(--chart-4))]' },
+                    };
+                    const info = labels[p.name];
+                    return (
+                      <div key={p.name} className="space-y-1.5">
+                        <div className="flex items-center justify-between text-sm">
+                          <div className="flex items-center gap-2">
+                            <span className={`h-3 w-3 rounded-full ${info.color}`} />
+                            <span className="font-medium">{info.label}</span>
+                          </div>
+                          <div className="text-right">
+                            <span className="font-semibold">NPR {npr(p.value)}</span>
+                            <span className="ml-2 text-muted-foreground">({pct}%)</span>
+                          </div>
+                        </div>
+                        <div className="h-2 rounded-full bg-muted overflow-hidden">
+                          <div className={`h-full rounded-full ${info.color} transition-all duration-500`} style={{ width: `${pct}%` }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                  <div className="mt-4 flex items-center justify-between rounded-lg bg-muted/50 px-4 py-3">
+                    <span className="text-sm font-medium">Total Today</span>
+                    <span className="text-lg font-bold">NPR {npr(paymentPieData.reduce((s, d) => s + d.value, 0))}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
         {/* Inventory Report */}
         <TabsContent value="inventory" className="space-y-6">
           <div className="flex justify-end">
@@ -174,7 +267,7 @@ export default function ReportsPage() {
               <Download className="h-4 w-4" /> Export CSV
             </Button>
           </div>
-          <Card>
+          <Card className="transition-shadow hover:shadow-md">
             <CardHeader>
               <CardTitle>Inventory Value by Category</CardTitle>
             </CardHeader>
@@ -191,7 +284,7 @@ export default function ReportsPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="transition-shadow hover:shadow-md">
             <CardContent className="p-0">
               <div className="overflow-x-auto">
               <Table>
@@ -205,7 +298,7 @@ export default function ReportsPage() {
                 </TableHeader>
                 <TableBody>
                   {mockInventoryReportData.map((row) => (
-                    <TableRow key={row.category}>
+                    <TableRow key={row.category} className="transition-colors hover:bg-muted/50">
                       <TableCell className="font-medium">{row.category}</TableCell>
                       <TableCell className="text-center">{row.totalProducts}</TableCell>
                       <TableCell className="text-right">NPR {npr(row.totalValue)}</TableCell>
@@ -232,7 +325,7 @@ export default function ReportsPage() {
               <Download className="h-4 w-4" /> Export CSV
             </Button>
           </div>
-          <Card>
+          <Card className="transition-shadow hover:shadow-md">
             <CardHeader>
               <CardTitle>VAT Collected vs VAT Paid</CardTitle>
             </CardHeader>
@@ -250,7 +343,7 @@ export default function ReportsPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="transition-shadow hover:shadow-md">
             <CardContent className="p-0">
               <div className="overflow-x-auto">
               <Table>
@@ -265,7 +358,7 @@ export default function ReportsPage() {
                 </TableHeader>
                 <TableBody>
                   {vatTableData.map((row) => (
-                    <TableRow key={row.month}>
+                    <TableRow key={row.month} className="transition-colors hover:bg-muted/50">
                       <TableCell className="font-medium">{row.month}</TableCell>
                       <TableCell className="text-right">NPR {npr(row.taxableAmount)}</TableCell>
                       <TableCell className="text-right">NPR {npr(row.vatCollected)}</TableCell>

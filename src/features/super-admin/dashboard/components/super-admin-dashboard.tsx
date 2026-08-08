@@ -1,7 +1,8 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { PageHeader } from '@/components/shared/page-header';
-import { StatCard } from '@/components/shared/stat-card';
+import { StatCard, StatCardSkeleton, ChartSkeleton } from '@/components/shared/stat-card';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
@@ -9,6 +10,7 @@ import { Building2, CreditCard, TrendingUp, IndianRupee } from 'lucide-react';
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { mockSuperAdminStats, mockSalesReportData } from '@/lib/mock-data';
 import { formatRelativeTime, getLogDotColor, npr } from '@/lib/helpers';
+import { cn } from '@/lib/utils';
 import type { ActivityLog } from '@/lib/types';
 import type { ChartConfig } from '@/components/ui/chart';
 
@@ -25,6 +27,31 @@ const last7DaysData = mockSalesReportData.slice(-7).map((d) => ({
 }));
 
 export default function SuperAdminDashboard() {
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 600);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <PageHeader title="Dashboard" description="Loading..." />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCardSkeleton />
+          <StatCardSkeleton />
+          <StatCardSkeleton />
+          <StatCardSkeleton />
+        </div>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <Card><CardContent className="p-6"><div className="space-y-4">{Array.from({length:5}).map((_,i)=><div key={i} className="h-12 rounded-lg bg-muted animate-pulse" />)}</div></CardContent></Card>
+          <ChartSkeleton />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <PageHeader title="Dashboard" description="Platform overview and key metrics" />
@@ -66,7 +93,7 @@ export default function SuperAdminDashboard() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Recent Activity */}
-        <Card>
+        <Card className="transition-shadow hover:shadow-md">
           <CardHeader>
             <CardTitle>Recent Activity</CardTitle>
           </CardHeader>
@@ -75,7 +102,7 @@ export default function SuperAdminDashboard() {
               <div className="space-y-4 pr-4">
                 {mockSuperAdminStats.recentActivity.map((activity: ActivityLog) => (
                   <div key={activity.id} className="flex items-start gap-3">
-                    <div className="mt-1.5 flex-shrink-0">
+                    <div className="mt-1.5 shrink-0">
                       <span
                         className={cn(
                           'inline-block h-2.5 w-2.5 rounded-full',
@@ -83,7 +110,7 @@ export default function SuperAdminDashboard() {
                         )}
                       />
                     </div>
-                    <div className="flex-1 min-w-0">
+                    <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium leading-tight">{activity.action}</p>
                       <p className="mt-0.5 text-xs text-muted-foreground truncate">
                         {activity.details}
@@ -100,7 +127,7 @@ export default function SuperAdminDashboard() {
         </Card>
 
         {/* Revenue Overview Chart */}
-        <Card>
+        <Card className="transition-shadow hover:shadow-md">
           <CardHeader>
             <CardTitle>Revenue Overview</CardTitle>
           </CardHeader>

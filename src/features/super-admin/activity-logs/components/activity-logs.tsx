@@ -92,12 +92,12 @@ export default function ActivityLogs() {
       </div>
 
       {/* Logs Table */}
-      <Card>
+      <Card className="transition-shadow hover:shadow-md">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
           <Table>
             <TableHeader>
-              <TableRow>
+              <TableRow className="transition-colors hover:bg-muted/50">
                 <TableHead className="w-10"></TableHead>
                 <TableHead>User</TableHead>
                 <TableHead>Action</TableHead>
@@ -107,14 +107,14 @@ export default function ActivityLogs() {
             </TableHeader>
             <TableBody>
               {paged.length === 0 ? (
-                <TableRow>
+                <TableRow className="transition-colors hover:bg-muted/50">
                   <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
                     No activity logs found.
                   </TableCell>
                 </TableRow>
               ) : (
                 paged.map((log) => (
-                  <TableRow key={log.id}>
+                  <TableRow key={log.id} className="transition-colors hover:bg-muted/50">
                     <TableCell>
                       <span
                         className={cn(

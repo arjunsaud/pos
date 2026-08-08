@@ -51,7 +51,7 @@ function PlanCard({ plan, isPro }: { plan: SubscriptionPlan; isPro: boolean }) {
   return (
     <Card
       className={cn(
-        'relative flex flex-col',
+        'relative flex flex-col transition-shadow hover:shadow-md',
         isPro && 'border-primary shadow-lg scale-[1.02]'
       )}
     >
@@ -156,7 +156,7 @@ export default function SubscriptionManagement() {
       </div>
 
       {/* Tenant Subscriptions Table */}
-      <Card>
+      <Card className="transition-shadow hover:shadow-md">
         <CardHeader>
           <CardTitle>Tenant Subscriptions</CardTitle>
         </CardHeader>
@@ -164,7 +164,7 @@ export default function SubscriptionManagement() {
           <div className="overflow-x-auto">
           <Table>
             <TableHeader>
-              <TableRow>
+              <TableRow className="transition-colors hover:bg-muted/50">
                 <TableHead>Tenant Name</TableHead>
                 <TableHead>Plan</TableHead>
                 <TableHead>Status</TableHead>
@@ -174,7 +174,7 @@ export default function SubscriptionManagement() {
             </TableHeader>
             <TableBody>
               {tenantSubscriptions.map((sub) => (
-                <TableRow key={sub.id}>
+                <TableRow key={sub.id} className="transition-colors hover:bg-muted/50">
                   <TableCell className="font-medium">{sub.name}</TableCell>
                   <TableCell>
                     <Badge variant={planBadgeVariant[sub.plan]}>

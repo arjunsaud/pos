@@ -80,7 +80,7 @@ export default function InventoryPage() {
         </TabsList>
 
         <TabsContent value="current">
-          <Card>
+          <Card className="transition-shadow hover:shadow-md">
             <CardHeader className="flex flex-row items-center justify-between space-y-0">
               <CardTitle>Current Stock Levels</CardTitle>
               <div className="relative w-56">
@@ -92,7 +92,7 @@ export default function InventoryPage() {
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow>
+                    <TableRow className="transition-colors hover:bg-muted/50">
                       <TableHead>Product</TableHead>
                       <TableHead>SKU</TableHead>
                       <TableHead className="text-center">Current Stock</TableHead>
@@ -103,7 +103,7 @@ export default function InventoryPage() {
                   </TableHeader>
                   <TableBody>
                     {pagedInventory.map((item) => (
-                      <TableRow key={item.id}>
+                      <TableRow key={item.id} className="transition-colors hover:bg-muted/50">
                         <TableCell className="font-medium">{item.productName}</TableCell>
                         <TableCell className="text-muted-foreground text-xs font-mono">{item.sku}</TableCell>
                         <TableCell className="text-center">
@@ -140,7 +140,7 @@ export default function InventoryPage() {
         </TabsContent>
 
         <TabsContent value="movements">
-          <Card>
+          <Card className="transition-shadow hover:shadow-md">
             <CardHeader>
               <CardTitle>Stock Movements</CardTitle>
             </CardHeader>
@@ -148,7 +148,7 @@ export default function InventoryPage() {
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow>
+                    <TableRow className="transition-colors hover:bg-muted/50">
                       <TableHead>Date</TableHead>
                       <TableHead>Product</TableHead>
                       <TableHead>Type</TableHead>
@@ -159,7 +159,7 @@ export default function InventoryPage() {
                   </TableHeader>
                   <TableBody>
                     {mockStockMovements.map((mov) => (
-                      <TableRow key={mov.id}>
+                      <TableRow key={mov.id} className="transition-colors hover:bg-muted/50">
                         <TableCell className="text-muted-foreground text-xs">{new Date(mov.date).toLocaleDateString('en-GB')}</TableCell>
                         <TableCell className="font-medium">{mov.productName}</TableCell>
                         <TableCell>

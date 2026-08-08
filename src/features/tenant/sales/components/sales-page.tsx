@@ -49,9 +49,11 @@ export default function SalesPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [page, setPage] = useState(1);
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
+  const [sortField, setSortField] = useState<'date' | 'total'>('date');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
 
   const filtered = useMemo(() => {
-    return sales.filter((s) => {
+    let result = sales.filter((s) => {
       const matchesSearch =
         s.invoiceNumber.toLowerCase().includes(search.toLowerCase()) ||
         s.customerName.toLowerCase().includes(search.toLowerCase());
@@ -62,11 +64,24 @@ export default function SalesPage() {
       const matchesTo = !dateTo || saleDate <= dateTo;
       return matchesSearch && matchesPayment && matchesStatus && matchesFrom && matchesTo;
     });
-  }, [sales, search, dateFrom, dateTo, paymentFilter, statusFilter]);
+    result.sort((a, b) => {
+      let cmp = 0;
+      if (sortField === 'date') cmp = a.date.localeCompare(b.date);
+      else cmp = a.total - b.total;
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+    return result;
+  }, [sales, search, dateFrom, dateTo, paymentFilter, statusFilter, sortField, sortDir]);
 
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
   const paged = filtered.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
   const totalSales = filtered.reduce((sum, s) => sum + s.total, 0);
+
+  const handleSort = (field: 'date' | 'total') => {
+    if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    else { setSortField(field); setSortDir('desc'); }
+  };
+  const sortIcon = (field: 'date' | 'total') => sortField === field ? (sortDir === 'asc' ? '↑' : '↓') : '↕';
 
   const exportCSV = () => {
     const headers = ['Invoice #', 'Date', 'Customer', 'PAN', 'Items', 'Subtotal', 'VAT', 'Total', 'Payment', 'Status'];
@@ -158,12 +173,12 @@ export default function SalesPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Invoice #</TableHead>
-                <TableHead>Date</TableHead>
+                <TableHead className="cursor-pointer select-none" onClick={() => handleSort('date')}>Date <span className="ml-1 text-[10px] opacity-60">{sortIcon('date')}</span></TableHead>
                 <TableHead>Customer</TableHead>
                 <TableHead className="text-center">Items</TableHead>
                 <TableHead>Payment</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="text-right">Total</TableHead>
+                <TableHead className="text-right cursor-pointer select-none" onClick={() => handleSort('total')}>Total <span className="ml-1 text-[10px] opacity-60">{sortIcon('total')}</span></TableHead>
                 <TableHead></TableHead>
               </TableRow>
             </TableHeader>

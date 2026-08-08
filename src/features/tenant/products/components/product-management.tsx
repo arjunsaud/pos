@@ -289,12 +289,12 @@ export default function ProductManagement() {
       </Card>
 
       {/* Table */}
-      <Card>
+      <Card className="transition-shadow hover:shadow-md">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
           <Table>
             <TableHeader>
-              <TableRow>
+              <TableRow className="transition-colors hover:bg-muted/50">
                 <TableHead className="w-12">
                   <Checkbox
                     checked={allPageSelected}
@@ -318,7 +318,7 @@ export default function ProductManagement() {
                 const isLow = product.stock > 0 && product.stock <= product.minStock;
                 const isOut = product.stock <= 0;
                 return (
-                  <TableRow key={product.id} data-state={selectedIds.includes(product.id) ? 'selected' : undefined}>
+                  <TableRow key={product.id} data-state={selectedIds.includes(product.id) ? 'selected' : undefined} className="transition-colors hover:bg-muted/50">
                     <TableCell>
                       <Checkbox
                         checked={selectedIds.includes(product.id)}

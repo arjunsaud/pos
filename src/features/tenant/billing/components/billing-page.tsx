@@ -154,7 +154,7 @@ export default function BillingPage() {
       </PageHeader>
 
       {/* Filters */}
-      <Card>
+      <Card className="transition-shadow hover:shadow-md">
         <CardContent className="p-4">
           <div className="flex flex-wrap items-end gap-3">
             <div className="flex-1" style={{ minWidth: '180px' }}>
@@ -192,7 +192,7 @@ export default function BillingPage() {
       </Card>
 
       {/* Table */}
-      <Card>
+      <Card className="transition-shadow hover:shadow-md">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
           <Table>
@@ -213,7 +213,7 @@ export default function BillingPage() {
             </TableHeader>
             <TableBody>
               {paged.map((sale) => (
-                <TableRow key={sale.id}>
+                <TableRow key={sale.id} className="transition-colors hover:bg-muted/50">
                   <TableCell className="font-medium">{sale.invoiceNumber}</TableCell>
                   <TableCell>{fmtDate(sale.date)}</TableCell>
                   <TableCell>{sale.customerName}</TableCell>

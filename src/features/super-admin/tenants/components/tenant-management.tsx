@@ -240,12 +240,12 @@ export default function TenantManagement() {
       </div>
 
       {/* Tenant Table */}
-      <Card>
+      <Card className="transition-shadow hover:shadow-md">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
           <Table>
             <TableHeader>
-              <TableRow>
+              <TableRow className="transition-colors hover:bg-muted/50">
                 <TableHead>Name</TableHead>
                 <TableHead className="hidden md:table-cell">Email</TableHead>
                 <TableHead>Plan</TableHead>
@@ -257,14 +257,14 @@ export default function TenantManagement() {
             </TableHeader>
             <TableBody>
               {pagedTenants.length === 0 ? (
-                <TableRow>
+                <TableRow className="transition-colors hover:bg-muted/50">
                   <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
                     No tenants found.
                   </TableCell>
                 </TableRow>
               ) : (
                 pagedTenants.map((tenant) => (
-                  <TableRow key={tenant.id}>
+                  <TableRow key={tenant.id} className="transition-colors hover:bg-muted/50">
                     <TableCell className="font-medium">{tenant.name}</TableCell>
                     <TableCell className="hidden md:table-cell text-muted-foreground">
                       {tenant.email}

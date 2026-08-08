@@ -19,6 +19,7 @@ import SuperAdminSettings from '@/features/super-admin/settings/components/super
 // Tenant pages
 import TenantDashboard from '@/features/tenant/dashboard/components/tenant-dashboard';
 import PosTerminal from '@/features/tenant/pos/components/pos-terminal';
+import CustomersPage from '@/features/tenant/customers/components/customers-page';
 import BillingPage from '@/features/tenant/billing/components/billing-page';
 import ProductManagement from '@/features/tenant/products/components/product-management';
 import InventoryPage from '@/features/tenant/inventory/components/inventory-page';
@@ -40,6 +41,7 @@ const sectionComponents: Record<NavSection, React.ComponentType> = {
   'super-admin-settings': SuperAdminSettings,
   'tenant-dashboard': TenantDashboard,
   'pos': PosTerminal,
+  'customers': CustomersPage,
   'billing': BillingPage,
   'products': ProductManagement,
   'inventory': InventoryPage,

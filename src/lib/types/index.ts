@@ -32,6 +32,7 @@ export type NavSection =
   | 'super-admin-settings'
   | 'tenant-dashboard'
   | 'pos'
+  | 'customers'
   | 'billing'
   | 'products'
   | 'inventory'
@@ -234,4 +235,28 @@ export interface TenantStats {
   totalOrdersGrowth: number;
   topProducts: { name: string; sold: number; revenue: number }[];
   lowStockAlerts: number;
+}
+
+// ---------- Customer ----------
+export interface Customer {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  pan: string;
+  address: string;
+  totalPurchases: number;
+  totalSpent: number;
+  lastVisit: string;
+  createdAt: string;
+  isActive: boolean;
+}
+
+// ---------- Held Sale ----------
+export interface HeldSale {
+  id: string;
+  cart: CartItem[];
+  customerName: string;
+  heldAt: string;
+  total: number;
 }

@@ -274,12 +274,12 @@ export default function SuperAdminStaff() {
       </PageHeader>
 
       {/* Staff Table */}
-      <Card>
+      <Card className="transition-shadow hover:shadow-md">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
           <Table>
             <TableHeader>
-              <TableRow>
+              <TableRow className="transition-colors hover:bg-muted/50">
                 <TableHead>Name</TableHead>
                 <TableHead className="hidden md:table-cell">Email</TableHead>
                 <TableHead className="hidden sm:table-cell">Phone</TableHead>
@@ -291,7 +291,7 @@ export default function SuperAdminStaff() {
             </TableHeader>
             <TableBody>
               {filteredStaff.map((member) => (
-                <TableRow key={member.id}>
+                <TableRow key={member.id} className="transition-colors hover:bg-muted/50">
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Avatar className="h-8 w-8">

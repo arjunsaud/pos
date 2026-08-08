@@ -24,7 +24,7 @@ export default function TenantSubscriptionPage() {
       <PageHeader title='Subscription' description='Manage your subscription plan' />
 
       {/* Current Plan Card */}
-      <Card className='border-primary'>
+      <Card className='border-primary transition-shadow hover:shadow-md'>
         <CardContent className='p-6'>
           <div className='flex flex-wrap items-start justify-between gap-4'>
             <div className='space-y-2'>
@@ -62,6 +62,7 @@ export default function TenantSubscriptionPage() {
             <Card
               key={plan.id}
               className={cn(
+                'transition-shadow hover:shadow-md',
                 isCurrent && 'border-primary shadow-lg scale-[1.02]',
                 isPopular && !isCurrent && 'border-primary/30'
               )}
@@ -126,7 +127,7 @@ export default function TenantSubscriptionPage() {
       </div>
 
       {/* Usage Stats */}
-      <Card>
+      <Card className='transition-shadow hover:shadow-md'>
         <CardHeader>
           <CardTitle>Usage</CardTitle>
         </CardHeader>
