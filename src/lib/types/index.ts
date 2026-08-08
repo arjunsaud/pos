@@ -42,7 +42,8 @@ export type NavSection =
   | 'tenant-subscription'
   | 'tenant-staff'
   | 'store-profile'
-  | 'settlement';
+  | 'settlement'
+  | 'notifications';
 
 export interface NavItem {
   label: string;

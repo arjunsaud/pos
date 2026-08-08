@@ -10,6 +10,9 @@ import { Separator } from '@/components/ui/separator';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  Sheet, SheetContent, SheetHeader, SheetTitle,
+} from '@/components/ui/sheet';
 import { Search, Plus, Minus, X, ShoppingCart, Banknote, CreditCard, Smartphone, Wallet, Receipt, Barcode, Trash2, TrendingUp, Clock, Pause, PlayCircle, Users, Printer } from 'lucide-react';
 import { mockProducts, mockCategories, mockCustomers } from '@/lib/mock-data';
 import { toast } from 'sonner';
@@ -47,6 +50,8 @@ export default function POSTerminal() {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [customerSearch, setCustomerSearch] = useState('');
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
+  const [cartSheetOpen, setCartSheetOpen] = useState(false);
+  const [isCartPulsing, setIsCartPulsing] = useState(false);
 
   const filteredCustomers = useMemo(() => {
     if (!customerSearch.trim()) return mockCustomers;
@@ -85,6 +90,8 @@ export default function POSTerminal() {
       }
       return [...prev, { product, quantity: 1, discount: 0 }];
     });
+    setIsCartPulsing(true);
+    setTimeout(() => setIsCartPulsing(false), 600);
   };
 
   const updateQuantity = (productId: string, delta: number) => {
@@ -188,6 +195,7 @@ export default function POSTerminal() {
     toast.success(`Sale completed! NPR ${npr(saleData.total)} via ${saleData.method}${selectedCustomer ? ` for ${selectedCustomer.name}` : ''}`);
     setCart([]);
     setDiscount(0);
+    setCartSheetOpen(false);
   };
 
   const handlePrintReceipt = useCallback(() => {
@@ -275,14 +283,14 @@ export default function POSTerminal() {
   }, [cart, receiptOpen, heldListOpen, searchQuery, handleCompleteSale]);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pb-20 md:pb-4">
       <PageHeader
         title="POS Terminal"
         description="Process sales and accept payments"
       >
         <div className="flex items-center gap-2">
           {heldSales.length > 0 && (
-            <Button variant="outline" size="sm" className="hidden sm:flex gap-1.5 border-amber-300 text-amber-700 dark:border-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30" onClick={() => setHeldListOpen(true)}>
+            <Button variant="outline" size="sm" className="flex gap-1.5 border-amber-300 text-amber-700 dark:border-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30" onClick={() => setHeldListOpen(true)}>
               <Pause className="h-3.5 w-3.5" />
               {heldSales.length} Held
             </Button>
@@ -329,7 +337,7 @@ export default function POSTerminal() {
         {/* Left: Products */}
         <div className="flex-1 space-y-4">
           {/* Search + Barcode */}
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -339,7 +347,7 @@ export default function POSTerminal() {
                 className="pl-9"
               />
             </div>
-            <div className="relative w-44 hidden sm:block">
+            <div className="relative sm:w-44">
               <Barcode className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 ref={barcodeRef}
@@ -353,7 +361,7 @@ export default function POSTerminal() {
           </div>
 
           {/* Category Pills */}
-          <ScrollArea className="w-full">
+          <div className="w-full overflow-x-auto no-scrollbar">
             <div className="flex gap-2 pb-1">
               {categories.map((cat) => (
                 <Button
@@ -367,10 +375,10 @@ export default function POSTerminal() {
                 </Button>
               ))}
             </div>
-          </ScrollArea>
+          </div>
 
           {/* Product Grid */}
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-3">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {filteredProducts.map((product) => {
               const isOutOfStock = product.stock <= 0;
               const isLowStock = product.stock > 0 && product.stock <= product.minStock;
@@ -425,7 +433,7 @@ export default function POSTerminal() {
         </div>
 
         {/* Right: Cart */}
-        <div className="w-full lg:w-[400px]">
+        <div className="hidden md:block w-full lg:w-[400px]">
           <Card className="sticky top-20">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
@@ -672,6 +680,269 @@ export default function POSTerminal() {
           </Card>
         </div>
       </div>
+
+      {/* Mobile Floating Cart Button */}
+      {cart.length > 0 && (
+        <div className="fixed bottom-4 right-4 left-4 z-30 md:hidden">
+          <Button
+            className={cn(
+              'w-full h-14 justify-between px-4 shadow-2xl rounded-2xl bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 text-white',
+              isCartPulsing && 'animate-cart-pulse'
+            )}
+            onClick={() => setCartSheetOpen(true)}
+          >
+            <span className="flex items-center gap-2">
+              <ShoppingCart className="h-5 w-5" />
+              <span className="font-semibold">View Cart ({cart.reduce((s, i) => s + i.quantity, 0)})</span>
+            </span>
+            <span className="font-bold text-lg">NPR {npr(total)}</span>
+          </Button>
+        </div>
+      )}
+
+      {/* Mobile Cart Sheet */}
+      <Sheet open={cartSheetOpen} onOpenChange={setCartSheetOpen}>
+        <SheetContent side="right" className="w-full sm:max-w-md gap-0 p-0 flex flex-col">
+          <SheetHeader className="border-b px-4 py-3 shrink-0">
+            <div className="flex items-center justify-between pr-8">
+              <SheetTitle className="flex items-center gap-2 text-base">
+                <ShoppingCart className="h-5 w-5" />
+                Cart
+                {cart.length > 0 && (
+                  <Badge variant="secondary">{cart.reduce((s, i) => s + i.quantity, 0)} items</Badge>
+                )}
+              </SheetTitle>
+              {cart.length > 0 && (
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => { setCart([]); setDiscount(0); }}>
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              )}
+            </div>
+            {/* Customer Selection - Mobile */}
+            <div className="relative mt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 gap-1.5 text-xs w-full justify-start"
+                onClick={() => { setShowCustomerDropdown(!showCustomerDropdown); setCustomerSearch(''); }}
+              >
+                <Users className="h-3 w-3" />
+                {selectedCustomer ? selectedCustomer.name : 'Walk-in Customer'}
+              </Button>
+              {showCustomerDropdown && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setShowCustomerDropdown(false)} />
+                  <div className="absolute left-0 top-full mt-1 z-50 w-72 rounded-lg border bg-popover p-2 shadow-md">
+                    <div className="relative">
+                      <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        placeholder="Search by name or phone..."
+                        value={customerSearch}
+                        onChange={(e) => setCustomerSearch(e.target.value)}
+                        className="h-8 pl-8 text-xs"
+                        autoFocus
+                      />
+                    </div>
+                    <div className="max-h-48 overflow-y-auto mt-1">
+                      {filteredCustomers.length === 0 ? (
+                        <div className="px-2 py-3 text-center text-xs text-muted-foreground">No customers found</div>
+                      ) : (
+                        filteredCustomers.map((customer) => (
+                          <div
+                            key={customer.id}
+                            className="flex items-center justify-between px-2 py-1.5 rounded-md text-sm hover:bg-accent cursor-pointer transition-colors"
+                            onClick={() => {
+                              setSelectedCustomer(customer);
+                              setShowCustomerDropdown(false);
+                              setCustomerSearch('');
+                            }}
+                          >
+                            <div className="min-w-0">
+                              <div className="text-xs font-medium truncate">{customer.name}</div>
+                              <div className="text-[11px] text-muted-foreground">{customer.phone}</div>
+                            </div>
+                            {customer.pan && (
+                              <Badge variant="secondary" className="text-[10px] px-1.5 shrink-0 ml-1">PAN</Badge>
+                            )}
+                          </div>
+                        ))
+                      )}
+                    </div>
+                    <Separator className="my-1" />
+                    <div
+                      className="flex items-center justify-between px-2 py-1.5 rounded-md text-sm hover:bg-accent cursor-pointer transition-colors text-muted-foreground"
+                      onClick={() => {
+                        setSelectedCustomer(null);
+                        setShowCustomerDropdown(false);
+                        setCustomerSearch('');
+                      }}
+                    >
+                      <span className="text-xs">Clear (Walk-in Customer)</span>
+                      <X className="h-3 w-3" />
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </SheetHeader>
+
+          {/* Scrollable Cart Items */}
+          <div className="flex-1 overflow-y-auto px-4 py-3">
+            {cart.length === 0 ? (
+              <div className="flex h-40 flex-col items-center justify-center gap-2 text-sm text-muted-foreground">
+                <ShoppingCart className="h-10 w-10 opacity-20" />
+                Cart is empty
+              </div>
+            ) : (
+              <div className="space-y-0">
+                {cart.map((item, idx) => {
+                  const isLowStock = item.product.stock > 0 && item.product.stock <= item.product.minStock;
+                  return (
+                    <div
+                      key={item.product.id}
+                      className={cn(
+                        'flex items-center gap-2 py-3 px-2 rounded-lg bg-muted/50 transition-colors hover:bg-muted border-b last:border-b-0',
+                        idx === 0 && 'rounded-t-lg',
+                        idx === cart.length - 1 && 'rounded-b-lg'
+                      )}
+                    >
+                      <div className={cn('w-0.5 h-8 rounded-full shrink-0', isLowStock ? 'bg-amber-400 dark:bg-amber-500' : 'bg-emerald-400 dark:bg-emerald-500')} />
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-medium leading-tight truncate">{item.product.name}</div>
+                        <div className="text-xs text-muted-foreground">NPR {npr(item.product.price)} each</div>
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-7 w-7 rounded-lg border-border/60"
+                          onClick={() => updateQuantity(item.product.id, -1)}
+                        >
+                          <Minus className="h-3 w-3" />
+                        </Button>
+                        <span className="w-7 text-center text-sm font-medium">{item.quantity}</span>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-7 w-7 rounded-lg border-border/60"
+                          onClick={() => updateQuantity(item.product.id, 1)}
+                        >
+                          <Plus className="h-3 w-3" />
+                        </Button>
+                      </div>
+                      <div className="w-20 text-right text-sm font-semibold shrink-0">
+                        NPR {npr(item.product.price * item.quantity)}
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
+                        onClick={() => removeFromCart(item.product.id)}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Held Sales - Mobile */}
+            {heldSales.length > 0 && cart.length === 0 && (
+              <>
+                <Separator className="my-3" />
+                <Button
+                  variant="outline"
+                  className="w-full gap-2 border-amber-300 text-amber-700 hover:bg-amber-50 dark:border-amber-700 dark:text-amber-400 dark:hover:bg-amber-950/30"
+                  onClick={() => { setCartSheetOpen(false); setHeldListOpen(true); }}
+                >
+                  <PlayCircle className="h-4 w-4" />
+                  Resume Held Sale ({heldSales.length})
+                </Button>
+              </>
+            )}
+          </div>
+
+          {/* Sticky Bottom: Totals + Payment + Actions */}
+          {cart.length > 0 && (
+            <div className="border-t bg-background p-4 space-y-3 shrink-0">
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Subtotal</span>
+                  <span>NPR {npr(subtotal)}</span>
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-muted-foreground">Discount</span>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={discount || ''}
+                    onChange={(e) => setDiscount(Math.max(0, Number(e.target.value)))}
+                    placeholder="0"
+                    className="h-8 w-28 text-right"
+                  />
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">VAT (13%)</span>
+                  <span>NPR {nprFull(vat)}</span>
+                </div>
+                <Separator />
+                <div className="flex justify-between items-baseline pt-0.5">
+                  <span className="text-lg font-bold">Total</span>
+                  <span className="text-lg font-bold animate-gentle-pulse">NPR {nprFull(total)}</span>
+                </div>
+              </div>
+
+              {/* Payment Methods */}
+              <div className="space-y-2">
+                <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Payment Method</div>
+                <div className="grid grid-cols-2 gap-2">
+                  {PAYMENT_METHODS.map((method) => {
+                    const Icon = method.icon;
+                    const isSelected = paymentMethod === method.id;
+                    const txCounts: Record<string, number> = { cash: 28, card: 12, esewa: 7, khalti: 3 };
+                    const borderColor = method.id === 'cash' ? 'border-b-emerald-500' : method.id === 'card' ? 'border-b-blue-500' : method.id === 'esewa' ? 'border-b-green-500' : 'border-b-purple-500';
+                    return (
+                      <Button
+                        key={method.id}
+                        variant={isSelected ? 'default' : 'outline'}
+                        className={cn(
+                          'h-10 justify-start gap-2 transition-all relative overflow-hidden',
+                          isSelected && cn('shadow-sm border-b-[3px]', borderColor)
+                        )}
+                        onClick={() => setPaymentMethod(method.id)}
+                      >
+                        <Icon className="h-4 w-4" />
+                        <span className="flex-1 text-left">{method.label}</span>
+                        <span className="text-[10px] opacity-70">{txCounts[method.id]} today</span>
+                      </Button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  className="flex-1 gap-2 border-amber-300 text-amber-700 hover:bg-amber-50 dark:border-amber-700 dark:text-amber-400 dark:hover:bg-amber-950/30"
+                  onClick={handleHoldSale}
+                >
+                  <Pause className="h-4 w-4" />
+                  Hold
+                </Button>
+                <Button
+                  className="flex-[2] h-12 text-base font-semibold gap-2 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600"
+                  onClick={handleCompleteSale}
+                >
+                  <Receipt className="h-5 w-5" />
+                  Complete Sale
+                </Button>
+              </div>
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
 
       {/* Held Sales Dialog */}
       <Dialog open={heldListOpen} onOpenChange={setHeldListOpen}>

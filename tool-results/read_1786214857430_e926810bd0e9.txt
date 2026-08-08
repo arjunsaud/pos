@@ -1,0 +1,596 @@
+     1→     1→'use client';
+     2→     2→
+     3→     3→import { useState, useMemo } from 'react';
+     4→     4→import { PageHeader } from '@/components/shared/page-header';
+     5→     5→import { StatCard } from '@/components/shared/stat-card';
+     6→     6→import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+     7→     7→import { Input } from '@/components/ui/input';
+     8→     8→import { Label } from '@/components/ui/label';
+     9→     9→import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+    10→    10→import {
+    11→    11→  Table,
+    12→    12→  TableBody,
+    13→    13→  TableCell,
+    14→    14→  TableHead,
+    15→    15→  TableHeader,
+    16→    16→  TableRow,
+    17→    17→} from '@/components/ui/table';
+    18→    18→import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+    19→    19→import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Cell, Pie, PieChart, Legend, Area, AreaChart } from 'recharts';
+    20→    20→import { Button } from '@/components/ui/button';
+    21→    21→import { Badge } from '@/components/ui/badge';
+    22→    22→import { TrendingUp, DollarSign, ShoppingCart, Calendar, Download, PieChart as PieChartIcon, BarChart3 } from 'lucide-react';
+    23→    23→import { toast } from 'sonner';
+    24→    24→import {
+    25→    25→  mockSalesReportData,
+    26→    26→  mockInventoryReportData,
+    27→    27→  mockVATReportData,
+    28→    28→} from '@/lib/mock-data';
+    29→    29→import { npr } from '@/lib/helpers';
+    30→    30→import type { ChartConfig } from '@/components/ui/chart';
+    31→    31→
+    32→    32→const salesChartConfig: ChartConfig = {
+    33→    33→  sales: { label: 'Sales (NPR)', color: 'hsl(var(--chart-1))' },
+    34→    34→};
+    35→    35→
+    36→    36→const inventoryChartConfig: ChartConfig = {
+    37→    37→  totalValue: { label: 'Stock Value (NPR)', color: 'hsl(var(--chart-2))' },
+    38→    38→};
+    39→    39→
+    40→    40→const vatChartConfig: ChartConfig = {
+    41→    41→  vatCollected: { label: 'VAT Collected', color: 'hsl(var(--chart-1))' },
+    42→    42→  vatPaid: { label: 'VAT Paid', color: 'hsl(var(--chart-3))' },
+    43→    43→};
+    44→    44→
+    45→    45→const topCategoriesChartConfig: ChartConfig = {
+    46→    46→  revenue: { label: 'Revenue (NPR)', color: 'hsl(var(--chart-1))' },
+    47→    47→  units: { label: 'Units Sold', color: 'hsl(var(--chart-2))' },
+    48→    48→};
+    49→    49→
+    50→    50→const vatTrendChartConfig: ChartConfig = {
+    51→    51→  collected: { label: 'VAT Collected', color: 'hsl(var(--chart-1))' },
+    52→    52→  paid: { label: 'VAT Paid', color: 'hsl(var(--chart-3))' },
+    53→    53→};
+    54→    54→
+    55→    55→const topCategoriesData = [
+    56→    56→  { category: 'Dairy & Eggs', revenue: 89000, units: 340 },
+    57→    57→  { category: 'Snacks & Chips', revenue: 72400, units: 520 },
+    58→    58→  { category: 'Beverages', revenue: 65800, units: 410 },
+    59→    59→  { category: 'Rice & Grains', revenue: 58200, units: 89 },
+    60→    60→  { category: 'Personal Care', revenue: 44500, units: 64 },
+    61→    61→  { category: 'Cooking Essentials', revenue: 38700, units: 102 },
+    62→    62→  { category: 'Cleaning Products', revenue: 28300, units: 87 },
+    63→    63→  { category: 'Frozen Foods', revenue: 22100, units: 45 },
+    64→    64→];
+    65→    65→
+    66→    66→const vatTrendData = [
+    67→    67→  { month: 'Jan', collected: 42000, paid: 18000 },
+    68→    68→  { month: 'Feb', collected: 38500, paid: 16500 },
+    69→    69→  { month: 'Mar', collected: 51200, paid: 22000 },
+    70→    70→  { month: 'Apr', collected: 46800, paid: 20100 },
+    71→    71→  { month: 'May', collected: 55300, paid: 23800 },
+    72→    72→  { month: 'Jun', collected: 49200, paid: 21200 },
+    73→    73→];
+    74→    74→
+    75→    75→const pieChartConfig = {
+    76→    76→  cash: { label: 'Cash', color: 'hsl(var(--chart-1))' },
+    77→    77→  card: { label: 'Card', color: 'hsl(var(--chart-2))' },
+    78→    78→  esewa: { label: 'eSewa', color: 'hsl(var(--chart-3))' },
+    79→    79→  khalti: { label: 'Khalti', color: 'hsl(var(--chart-4))' },
+    80→    80→} satisfies ChartConfig;
+    81→    81→
+    82→    82→const paymentPieData = [
+    83→    83→  { name: 'cash', value: 18750, fill: 'var(--color-cash)' },
+    84→    84→  { name: 'card', value: 8464, fill: 'var(--color-card)' },
+    85→    85→  { name: 'esewa', value: 4593, fill: 'var(--color-esewa)' },
+    86→    86→  { name: 'khalti', value: 3393, fill: 'var(--color-khalti)' },
+    87→    87→];
+    88→    88→
+    89→    89→function formatDate(date: Date): string {
+    90→    90→  const y = date.getFullYear();
+    91→    91→  const m = String(date.getMonth() + 1).padStart(2, '0');
+    92→    92→  const d = String(date.getDate()).padStart(2, '0');
+    93→    93→  return `${y}-${m}-${d}`;
+    94→    94→}
+    95→    95→
+    96→    96→const datePresets = [
+    97→    97→  { label: 'Today', key: 'today' },
+    98→    98→  { label: 'Last 7 Days', key: '7d' },
+    99→    99→  { label: 'Last 30 Days', key: '30d' },
+   100→   100→  { label: 'This Month', key: 'month' },
+   101→   101→] as const;
+   102→   102→
+   103→   103→export default function ReportsPage() {
+   104→   104→  const [dateFrom, setDateFrom] = useState('');
+   105→   105→  const [dateTo, setDateTo] = useState('');
+   106→   106→  const [datePreset, setDatePreset] = useState('');
+   107→   107→  const [categoriesView, setCategoriesView] = useState<'revenue' | 'units'>('revenue');
+   108→   108→
+   109→   109→  const applyPreset = (key: string) => {
+   110→   110→    const today = new Date();
+   111→   111→    today.setHours(0, 0, 0, 0);
+   112→   112→    let from: Date;
+   113→   113→    let to: Date = new Date(today);
+   114→   114→
+   115→   115→    switch (key) {
+   116→   116→      case 'today':
+   117→   117→        from = new Date(today);
+   118→   118→        break;
+   119→   119→      case '7d': {
+   120→   120→        from = new Date(today);
+   121→   121→        from.setDate(from.getDate() - 6);
+   122→   122→        break;
+   123→   123→      }
+   124→   124→      case '30d': {
+   125→   125→        from = new Date(today);
+   126→   126→        from.setDate(from.getDate() - 29);
+   127→   127→        break;
+   128→   128→      }
+   129→   129→      case 'month': {
+   130→   130→        from = new Date(today.getFullYear(), today.getMonth(), 1);
+   131→   131→        break;
+   132→   132→      }
+   133→   133→      default:
+   134→   134→        return;
+   135→   135→    }
+   136→   136→
+   137→   137→    setDateFrom(formatDate(from));
+   138→   138→    setDateTo(formatDate(to));
+   139→   139→    setDatePreset(key);
+   140→   140→  };
+   141→   141→
+   142→   142→  const handleDateFromChange = (value: string) => {
+   143→   143→    setDateFrom(value);
+   144→   144→    setDatePreset('');
+   145→   145→  };
+   146→   146→
+   147→   147→  const handleDateToChange = (value: string) => {
+   148→   148→    setDateTo(value);
+   149→   149→    setDatePreset('');
+   150→   150→  };
+   151→   151→
+   152→   152→  // Filter sales report data by date range (mock filter - slice)
+   153→   153→  const filteredSalesData = useMemo(() => {
+   154→   154→    if (!dateFrom && !dateTo) return mockSalesReportData;
+   155→   155→    const sorted = [...mockSalesReportData].sort((a, b) => a.date.localeCompare(b.date));
+   156→   156→    const fromIdx = dateFrom ? sorted.findIndex((d) => d.date >= dateFrom) : 0;
+   157→   157→    const toIdx = dateTo ? sorted.findLastIndex((d) => d.date <= dateTo) : sorted.length - 1;
+   158→   158→    if (fromIdx < 0 || toIdx < 0 || fromIdx > toIdx) return [];
+   159→   159→    return sorted.slice(fromIdx, toIdx + 1);
+   160→   160→  }, [dateFrom, dateTo]);
+   161→   161→
+   162→   162→  const exportCSV = (headers: string[], rows: string[][], filename: string) => {
+   163→   163→    const csv = [headers, ...rows].map((r) => r.join(',')).join('\n');
+   164→   164→    const blob = new Blob([csv], { type: 'text/csv' });
+   165→   165→    const url = URL.createObjectURL(blob);
+   166→   166→    const a = document.createElement('a');
+   167→   167→    a.href = url; a.download = filename; a.click();
+   168→   168→    URL.revokeObjectURL(url);
+   169→   169→    toast.success(`${filename} exported`);
+   170→   170→  };
+   171→   171→
+   172→   172→  const exportSalesCSV = () => {
+   173→   173→    const headers = ['Date', 'Sales (NPR)', 'Orders'];
+   174→   174→    const rows = filteredSalesData.map((d) => [d.date, String(d.sales), String(d.orders)]);
+   175→   175→    exportCSV(headers, rows, 'sales-report.csv');
+   176→   176→  };
+   177→   177→
+   178→   178→  const exportInventoryCSV = () => {
+   179→   179→    const headers = ['Category', 'Total Products', 'Total Value (NPR)', 'Low Stock'];
+   180→   180→    const rows = mockInventoryReportData.map((d) => [d.category, String(d.totalProducts), String(d.totalValue), String(d.lowStock)]);
+   181→   181→    exportCSV(headers, rows, 'inventory-report.csv');
+   182→   182→  };
+   183→   183→
+   184→   184→  const exportVATCSV = () => {
+   185→   185→    const headers = ['Month', 'Taxable Amount', 'VAT Collected', 'VAT Paid'];
+   186→   186→    const rows = mockVATReportData.map((d) => [d.month, String(d.taxableAmount), String(d.vatCollected), String(d.vatPaid)]);
+   187→   187→    exportCSV(headers, rows, 'vat-report.csv');
+   188→   188→  };
+   189→   189→
+   190→   190→  // Sales Report calculations
+   191→   191→  const salesData = filteredSalesData.map((d) => ({
+   192→   192→    date: d.date.slice(5),
+   193→   193→    sales: d.sales,
+   194→   194→  }));
+   195→   195→  const totalRevenue = filteredSalesData.reduce((sum, d) => sum + d.sales, 0);
+   196→   196→  const avgDailySales = filteredSalesData.length > 0 ? Math.round(totalRevenue / filteredSalesData.length) : 0;
+   197→   197→  const totalOrders = filteredSalesData.reduce((sum, d) => sum + d.orders, 0);
+   198→   198→  const bestDay = filteredSalesData.reduce(
+   199→   199→    (best, d) => (d.sales > best.sales ? d : best),
+   200→   200→    { date: '—', sales: 0, orders: 0 }
+   201→   201→  );
+   202→   202→
+   203→   203→  // VAT Report calculations
+   204→   204→  const vatTableData = mockVATReportData.map((d) => ({
+   205→   205→    ...d,
+   206→   206→    netVAT: d.vatCollected - d.vatPaid,
+   207→   207→  }));
+   208→   208→
+   209→   209→  return (
+   210→   210→    <div className="space-y-6">
+   211→   211→      <PageHeader title="Reports & Analytics" />
+   212→   212→
+   213→   213→      {/* Date Range Filter */}
+   214→   214→      <Card className="transition-shadow hover:shadow-md">
+   215→   215→        <CardContent className="space-y-3 p-4">
+   216→   216→          <div className="flex flex-wrap gap-2">
+   217→   217→            {datePresets.map((preset) => (
+   218→   218→              <Button
+   219→   219→                key={preset.key}
+   220→   220→                variant={datePreset === preset.key ? 'default' : 'outline'}
+   221→   221→                size="sm"
+   222→   222→                onClick={() => applyPreset(preset.key)}
+   223→   223→              >
+   224→   224→                {preset.label}
+   225→   225→              </Button>
+   226→   226→            ))}
+   227→   227→          </div>
+   228→   228→          <div className="flex flex-wrap items-end gap-3">
+   229→   229→            <div>
+   230→   230→              <Label className="mb-1.5">From</Label>
+   231→   231→              <Input type="date" value={dateFrom} onChange={(e) => handleDateFromChange(e.target.value)} />
+   232→   232→            </div>
+   233→   233→            <div>
+   234→   234→              <Label className="mb-1.5">To</Label>
+   235→   235→              <Input type="date" value={dateTo} onChange={(e) => handleDateToChange(e.target.value)} />
+   236→   236→            </div>
+   237→   237→          </div>
+   238→   238→        </CardContent>
+   239→   239→      </Card>
+   240→   240→
+   241→   241→      <Tabs defaultValue="sales">
+   242→   242→        <TabsList>
+   243→   243→          <TabsTrigger value="sales">Sales Report</TabsTrigger>
+   244→   244→          <TabsTrigger value="payment">Payment Breakdown</TabsTrigger>
+   245→   245→          <TabsTrigger value="inventory">Inventory Report</TabsTrigger>
+   246→   246→          <TabsTrigger value="vat">VAT Report</TabsTrigger>
+   247→   247→          <TabsTrigger value="categories" className="gap-1.5">
+   248→   248→            <BarChart3 className="h-3.5 w-3.5" />
+   249→   249→            Top Categories
+   250→   250→          </TabsTrigger>
+   251→   251→        </TabsList>
+   252→   252→
+   253→   253→        {/* Sales Report */}
+   254→   254→        <TabsContent value="sales" className="space-y-6">
+   255→   255→          <div className="flex justify-end">
+   256→   256→            <Button variant="outline" size="sm" onClick={exportSalesCSV}>
+   257→   257→              <Download className="h-4 w-4" /> Export CSV
+   258→   258→            </Button>
+   259→   259→          </div>
+   260→   260→          {/* Summary Stats */}
+   261→   261→          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+   262→   262→            <StatCard title="Total Revenue" value={`NPR ${npr(totalRevenue)}`} icon={DollarSign} />
+   263→   263→            <StatCard title="Avg Daily Sales" value={`NPR ${npr(avgDailySales)}`} icon={TrendingUp} />
+   264→   264→            <StatCard title="Total Orders" value={npr(totalOrders)} icon={ShoppingCart} />
+   265→   265→            <StatCard
+   266→   266→              title="Best Day"
+   267→   267→              value={`NPR ${npr(bestDay.sales)}`}
+   268→   268→              icon={Calendar}
+   269→   269→              description={bestDay.date}
+   270→   270→            />
+   271→   271→          </div>
+   272→   272→
+   273→   273→          {/* Data Summary Strip */}
+   274→   274→          <div className="flex items-center justify-center gap-6 bg-muted/30 rounded-lg px-4 py-2 text-sm text-muted-foreground">
+   275→   275→            <span>Total: <strong className="text-foreground">NPR {npr(totalRevenue)}</strong></span>
+   276→   276→            <span>Orders: <strong className="text-foreground">{totalOrders}</strong></span>
+   277→   277→            <span>Avg: <strong className="text-foreground">NPR {npr(avgDailySales)}</strong></span>
+   278→   278→          </div>
+   279→   279→
+   280→   280→          <Card className="transition-shadow hover:shadow-md">
+   281→   281→            <CardHeader>
+   282→   282→              <CardTitle>Daily Sales</CardTitle>
+   283→   283→            </CardHeader>
+   284→   284→            <CardContent>
+   285→   285→              <ChartContainer config={salesChartConfig} className="h-[300px] w-full">
+   286→   286→                <BarChart data={salesData}>
+   287→   287→                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+   288→   288→                  <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} />
+   289→   289→                  <YAxis tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
+   290→   290→                  <ChartTooltip content={<ChartTooltipContent />} />
+   291→   291→                  <Bar dataKey="sales" fill="var(--color-sales)" radius={[4, 4, 0, 0]} />
+   292→   292→                </BarChart>
+   293→   293→              </ChartContainer>
+   294→   294→            </CardContent>
+   295→   295→          </Card>
+   296→   296→        </TabsContent>
+   297→   297→
+   298→   298→        {/* Payment Breakdown (NEW) */}
+   299→   299→        <TabsContent value="payment" className="space-y-6">
+   300→   300→          <div className="grid gap-6 md:grid-cols-2">
+   301→   301→            <Card className="transition-shadow hover:shadow-md">
+   302→   302→              <CardHeader>
+   303→   303→                <CardTitle className="flex items-center gap-2">
+   304→   304→                  <PieChartIcon className="h-4 w-4" />
+   305→   305→                  Payment Method Distribution
+   306→   306→                </CardTitle>
+   307→   307→              </CardHeader>
+   308→   308→              <CardContent className="flex items-center justify-center">
+   309→   309→                <ChartContainer config={pieChartConfig} className="h-[300px] w-full">
+   310→   310→                  <PieChart>
+   311→   311→                    <ChartTooltip content={<ChartTooltipContent />} />
+   312→   312→                    <Pie
+   313→   313→                      data={paymentPieData}
+   314→   314→                      dataKey="value"
+   315→   315→                      nameKey="name"
+   316→   316→                      cx="50%"
+   317→   317→                      cy="50%"
+   318→   318→                      innerRadius={60}
+   319→   319→                      outerRadius={100}
+   320→   320→                      strokeWidth={2}
+   321→   321→                      stroke="hsl(var(--background))"
+   322→   322→                    >
+   323→   323→                      {paymentPieData.map((entry, index) => (
+   324→   324→                        <Cell key={`cell-${index}`} fill={entry.fill} />
+   325→   325→                      ))}
+   326→   326→                    </Pie>
+   327→   327→                  </PieChart>
+   328→   328→                </ChartContainer>
+   329→   329→              </CardContent>
+   330→   330→            </Card>
+   331→   331→
+   332→   332→            <Card className="transition-shadow hover:shadow-md">
+   333→   333→              <CardHeader>
+   334→   334→                <CardTitle>Payment Summary</CardTitle>
+   335→   335→              </CardHeader>
+   336→   336→              <CardContent>
+   337→   337→                <div className="space-y-4">
+   338→   338→                  {paymentPieData.map((p) => {
+   339→   339→                    const total = paymentPieData.reduce((s, d) => s + d.value, 0);
+   340→   340→                    const pct = Math.round((p.value / total) * 100);
+   341→   341→                    const labels: Record<string, { label: string; color: string }> = {
+   342→   342→                      cash: { label: 'Cash', color: 'bg-[hsl(var(--chart-1))]' },
+   343→   343→                      card: { label: 'Card', color: 'bg-[hsl(var(--chart-2))]' },
+   344→   344→                      esewa: { label: 'eSewa', color: 'bg-[hsl(var(--chart-3))]' },
+   345→   345→                      khalti: { label: 'Khalti', color: 'bg-[hsl(var(--chart-4))]' },
+   346→   346→                    };
+   347→   347→                    const info = labels[p.name];
+   348→   348→                    return (
+   349→   349→                      <div key={p.name} className="space-y-1.5">
+   350→   350→                        <div className="flex items-center justify-between text-sm">
+   351→   351→                          <div className="flex items-center gap-2">
+   352→   352→                            <span className={`h-3 w-3 rounded-full ${info.color}`} />
+   353→   353→                            <span className="font-medium">{info.label}</span>
+   354→   354→                          </div>
+   355→   355→                          <div className="text-right">
+   356→   356→                            <span className="font-semibold">NPR {npr(p.value)}</span>
+   357→   357→                            <span className="ml-2 text-muted-foreground">({pct}%)</span>
+   358→   358→                          </div>
+   359→   359→                        </div>
+   360→   360→                        <div className="h-2 rounded-full bg-muted overflow-hidden">
+   361→   361→                          <div className={`h-full rounded-full ${info.color} transition-all duration-500`} style={{ width: `${pct}%` }} />
+   362→   362→                        </div>
+   363→   363→                      </div>
+   364→   364→                    );
+   365→   365→                  })}
+   366→   366→                  <div className="mt-4 flex items-center justify-between rounded-lg bg-muted/50 px-4 py-3">
+   367→   367→                    <span className="text-sm font-medium">Total Today</span>
+   368→   368→                    <span className="text-lg font-bold">NPR {npr(paymentPieData.reduce((s, d) => s + d.value, 0))}</span>
+   369→   369→                  </div>
+   370→   370→                </div>
+   371→   371→              </CardContent>
+   372→   372→            </Card>
+   373→   373→          </div>
+   374→   374→        </TabsContent>
+   375→   375→
+   376→   376→        {/* Inventory Report */}
+   377→   377→        <TabsContent value="inventory" className="space-y-6">
+   378→   378→          <div className="flex justify-end">
+   379→   379→            <Button variant="outline" size="sm" onClick={exportInventoryCSV}>
+   380→   380→              <Download className="h-4 w-4" /> Export CSV
+   381→   381→            </Button>
+   382→   382→          </div>
+   383→   383→          <Card className="transition-shadow hover:shadow-md">
+   384→   384→            <CardHeader>
+   385→   385→              <CardTitle>Inventory Value by Category</CardTitle>
+   386→   386→            </CardHeader>
+   387→   387→            <CardContent>
+   388→   388→              <ChartContainer config={inventoryChartConfig} className="h-[300px] w-full">
+   389→   389→                <BarChart data={mockInventoryReportData}>
+   390→   390→                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+   391→   391→                  <XAxis dataKey="category" tickLine={false} axisLine={false} tickMargin={8} />
+   392→   392→                  <YAxis tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
+   393→   393→                  <ChartTooltip content={<ChartTooltipContent />} />
+   394→   394→                  <Bar dataKey="totalValue" fill="var(--color-totalValue)" radius={[4, 4, 0, 0]} />
+   395→   395→                </BarChart>
+   396→   396→              </ChartContainer>
+   397→   397→            </CardContent>
+   398→   398→          </Card>
+   399→   399→
+   400→   400→          <Card className="transition-shadow hover:shadow-md">
+   401→   401→            <CardContent className="p-0">
+   402→   402→              <div className="overflow-x-auto">
+   403→   403→              <Table>
+   404→   404→                <TableHeader>
+   405→   405→                  <TableRow>
+   406→   406→                    <TableHead>Category</TableHead>
+   407→   407→                    <TableHead className="text-center">Products</TableHead>
+   408→   408→                    <TableHead className="text-right">Total Value</TableHead>
+   409→   409→                    <TableHead className="text-center">Low Stock</TableHead>
+   410→   410→                  </TableRow>
+   411→   411→                </TableHeader>
+   412→   412→                <TableBody>
+   413→   413→                  {mockInventoryReportData.map((row) => (
+   414→   414→                    <TableRow key={row.category} className="transition-colors hover:bg-muted/50">
+   415→   415→                      <TableCell className="font-medium">{row.category}</TableCell>
+   416→   416→                      <TableCell className="text-center">{row.totalProducts}</TableCell>
+   417→   417→                      <TableCell className="text-right">NPR {npr(row.totalValue)}</TableCell>
+   418→   418→                      <TableCell className="text-center">
+   419→   419→                        {row.lowStock > 0 ? (
+   420→   420→                          <span className="text-amber-600 font-medium">{row.lowStock}</span>
+   421→   421→                        ) : (
+   422→   422→                          <span className="text-muted-foreground">0</span>
+   423→   423→                        )}
+   424→   424→                      </TableCell>
+   425→   425→                    </TableRow>
+   426→   426→                  ))}
+   427→   427→                </TableBody>
+   428→   428→              </Table>
+   429→   429→              </div>
+   430→   430→            </CardContent>
+   431→   431→          </Card>
+   432→   432→        </TabsContent>
+   433→   433→
+   434→   434→        {/* VAT Report */}
+   435→   435→        <TabsContent value="vat" className="space-y-6">
+   436→   436→          <div className="flex justify-end">
+   437→   437→            <Button variant="outline" size="sm" onClick={exportVATCSV}>
+   438→   438→              <Download className="h-4 w-4" /> Export CSV
+   439→   439→            </Button>
+   440→   440→          </div>
+   441→   441→          <Card className="transition-shadow hover:shadow-md">
+   442→   442→            <CardHeader>
+   443→   443→              <CardTitle>VAT Trends</CardTitle>
+   444→   444→            </CardHeader>
+   445→   445→            <CardContent>
+   446→   446→              <ChartContainer config={vatTrendChartConfig} className="h-[200px] w-full">
+   447→   447→                <AreaChart data={vatTrendData}>
+   448→   448→                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+   449→   449→                  <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} />
+   450→   450→                  <YAxis tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(v) => `NPR ${(v / 1000).toFixed(0)}k`} />
+   451→   451→                  <ChartTooltip content={<ChartTooltipContent />} />
+   452→   452→                  <Area type="monotone" dataKey="collected" stroke="var(--color-collected)" fill="var(--color-collected)" fillOpacity={0.15} strokeWidth={2} />
+   453→   453→                  <Area type="monotone" dataKey="paid" stroke="var(--color-paid)" fill="var(--color-paid)" fillOpacity={0.15} strokeWidth={2} />
+   454→   454→                </AreaChart>
+   455→   455→              </ChartContainer>
+   456→   456→            </CardContent>
+   457→   457→          </Card>
+   458→   458→
+   459→   459→          <Card className="transition-shadow hover:shadow-md">
+   460→   460→            <CardHeader>
+   461→   461→              <CardTitle>VAT Collected vs VAT Paid</CardTitle>
+   462→   462→            </CardHeader>
+   463→   463→            <CardContent>
+   464→   464→              <ChartContainer config={vatChartConfig} className="h-[300px] w-full">
+   465→   465→                <BarChart data={mockVATReportData}>
+   466→   466→                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+   467→   467→                  <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} />
+   468→   468→                  <YAxis tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
+   469→   469→                  <ChartTooltip content={<ChartTooltipContent />} />
+   470→   470→                  <Bar dataKey="vatCollected" fill="var(--color-vatCollected)" radius={[4, 4, 0, 0]} />
+   471→   471→                  <Bar dataKey="vatPaid" fill="var(--color-vatPaid)" radius={[4, 4, 0, 0]} />
+   472→   472→                </BarChart>
+   473→   473→              </ChartContainer>
+   474→   474→            </CardContent>
+   475→   475→          </Card>
+   476→   476→
+   477→   477→          <Card className="transition-shadow hover:shadow-md">
+   478→   478→            <CardContent className="p-0">
+   479→   479→              <div className="overflow-x-auto">
+   480→   480→              <Table>
+   481→   481→                <TableHeader>
+   482→   482→                  <TableRow>
+   483→   483→                    <TableHead>Month</TableHead>
+   484→   484→                    <TableHead className="text-right">Taxable Amount</TableHead>
+   485→   485→                    <TableHead className="text-right">VAT Collected</TableHead>
+   486→   486→                    <TableHead className="text-right">VAT Paid</TableHead>
+   487→   487→                    <TableHead className="text-right">Net VAT</TableHead>
+   488→   488→                  </TableRow>
+   489→   489→                </TableHeader>
+   490→   490→                <TableBody>
+   491→   491→                  {vatTableData.map((row) => (
+   492→   492→                    <TableRow key={row.month} className="transition-colors hover:bg-muted/50">
+   493→   493→                      <TableCell className="font-medium">{row.month}</TableCell>
+   494→   494→                      <TableCell className="text-right">NPR {npr(row.taxableAmount)}</TableCell>
+   495→   495→                      <TableCell className="text-right">NPR {npr(row.vatCollected)}</TableCell>
+   496→   496→                      <TableCell className="text-right">NPR {npr(row.vatPaid)}</TableCell>
+   497→   497→                      <TableCell className="text-right font-semibold">
+   498→   498→                        NPR {npr(row.netVAT)}
+   499→   499→                      </TableCell>
+   500→   500→                    </TableRow>
+   501→   501→                  ))}
+   502→   502→                </TableBody>
+   503→   503→              </Table>
+   504→   504→              </div>
+   505→   505→            </CardContent>
+   506→   506→          </Card>
+   507→   507→        </TabsContent>
+   508→   508→
+   509→   509→        {/* Top Categories */}
+   510→   510→        <TabsContent value="categories" className="space-y-6">
+   511→   511→          {/* Summary Stats */}
+   512→   512→          <div className="flex flex-wrap items-center gap-4">
+   513→   513→            <div className="rounded-lg border bg-muted/50 px-4 py-2.5">
+   514→   514→              <p className="text-xs text-muted-foreground">Total Revenue</p>
+   515→   515→              <p className="text-lg font-bold">NPR {npr(topCategoriesData.reduce((s, d) => s + d.revenue, 0))}</p>
+   516→   516→            </div>
+   517→   517→            <div className="flex items-center gap-2 rounded-lg border bg-muted/50 px-4 py-2.5">
+   518→   518→              <p className="text-xs text-muted-foreground">Top Category</p>
+   519→   519→              <Badge variant="default" className="ml-1">{topCategoriesData[0].category}</Badge>
+   520→   520→            </div>
+   521→   521→            <div className="ml-auto">
+   522→   522→              <div className="inline-flex rounded-lg border p-0.5">
+   523→   523→                <button
+   524→   524→                  onClick={() => setCategoriesView('revenue')}
+   525→   525→                  className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+   526→   526→                    categoriesView === 'revenue'
+   527→   527→                      ? 'bg-primary text-primary-foreground shadow-sm'
+   528→   528→                      : 'text-muted-foreground hover:text-foreground'
+   529→   529→                  }`}
+   530→   530→                >
+   531→   531→                  Revenue
+   532→   532→                </button>
+   533→   533→                <button
+   534→   534→                  onClick={() => setCategoriesView('units')}
+   535→   535→                  className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+   536→   536→                    categoriesView === 'units'
+   537→   537→                      ? 'bg-primary text-primary-foreground shadow-sm'
+   538→   538→                      : 'text-muted-foreground hover:text-foreground'
+   539→   539→                  }`}
+   540→   540→                >
+   541→   541→                  Units Sold
+   542→   542→                </button>
+   543→   543→              </div>
+   544→   544→            </div>
+   545→   545→          </div>
+   546→   546→
+   547→   547→          <Card className="transition-shadow hover:shadow-md">
+   548→   548→            <CardHeader>
+   549→   549→              <CardTitle className="flex items-center gap-2">
+   550→   550→                <BarChart3 className="h-4 w-4" />
+   551→   551→                Top Categories by {categoriesView === 'revenue' ? 'Revenue' : 'Units Sold'}
+   552→   552→              </CardTitle>
+   553→   553→            </CardHeader>
+   554→   554→            <CardContent>
+   555→   555→              <ChartContainer config={topCategoriesChartConfig} className="h-[350px] w-full">
+   556→   556→                <BarChart
+   557→   557→                  data={topCategoriesData}
+   558→   558→                  layout="vertical"
+   559→   559→                  margin={{ left: 20 }}
+   560→   560→                >
+   561→   561→                  <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+   562→   562→                  <XAxis
+   563→   563→                    type="number"
+   564→   564→                    tickLine={false}
+   565→   565→                    axisLine={false}
+   566→   566→                    tickMargin={8}
+   567→   567→                    tickFormatter={categoriesView === 'revenue'
+   568→   568→                      ? (v) => `NPR ${(v / 1000).toFixed(0)}k`
+   569→   569→                      : (v) => String(v)
+   570→   570→                    }
+   571→   571→                  />
+   572→   572→                  <YAxis
+   573→   573→                    type="category"
+   574→   574→                    dataKey="category"
+   575→   575→                    tickLine={false}
+   576→   576→                    axisLine={false}
+   577→   577→                    tickMargin={8}
+   578→   578→                    width={120}
+   579→   579→                    tick={{ fontSize: 12 }}
+   580→   580→                  />
+   581→   581→                  <ChartTooltip content={<ChartTooltipContent />} />
+   582→   582→                  <Bar
+   583→   583→                    dataKey={categoriesView}
+   584→   584→                    fill={categoriesView === 'revenue' ? 'var(--color-revenue)' : 'var(--color-units)'}
+   585→   585→                    radius={[0, 4, 4, 0]}
+   586→   586→                  />
+   587→   587→                </BarChart>
+   588→   588→              </ChartContainer>
+   589→   589→            </CardContent>
+   590→   590→          </Card>
+   591→   591→        </TabsContent>
+   592→   592→      </Tabs>
+   593→   593→    </div>
+   594→   594→  );
+   595→   595→}
+   596→   596→

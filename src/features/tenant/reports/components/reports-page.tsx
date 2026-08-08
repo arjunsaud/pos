@@ -27,6 +27,7 @@ import {
   mockVATReportData,
 } from '@/lib/mock-data';
 import { npr } from '@/lib/helpers';
+import { cn } from '@/lib/utils';
 import type { ChartConfig } from '@/components/ui/chart';
 
 const salesChartConfig: ChartConfig = {
@@ -100,10 +101,19 @@ const datePresets = [
   { label: 'This Month', key: 'month' },
 ] as const;
 
+function getDefaultDates() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const from = new Date(today);
+  from.setDate(from.getDate() - 6);
+  return { from: formatDate(from), to: formatDate(today) };
+}
+
 export default function ReportsPage() {
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
-  const [datePreset, setDatePreset] = useState('');
+  const defaultDates = getDefaultDates();
+  const [dateFrom, setDateFrom] = useState(defaultDates.from);
+  const [dateTo, setDateTo] = useState(defaultDates.to);
+  const [datePreset, setDatePreset] = useState('7d');
   const [categoriesView, setCategoriesView] = useState<'revenue' | 'units'>('revenue');
 
   const applyPreset = (key: string) => {
@@ -552,40 +562,57 @@ export default function ReportsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <ChartContainer config={topCategoriesChartConfig} className="h-[350px] w-full">
-                <BarChart
-                  data={topCategoriesData}
-                  layout="vertical"
-                  margin={{ left: 20 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                  <XAxis
-                    type="number"
-                    tickLine={false}
-                    axisLine={false}
-                    tickMargin={8}
-                    tickFormatter={categoriesView === 'revenue'
-                      ? (v) => `NPR ${(v / 1000).toFixed(0)}k`
-                      : (v) => String(v)
-                    }
-                  />
-                  <YAxis
-                    type="category"
-                    dataKey="category"
-                    tickLine={false}
-                    axisLine={false}
-                    tickMargin={8}
-                    width={120}
-                    tick={{ fontSize: 12 }}
-                  />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Bar
-                    dataKey={categoriesView}
-                    fill={categoriesView === 'revenue' ? 'var(--color-revenue)' : 'var(--color-units)'}
-                    radius={[0, 4, 4, 0]}
-                  />
-                </BarChart>
-              </ChartContainer>
+              <div className="space-y-3">
+                {topCategoriesData.map((item, idx) => {
+                  const maxVal = Math.max(...topCategoriesData.map((d) => d[categoriesView]));
+                  const pct = Math.round((item[categoriesView] / maxVal) * 100);
+                  const barColors = [
+                    'bg-emerald-500 dark:bg-emerald-400',
+                    'bg-amber-500 dark:bg-amber-400',
+                    'bg-teal-500 dark:bg-teal-400',
+                    'bg-orange-500 dark:bg-orange-400',
+                    'bg-rose-500 dark:bg-rose-400',
+                    'bg-cyan-500 dark:bg-cyan-400',
+                    'bg-violet-500 dark:bg-violet-400',
+                    'bg-pink-500 dark:bg-pink-400',
+                  ];
+                  return (
+                    <div key={item.category} className="group">
+                      <div className="mb-1.5 flex items-center justify-between text-sm">
+                        <span className="flex items-center gap-2 font-medium">
+                          <span className={cn(
+                            'flex h-6 w-6 shrink-0 items-center justify-center rounded text-xs font-bold text-white',
+                            barColors[idx % barColors.length]
+                          )}>
+                            {idx + 1}
+                          </span>
+                          {item.category}
+                        </span>
+                        <span className="font-semibold tabular-nums">
+                          {categoriesView === 'revenue'
+                            ? `NPR ${npr(item.revenue)}`
+                            : `${item.units} units`
+                          }
+                        </span>
+                      </div>
+                      <div className="relative h-7 w-full overflow-hidden rounded-md bg-muted/50">
+                        <div
+                          className={cn(
+                            'absolute inset-y-0 left-0 rounded-md transition-all duration-700 ease-out group-hover:brightness-110',
+                            barColors[idx % barColors.length]
+                          )}
+                          style={{ width: `${pct}%` }}
+                        />
+                        <div className="absolute inset-0 flex items-center px-3">
+                          <span className="text-xs font-medium text-white/90 drop-shadow-sm tabular-nums">
+                            {pct}%
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

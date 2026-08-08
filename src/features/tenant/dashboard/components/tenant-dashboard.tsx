@@ -6,21 +6,29 @@ import { StatCard, StatCardSkeleton, ChartSkeleton } from '@/components/shared/s
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { ShoppingBag, Banknote, ClipboardList, AlertTriangle, Wallet, CreditCard, Smartphone, ArrowUpRight, ShoppingCart, FileText, Package, BarChart3 } from 'lucide-react';
+import {
+  ShoppingBag, Banknote, ClipboardList, AlertTriangle, Wallet, CreditCard,
+  Smartphone, ArrowUpRight, ShoppingCart, FileText, Package, BarChart3,
+  Users, Tag, Receipt, ExternalLink, RotateCcw,
+} from 'lucide-react';
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { mockTenantStats, mockSalesReportData, mockSales } from '@/lib/mock-data';
 import { npr, nprFull, getStatusBadgeClasses } from '@/lib/helpers';
 import { useAuthStore, useNavStore } from '@/features/auth/store';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 import type { ChartConfig } from '@/components/ui/chart';
+import type { LucideIcon } from 'lucide-react';
 
+// ---------- Chart Config ----------
 const salesChartConfig: ChartConfig = {
   sales: { label: 'Sales (NPR)', color: 'hsl(var(--chart-1))' },
 };
 
-// Cash register payment breakdown
+// ---------- Payment Breakdown ----------
 const paymentBreakdown = [
   { method: 'Cash', amount: 18750, icon: Wallet, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-100 dark:bg-emerald-900/30', count: 28 },
   { method: 'Card', amount: 8464, icon: CreditCard, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-100 dark:bg-blue-900/30', count: 5 },
@@ -28,6 +36,7 @@ const paymentBreakdown = [
   { method: 'Khalti', amount: 3393, icon: ArrowUpRight, color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-100 dark:bg-purple-900/30', count: 2 },
 ];
 
+// ---------- Period ----------
 const periodOptions = [
   { value: '7d', label: '7D' },
   { value: '30d', label: '30D' },
@@ -42,12 +51,62 @@ const periodSlice: Record<Period, number> = {
   '90d': 90,
 };
 
+// ---------- Quick Actions ----------
 const quickActions = [
   { label: 'New Sale', description: 'Start a new transaction', icon: ShoppingCart, section: 'pos' as const, color: 'bg-emerald-100 dark:bg-emerald-900/30', iconColor: 'text-emerald-600 dark:text-emerald-400' },
   { label: 'Create Invoice', description: 'Generate a new invoice', icon: FileText, section: 'billing' as const, color: 'bg-blue-100 dark:bg-blue-900/30', iconColor: 'text-blue-600 dark:text-blue-400' },
   { label: 'Add Product', description: 'Add to product catalog', icon: Package, section: 'products' as const, color: 'bg-amber-100 dark:bg-amber-900/30', iconColor: 'text-amber-600 dark:text-amber-400' },
   { label: 'View Reports', description: 'Analyze sales data', icon: BarChart3, section: 'reports' as const, color: 'bg-purple-100 dark:bg-purple-900/30', iconColor: 'text-purple-600 dark:text-purple-400' },
 ];
+
+// ---------- Recent Activity ----------
+interface ActivityItem {
+  id: string;
+  icon: LucideIcon;
+  description: string;
+  time: string;
+  color: string;
+  iconBg: string;
+}
+
+const recentActivities: ActivityItem[] = [
+  { id: 'a1', icon: ShoppingCart, description: 'New sale completed — NPR 2,450 via Cash', time: '5 min ago', color: 'text-emerald-600 dark:text-emerald-400', iconBg: 'bg-emerald-100 dark:bg-emerald-900/30' },
+  { id: 'a2', icon: AlertTriangle, description: "Stock alert: DDC Milk (1L) is low (5 units)", time: '12 min ago', color: 'text-red-600 dark:text-red-400', iconBg: 'bg-red-100 dark:bg-red-900/30' },
+  { id: 'a3', icon: Users, description: 'New customer registered — Sita Thapa', time: '18 min ago', color: 'text-blue-600 dark:text-blue-400', iconBg: 'bg-blue-100 dark:bg-blue-900/30' },
+  { id: 'a4', icon: CreditCard, description: 'Payment received via eSewa — NPR 5,200', time: '25 min ago', color: 'text-purple-600 dark:text-purple-400', iconBg: 'bg-purple-100 dark:bg-purple-900/30' },
+  { id: 'a5', icon: Receipt, description: 'Invoice #INV-2025-0042 created', time: '42 min ago', color: 'text-emerald-600 dark:text-emerald-400', iconBg: 'bg-emerald-100 dark:bg-emerald-900/30' },
+  { id: 'a6', icon: Package, description: "Stock updated: Wai Wai Noodles (+50 units)", time: '1 hour ago', color: 'text-amber-600 dark:text-amber-400', iconBg: 'bg-amber-100 dark:bg-amber-900/30' },
+  { id: 'a7', icon: Tag, description: "Product 'Goldstar Shoes' price updated to NPR 2,500", time: '2 hours ago', color: 'text-orange-600 dark:text-orange-400', iconBg: 'bg-orange-100 dark:bg-orange-900/30' },
+  { id: 'a8', icon: Package, description: "Category 'Snacks' product count updated to 15", time: '3 hours ago', color: 'text-amber-600 dark:text-amber-400', iconBg: 'bg-amber-100 dark:bg-amber-900/30' },
+  { id: 'a9', icon: ShoppingCart, description: 'New sale completed — NPR 8,750 via Khalti', time: '3 hours ago', color: 'text-emerald-600 dark:text-emerald-400', iconBg: 'bg-emerald-100 dark:bg-emerald-900/30' },
+  { id: 'a10', icon: Users, description: 'New customer registered — Hari Shrestha', time: '5 hours ago', color: 'text-blue-600 dark:text-blue-400', iconBg: 'bg-blue-100 dark:bg-blue-900/30' },
+];
+
+// ---------- Low Stock Data ----------
+interface LowStockItem {
+  id: string;
+  name: string;
+  current: number;
+  min: number;
+}
+
+const lowStockItems: LowStockItem[] = [
+  { id: 'ls1', name: 'DDC Milk (1L)', current: 5, min: 20 },
+  { id: 'ls2', name: 'Goldstar Shoes (Size 9)', current: 3, min: 10 },
+  { id: 'ls3', name: 'Surya Lights (Candle)', current: 2, min: 15 },
+  { id: 'ls4', name: 'Tokla Tea (500g)', current: 8, min: 25 },
+  { id: 'ls5', name: 'Amul Butter (500g)', current: 4, min: 12 },
+];
+
+// ---------- Greeting Helper ----------
+function getGreeting(): { greeting: string; period: string } {
+  const hour = new Date().getHours();
+  if (hour < 12) return { greeting: 'Good morning', period: 'morning' };
+  if (hour < 17) return { greeting: 'Good afternoon', period: 'afternoon' };
+  return { greeting: 'Good evening', period: 'evening' };
+}
+
+// ---------- Components ----------
 
 function QuickActionsCard() {
   const setCurrentSection = useNavStore((s) => s.setCurrentSection);
@@ -82,12 +141,135 @@ function QuickActionsCard() {
   );
 }
 
+function RecentActivityCard() {
+  return (
+    <Card className="transition-shadow hover:shadow-md">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+        <CardTitle className="text-base">Recent Activity</CardTitle>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-xs text-muted-foreground hover:text-foreground gap-1.5"
+          onClick={() => toast.info('Navigating to activity logs...')}
+        >
+          View All
+          <ExternalLink className="h-3.5 w-3.5" />
+        </Button>
+      </CardHeader>
+      <CardContent className="p-0">
+        <ScrollArea className="max-h-[420px]">
+          <div className="divide-y divide-border">
+            {recentActivities.map((activity, idx) => {
+              const Icon = activity.icon;
+              return (
+                <button
+                  key={activity.id}
+                  onClick={() => toast.info('Opening activity details...')}
+                  className={cn(
+                    'flex w-full items-center gap-3 px-6 py-3.5 text-left transition-colors hover:bg-muted/60',
+                    idx % 2 === 1 && 'bg-muted/20',
+                  )}
+                >
+                  <div className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded-full', activity.iconBg)}>
+                    <Icon className={cn('h-4 w-4', activity.color)} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm leading-snug">{activity.description}</p>
+                  </div>
+                  <span className="shrink-0 text-xs text-muted-foreground whitespace-nowrap">{activity.time}</span>
+                </button>
+              );
+            })}
+          </div>
+        </ScrollArea>
+      </CardContent>
+    </Card>
+  );
+}
+
+function LowStockAlertsCard() {
+  return (
+    <Card className="transition-shadow hover:shadow-md">
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <AlertTriangle className="h-4 w-4 text-amber-500" />
+          Low Stock Alerts
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {lowStockItems.map((item) => {
+          const pct = Math.round((item.current / item.min) * 100);
+          const isCritical = pct <= 25;
+          const barColor = isCritical
+            ? '[&>div]:bg-red-500'
+            : '[&>div]:bg-amber-500';
+          return (
+            <div key={item.id} className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium truncate mr-2">{item.name}</span>
+                <span className={cn(
+                  'text-xs font-semibold shrink-0',
+                  isCritical ? 'text-red-600 dark:text-red-400' : 'text-amber-600 dark:text-amber-400',
+                )}>
+                  {item.current} / {item.min}
+                </span>
+              </div>
+              <Progress value={pct} className={cn('h-2', barColor)} />
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full h-7 text-xs gap-1.5"
+                onClick={() => toast.info(`Restocking ${item.name}...`)}
+              >
+                <RotateCcw className="h-3 w-3" />
+                Restock
+              </Button>
+            </div>
+          );
+        })}
+      </CardContent>
+    </Card>
+  );
+}
+
+function GreetingBanner({ name }: { name: string }) {
+  const { greeting } = getGreeting();
+  const storeName = 'ABC Store';
+  return (
+    <div className="rounded-xl border bg-gradient-to-r from-muted/80 via-muted/40 to-muted/80 p-4 md:p-5">
+      <h2 className="text-lg md:text-xl font-bold">
+        {greeting}, {name}!
+      </h2>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Here&apos;s what&apos;s happening at {storeName} today.
+      </p>
+    </div>
+  );
+}
+
+function AnimatedGradientBorder({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="space-y-1 pb-0">
+      {children}
+      <div
+        className="h-[2px] w-full rounded-full animate-gradient-border"
+        style={{
+          background: 'linear-gradient(90deg, #10b981, #f59e0b, #8b5cf6, #ef4444, #10b981)',
+          backgroundSize: '200% 200%',
+        }}
+      />
+    </div>
+  );
+}
+
+// ---------- Main Component ----------
 export default function TenantDashboard() {
   const { user } = useAuthStore();
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<Period>('7d');
   const stats = mockTenantStats;
   const recentSales = mockSales.slice(0, 5);
+  const firstName = user?.name?.split(' ')[0] || 'there';
   const chartData = useMemo(
     () =>
       mockSalesReportData
@@ -116,8 +298,8 @@ export default function TenantDashboard() {
           <StatCardSkeleton />
         </div>
         <div className="grid gap-6 md:grid-cols-2">
-          <Card><CardContent className="p-6"><div className="space-y-3">{Array.from({length:5}).map((_,i)=><div key={i} className="h-14 rounded-lg bg-muted animate-pulse" />)}</div></CardContent></Card>
-          <Card><CardContent className="p-6"><div className="space-y-3">{Array.from({length:5}).map((_,i)=><div key={i} className="h-14 rounded-lg bg-muted animate-pulse" />)}</div></CardContent></Card>
+          <Card><CardContent className="p-6"><div className="space-y-3">{Array.from({ length: 5 }).map((_, i) => <div key={i} className="h-14 rounded-lg bg-muted animate-pulse" />)}</div></CardContent></Card>
+          <Card><CardContent className="p-6"><div className="space-y-3">{Array.from({ length: 5 }).map((_, i) => <div key={i} className="h-14 rounded-lg bg-muted animate-pulse" />)}</div></CardContent></Card>
         </div>
         <ChartSkeleton />
       </div>
@@ -126,7 +308,13 @@ export default function TenantDashboard() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Dashboard" description={`Welcome back, ${user?.name?.split(' ')[0] || 'there'}`} />
+      {/* Header with animated gradient border */}
+      <AnimatedGradientBorder>
+        <PageHeader title="Dashboard" description={`Welcome back, ${firstName}`} />
+      </AnimatedGradientBorder>
+
+      {/* Greeting Banner */}
+      <GreetingBanner name={firstName} />
 
       {/* Stat Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -135,42 +323,60 @@ export default function TenantDashboard() {
           value={`NPR ${npr(stats.dailySales)}`}
           icon={ShoppingBag}
           trend={{ value: stats.dailySalesGrowth, label: 'from yesterday' }}
-          className="border-l-4 border-l-emerald-500"
+          trendColor={stats.dailySalesGrowth >= 0 ? 'positive' : 'negative'}
+          borderColor="border-l-emerald-500"
+          className="animate-number-pop"
         />
         <StatCard
           title="Monthly Revenue"
           value={`NPR ${npr(stats.monthlyRevenue)}`}
           icon={Banknote}
           trend={{ value: stats.monthlyRevenueGrowth, label: 'from last month' }}
-          className="border-l-4 border-l-blue-500"
+          trendColor={stats.monthlyRevenueGrowth >= 0 ? 'positive' : 'negative'}
+          borderColor="border-l-blue-500"
+          className="animate-number-pop"
         />
         <StatCard
           title="Total Orders"
           value={npr(stats.totalOrders)}
           icon={ClipboardList}
           trend={{ value: stats.totalOrdersGrowth, label: 'from last month' }}
-          className="border-l-4 border-l-purple-500"
+          trendColor={stats.totalOrdersGrowth >= 0 ? 'positive' : 'negative'}
+          borderColor="border-l-purple-500"
+          className="animate-number-pop"
         />
         <StatCard
           title="Low Stock Alerts"
           value={stats.lowStockAlerts}
           icon={AlertTriangle}
           trend={{ value: -5, label: 'needs attention' }}
+          trendColor="negative"
+          borderColor="border-l-amber-500"
           iconClassName="bg-amber-100 dark:bg-amber-900/30"
           iconColor="text-amber-600 dark:text-amber-400"
-          className="border-l-4 border-l-amber-500"
+          className="animate-number-pop"
         />
       </div>
 
       {/* Quick Actions */}
       <QuickActionsCard />
 
+      {/* Recent Activity + Low Stock Alerts */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <RecentActivityCard />
+        </div>
+        <div className="lg:col-span-1">
+          <LowStockAlertsCard />
+        </div>
+      </div>
+
       {/* Daily Cash Register Summary */}
       <Card className="overflow-hidden">
         <CardHeader className="pb-3 bg-gradient-to-b from-muted/50 to-transparent">
           <CardTitle className="flex items-center gap-2 text-base">
             <Wallet className="h-4 w-4" />
-            Today's Cash Register
+            Today&apos;s Cash Register
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -179,8 +385,8 @@ export default function TenantDashboard() {
               const Icon = p.icon;
               return (
                 <div key={p.method} className="flex items-center gap-3 rounded-xl border p-3 transition-shadow hover:shadow-md">
-                  <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${p.bg}`}>
-                    <Icon className={`h-5 w-5 ${p.color}`} />
+                  <div className={cn('flex h-10 w-10 items-center justify-center rounded-xl', p.bg)}>
+                    <Icon className={cn('h-5 w-5', p.color)} />
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-[11px] text-muted-foreground">{p.method}</p>

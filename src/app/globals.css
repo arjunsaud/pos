@@ -132,6 +132,75 @@
   animation: gentle-pulse 3s ease-in-out infinite;
 }
 
+@keyframes gradient-border {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@utility animate-gradient-border {
+  background-size: 200% 200%;
+  animation: gradient-border 6s ease infinite;
+}
+
+@keyframes number-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+@utility animate-number-pop {
+  animation: number-pop 0.6s ease-out;
+}
+
+@keyframes cart-pulse {
+  0% { transform: scale(1); box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.3); }
+  50% { transform: scale(1.03); box-shadow: 0 15px 35px -5px rgba(16, 185, 129, 0.5); }
+  100% { transform: scale(1); box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.3); }
+}
+
+@utility animate-cart-pulse {
+  animation: cart-pulse 0.5s ease-out;
+}
+
+@utility no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+@utility animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+@utility scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: oklch(0.7 0 0 / 30%);
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background-color: oklch(0.5 0 0 / 50%);
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

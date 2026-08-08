@@ -23,6 +23,7 @@ import {
   Menu,
   Users,
   Calculator,
+  Bell,
   type LucideIcon,
 } from 'lucide-react';
 import { CommandPalette } from '@/components/layout/command-palette';
@@ -102,6 +103,7 @@ const tenantAdminMenu: SidebarGroup[] = [
       { label: 'Subscription', section: 'tenant-subscription', icon: CreditCard },
       { label: 'Store Profile', section: 'store-profile', icon: Store },
       { label: 'Staff', section: 'tenant-staff', icon: UserCog },
+      { label: 'Notifications', section: 'notifications', icon: Bell },
     ],
   },
 ];

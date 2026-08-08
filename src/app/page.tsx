@@ -31,6 +31,7 @@ import TenantSubscriptionPage from '@/features/tenant/subscription/components/te
 import TenantStaffPage from '@/features/tenant/staff/components/tenant-staff-page';
 import StoreProfile from '@/features/tenant/store-profile/components/store-profile';
 import SettlementPage from '@/features/tenant/settlement/components/settlement-page';
+import NotificationsPage from '@/features/tenant/notifications/components/notifications-page';
 
 import type { NavSection } from '@/lib/types';
 
@@ -55,6 +56,7 @@ const sectionComponents: Record<NavSection, React.ComponentType> = {
   'tenant-staff': TenantStaffPage,
   'store-profile': StoreProfile,
   'settlement': SettlementPage,
+  'notifications': NotificationsPage,
 };
 
 export default function HomePage() {

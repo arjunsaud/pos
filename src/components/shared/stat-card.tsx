@@ -10,19 +10,25 @@ interface StatCardProps {
   description?: string;
   icon: LucideIcon;
   trend?: { value: number; label: string };
+  trendColor?: 'positive' | 'negative' | 'neutral';
+  borderColor?: string;
   className?: string;
   iconClassName?: string;
   iconColor?: string;
 }
 
-export function StatCard({ title, value, description, icon: Icon, trend, className, iconClassName, iconColor }: StatCardProps) {
+export function StatCard({ title, value, description, icon: Icon, trend, trendColor = 'neutral', borderColor, className, iconClassName, iconColor }: StatCardProps) {
   return (
-    <Card className={cn('group relative overflow-hidden transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 animate-card-shine', className)}>
+    <Card className={cn(
+      'group relative overflow-hidden transition-all duration-200 hover:shadow-lg hover:scale-[1.01] animate-card-shine',
+      borderColor && `border-l-[3px] ${borderColor}`,
+      className,
+    )}>
       <div className="before:absolute before:inset-x-0 before:h-[2px] before:top-0 before:bg-gradient-to-r before:from-transparent before:via-primary/20 before:to-transparent before:rounded-t-lg" />
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
         <div className={cn(
-          'flex h-10 w-10 items-center justify-center rounded-xl transition-transform duration-200 group-hover:scale-110',
+          'flex h-11 w-11 items-center justify-center rounded-xl transition-all duration-200 group-hover:scale-110',
           iconClassName || 'bg-primary/10',
           iconColor && 'text-foreground'
         )}>
@@ -36,9 +42,11 @@ export function StatCard({ title, value, description, icon: Icon, trend, classNa
             {trend && (
               <span className={cn(
                 'inline-flex items-center gap-0.5 rounded-full px-2 py-1 text-xs font-semibold',
-                trend.value >= 0 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                trendColor === 'positive' && 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400',
+                trendColor === 'negative' && 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400',
+                trendColor === 'neutral' && 'bg-muted text-muted-foreground',
               )}>
-                {trend.value >= 0 ? '↑ +' : '↓ -'}{Math.abs(trend.value)}%
+                {trendColor === 'positive' ? '+' : trendColor === 'negative' ? '-' : ''}{Math.abs(trend.value)}%
               </span>
             )}
             {trend && description && (

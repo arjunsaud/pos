@@ -170,7 +170,7 @@ export default function SuperAdminDashboard() {
           description="Monthly recurring"
           iconClassName="bg-amber-100 dark:bg-amber-900/30"
           iconColor="text-amber-600 dark:text-amber-400"
-          className="border-l-4 border-l-amber-500"
+          borderColor="border-l-amber-500"
         />
         <StatCard
           title="Revenue Growth"
