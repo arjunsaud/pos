@@ -39,14 +39,13 @@ import { mockSuperAdminStaff } from '@/lib/mock-data';
 import type { StaffMember, SuperAdminStaffRole } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
-const PERMISSIONS = [
-  { key: 'view_tenants', label: 'View Tenants' },
-  { key: 'view_tickets', label: 'View Tickets' },
-  { key: 'respond_tickets', label: 'Respond Tickets' },
-  { key: 'view_revenue', label: 'View Revenue' },
-  { key: 'view_subscriptions', label: 'View Subscriptions' },
-  { key: 'manage_invoices', label: 'Manage Invoices' },
-] as const;
+function getAvatarColor(name: string): string {
+  const colors = [
+    'bg-emerald-500', 'bg-blue-500', 'bg-amber-500', 'bg-purple-500', 'bg-rose-500',
+    'bg-cyan-500', 'bg-orange-500', 'bg-teal-500', 'bg-pink-500', 'bg-indigo-500'
+  ];
+  return colors[name.charCodeAt(0) % colors.length];
+}
 
 function getInitials(name: string): string {
   return name
@@ -57,11 +56,26 @@ function getInitials(name: string): string {
     .slice(0, 2);
 }
 
+const ROLE_DESCRIPTIONS: Record<SuperAdminStaffRole, string> = {
+  admin: 'Full platform access with all management capabilities',
+  support: 'Can view tenants and respond to support tickets',
+  finance: 'Access to billing, invoices and financial reports',
+};
+
 const roleBadgeClass: Record<SuperAdminStaffRole, string> = {
   admin: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
   support: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
   finance: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
 };
+
+const PERMISSIONS = [
+  { key: 'view_tenants', label: 'View Tenants' },
+  { key: 'view_tickets', label: 'View Tickets' },
+  { key: 'respond_tickets', label: 'Respond Tickets' },
+  { key: 'view_revenue', label: 'View Revenue' },
+  { key: 'view_subscriptions', label: 'View Subscriptions' },
+  { key: 'manage_invoices', label: 'Manage Invoices' },
+] as const;
 
 export default function SuperAdminStaff() {
   const [staff, setStaff] = useState<StaffMember[]>([...mockSuperAdminStaff]);
@@ -162,15 +176,30 @@ export default function SuperAdminStaff() {
     );
   };
 
-  const renderPermissions = (member: StaffMember) => {
+  const renderPermissionTags = (member: StaffMember) => {
     if (member.permissions.includes('all')) {
       return <Badge variant="outline" className="text-xs">All Permissions</Badge>;
     }
-    return member.permissions.map((p) => (
-      <Badge key={p} variant="secondary" className="text-xs">
-        {p.replace(/_/g, ' ')}
-      </Badge>
-    ));
+    const permLabels = member.permissions.map((key) => {
+      const found = PERMISSIONS.find((p) => p.key === key);
+      return found ? found.label : key.replace(/_/g, ' ');
+    });
+    const visible = permLabels.slice(0, 3);
+    const remaining = permLabels.length - 3;
+    return (
+      <>
+        {visible.map((label, i) => (
+          <Badge key={i} variant="outline" className="text-xs">
+            {label}
+          </Badge>
+        ))}
+        {remaining > 0 && (
+          <Badge variant="secondary" className="text-xs">
+            +{remaining} more
+          </Badge>
+        )}
+      </>
+    );
   };
 
   const formContent = (
@@ -215,6 +244,9 @@ export default function SuperAdminStaff() {
             <SelectItem value="finance">Finance</SelectItem>
           </SelectContent>
         </Select>
+        <p className="text-xs text-muted-foreground">
+          {ROLE_DESCRIPTIONS[formRole]}
+        </p>
       </div>
       <div className="grid gap-3">
         <Label>Permissions</Label>
@@ -294,8 +326,12 @@ export default function SuperAdminStaff() {
                 <TableRow key={member.id} className="transition-colors hover:bg-muted/50">
                   <TableCell>
                     <div className="flex items-center gap-3">
+                      <div className={cn(
+                        'h-2 w-2 rounded-full shrink-0',
+                        member.status === 'active' ? 'bg-emerald-500' : 'bg-gray-400'
+                      )} />
                       <Avatar className="h-8 w-8">
-                        <AvatarFallback className="text-xs">
+                        <AvatarFallback className={cn('text-xs text-white', getAvatarColor(member.name))}>
                           {getInitials(member.name)}
                         </AvatarFallback>
                       </Avatar>
@@ -326,7 +362,12 @@ export default function SuperAdminStaff() {
                     </Badge>
                   </TableCell>
                   <TableCell className="hidden lg:table-cell">
-                    <div className="flex flex-wrap gap-1">{renderPermissions(member)}</div>
+                    <div className="flex flex-wrap gap-1 items-center">
+                      <Badge className={cn('border-transparent', roleBadgeClass[member.role as SuperAdminStaffRole])}>
+                        {member.role.charAt(0).toUpperCase() + member.role.slice(1)}
+                      </Badge>
+                      {renderPermissionTags(member)}
+                    </div>
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">

@@ -29,6 +29,7 @@ import SalesPage from '@/features/tenant/sales/components/sales-page';
 import ReportsPage from '@/features/tenant/reports/components/reports-page';
 import TenantSubscriptionPage from '@/features/tenant/subscription/components/tenant-subscription-page';
 import TenantStaffPage from '@/features/tenant/staff/components/tenant-staff-page';
+import StoreProfile from '@/features/tenant/store-profile/components/store-profile';
 
 import type { NavSection } from '@/lib/types';
 
@@ -51,6 +52,7 @@ const sectionComponents: Record<NavSection, React.ComponentType> = {
   'reports': ReportsPage,
   'tenant-subscription': TenantSubscriptionPage,
   'tenant-staff': TenantStaffPage,
+  'store-profile': StoreProfile,
 };
 
 export default function HomePage() {

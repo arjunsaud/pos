@@ -42,7 +42,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, Pencil, Trash2, AlertTriangle, Download, X } from 'lucide-react';
+import { Plus, Pencil, Trash2, AlertTriangle, Download, X, CheckCircle2, XCircle } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { mockProducts, mockCategories } from '@/lib/mock-data';
 import { toast } from 'sonner';
 import type { Product } from '@/lib/types';
@@ -219,6 +220,22 @@ export default function ProductManagement() {
     toast.success('selected-products.csv exported');
   };
 
+  const handleBulkActivate = () => {
+    setProducts((prev) =>
+      prev.map((p) => (selectedIds.includes(p.id) ? { ...p, isActive: true } : p))
+    );
+    toast.success(`${selectedIds.length} product(s) activated`);
+    setSelectedIds([]);
+  };
+
+  const handleBulkDeactivate = () => {
+    setProducts((prev) =>
+      prev.map((p) => (selectedIds.includes(p.id) ? { ...p, isActive: false } : p))
+    );
+    toast.success(`${selectedIds.length} product(s) deactivated`);
+    setSelectedIds([]);
+  };
+
   const clearSelection = () => setSelectedIds([]);
 
   const exportCSV = () => {
@@ -257,27 +274,43 @@ export default function ProductManagement() {
         </Button>
       </PageHeader>
 
-      {/* Bulk Action Bar */}
-      {selectedIds.length > 0 && (
-        <div className="flex items-center gap-3 rounded-lg border bg-muted/50 p-3">
-          <Badge variant="secondary" className="font-semibold">
-            {selectedIds.length} selected
-          </Badge>
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={() => setDeleteId('bulk')}
+      {/* Floating Bulk Action Bar */}
+      <AnimatePresence>
+        {selectedIds.length > 0 && (
+          <motion.div
+            initial={{ y: 100 }}
+            animate={{ y: 0 }}
+            exit={{ y: 100 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            className="sticky bottom-0 z-30 flex items-center gap-3 rounded-t-xl border-t bg-background p-3 shadow-lg"
           >
-            <Trash2 className="h-4 w-4" /> Delete Selected
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleExportSelected}>
-            <Download className="h-4 w-4" /> Export Selected
-          </Button>
-          <Button variant="ghost" size="sm" className="ml-auto" onClick={clearSelection}>
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
-      )}
+            <Badge variant="secondary" className="font-semibold">
+              {selectedIds.length} product{selectedIds.length !== 1 ? 's' : ''} selected
+            </Badge>
+            <Button variant="outline" size="sm" onClick={handleBulkActivate}>
+              <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+              Activate All
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleBulkDeactivate}>
+              <XCircle className="h-4 w-4 text-amber-600" />
+              Deactivate All
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => setDeleteId('bulk')}
+            >
+              <Trash2 className="h-4 w-4" /> Delete Selected
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleExportSelected}>
+              <Download className="h-4 w-4" /> Export Selected
+            </Button>
+            <Button variant="ghost" size="sm" className="ml-auto" onClick={clearSelection}>
+              <X className="h-4 w-4" /> Clear Selection
+            </Button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Filters */}
       <Card>

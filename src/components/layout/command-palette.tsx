@@ -9,8 +9,9 @@ import { useNavStore, useAuthStore } from '@/features/auth/store';
 import {
   LayoutDashboard, CreditCard, Activity, FileText, Settings,
   ShoppingCart, Receipt, Package, Warehouse, Tags, BarChart3,
-  UserCog, Store, Search, type LucideIcon,
+  UserCog, Store, Search, Zap, type LucideIcon,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import type { NavSection, UserRole } from '@/lib/types';
 
@@ -18,73 +19,229 @@ interface CommandItem {
   label: string;
   section: NavSection;
   icon: LucideIcon;
-  group: string;
+  group: 'Pages' | 'Actions';
+  isAction?: boolean;
+  toastMessage?: string;
 }
 
 function buildCommands(role: UserRole): CommandItem[] {
-  const all: Record<string, CommandItem[]> = {
-    'super-admin': [
-      { label: 'Go to Dashboard', section: 'super-admin-dashboard', icon: LayoutDashboard, group: 'Navigation' },
-      { label: 'Go to Tenants', section: 'tenants', icon: Store, group: 'Navigation' },
-      { label: 'Go to Staff', section: 'super-admin-staff', icon: UserCog, group: 'Navigation' },
-      { label: 'Go to Subscriptions', section: 'super-admin-subscriptions', icon: CreditCard, group: 'Navigation' },
-      { label: 'Go to Activity Logs', section: 'activity-logs', icon: Activity, group: 'Navigation' },
-      { label: 'Go to Content & Social', section: 'content', icon: FileText, group: 'Navigation' },
-      { label: 'Go to Settings', section: 'super-admin-settings', icon: Settings, group: 'Navigation' },
-    ],
-    'tenant-admin': [
-      { label: 'Go to Dashboard', section: 'tenant-dashboard', icon: LayoutDashboard, group: 'Navigation' },
-      { label: 'Go to POS Terminal', section: 'pos', icon: ShoppingCart, group: 'Quick Actions' },
-      { label: 'Go to Customers', section: 'customers', icon: Store, group: 'Quick Actions' },
-      { label: 'Go to Billing', section: 'billing', icon: Receipt, group: 'Navigation' },
-      { label: 'Go to Products', section: 'products', icon: Package, group: 'Navigation' },
-      { label: 'Go to Inventory', section: 'inventory', icon: Warehouse, group: 'Navigation' },
-      { label: 'Go to Categories', section: 'categories', icon: Tags, group: 'Navigation' },
-      { label: 'Go to Sales', section: 'sales', icon: BarChart3, group: 'Navigation' },
-      { label: 'Go to Reports', section: 'reports', icon: BarChart3, group: 'Navigation' },
-      { label: 'Go to Subscription', section: 'tenant-subscription', icon: CreditCard, group: 'Navigation' },
-      { label: 'Go to Staff', section: 'tenant-staff', icon: UserCog, group: 'Navigation' },
-    ],
-    'staff': [
-      { label: 'Go to POS Terminal', section: 'pos', icon: ShoppingCart, group: 'Quick Actions' },
-      { label: 'Go to Sales History', section: 'sales', icon: BarChart3, group: 'Navigation' },
-    ],
-  };
-  return all[role] || [];
+  const pages: CommandItem[] = [];
+  const actions: CommandItem[] = [];
+
+  if (role === 'super-admin') {
+    pages.push(
+      { label: 'Dashboard', section: 'super-admin-dashboard', icon: LayoutDashboard, group: 'Pages' },
+      { label: 'Tenants', section: 'tenants', icon: Store, group: 'Pages' },
+      { label: 'Staff', section: 'super-admin-staff', icon: UserCog, group: 'Pages' },
+      { label: 'Subscriptions', section: 'super-admin-subscriptions', icon: CreditCard, group: 'Pages' },
+      { label: 'Activity Logs', section: 'activity-logs', icon: Activity, group: 'Pages' },
+      { label: 'Content & Social', section: 'content', icon: FileText, group: 'Pages' },
+      { label: 'Settings', section: 'super-admin-settings', icon: Settings, group: 'Pages' },
+    );
+  } else if (role === 'tenant-admin') {
+    pages.push(
+      { label: 'Dashboard', section: 'tenant-dashboard', icon: LayoutDashboard, group: 'Pages' },
+      { label: 'Customers', section: 'customers', icon: Store, group: 'Pages' },
+      { label: 'Billing', section: 'billing', icon: Receipt, group: 'Pages' },
+      { label: 'Products', section: 'products', icon: Package, group: 'Pages' },
+      { label: 'Inventory', section: 'inventory', icon: Warehouse, group: 'Pages' },
+      { label: 'Categories', section: 'categories', icon: Tags, group: 'Pages' },
+      { label: 'Sales', section: 'sales', icon: BarChart3, group: 'Pages' },
+      { label: 'Reports', section: 'reports', icon: BarChart3, group: 'Pages' },
+      { label: 'Subscription', section: 'tenant-subscription', icon: CreditCard, group: 'Pages' },
+      { label: 'Staff', section: 'tenant-staff', icon: UserCog, group: 'Pages' },
+      { label: 'Store Profile', section: 'store-profile', icon: Store, group: 'Pages' },
+    );
+    actions.push(
+      { label: 'New Sale', section: 'pos', icon: ShoppingCart, group: 'Actions', isAction: true, toastMessage: 'Opening POS Terminal...' },
+      { label: 'Create Invoice', section: 'billing', icon: Receipt, group: 'Actions', isAction: true, toastMessage: 'Opening Billing...' },
+      { label: 'Add Product', section: 'products', icon: Package, group: 'Actions', isAction: true, toastMessage: 'Opening Products...' },
+      { label: 'View Reports', section: 'reports', icon: BarChart3, group: 'Actions', isAction: true, toastMessage: 'Opening Reports...' },
+    );
+  } else if (role === 'staff') {
+    pages.push(
+      { label: 'POS Terminal', section: 'pos', icon: ShoppingCart, group: 'Pages' },
+      { label: 'Sales History', section: 'sales', icon: BarChart3, group: 'Pages' },
+    );
+    actions.push(
+      { label: 'New Sale', section: 'pos', icon: ShoppingCart, group: 'Actions', isAction: true, toastMessage: 'Opening POS Terminal...' },
+    );
+  }
+
+  return [...pages, ...actions];
 }
+
+// Section label for a given NavSection
+const sectionLabels: Record<NavSection, string> = {
+  'super-admin-dashboard': 'Dashboard',
+  'tenants': 'Tenants',
+  'super-admin-staff': 'Staff',
+  'super-admin-subscriptions': 'Subscriptions',
+  'activity-logs': 'Activity Logs',
+  'content': 'Content & Social',
+  'super-admin-settings': 'Settings',
+  'tenant-dashboard': 'Dashboard',
+  'pos': 'POS Terminal',
+  'customers': 'Customers',
+  'billing': 'Billing',
+  'products': 'Products',
+  'inventory': 'Inventory',
+  'categories': 'Categories',
+  'sales': 'Sales',
+  'reports': 'Reports',
+  'tenant-subscription': 'Subscription',
+  'tenant-staff': 'Staff',
+  'store-profile': 'Store Profile',
+};
+
+const sectionIcons: Record<NavSection, LucideIcon> = {
+  'super-admin-dashboard': LayoutDashboard,
+  'tenants': Store,
+  'super-admin-staff': UserCog,
+  'super-admin-subscriptions': CreditCard,
+  'activity-logs': Activity,
+  'content': FileText,
+  'super-admin-settings': Settings,
+  'tenant-dashboard': LayoutDashboard,
+  'pos': ShoppingCart,
+  'customers': Store,
+  'billing': Receipt,
+  'products': Package,
+  'inventory': Warehouse,
+  'categories': Tags,
+  'sales': BarChart3,
+  'reports': BarChart3,
+  'tenant-subscription': CreditCard,
+  'tenant-staff': UserCog,
+  'store-profile': Store,
+};
+
+type FlatEntry =
+  | { type: 'header'; label: string; icon: LucideIcon }
+  | { type: 'item'; item: CommandItem; globalIndex: number }
+  | { type: 'recent-header' }
+  | { type: 'recent-item'; section: NavSection; globalIndex: number };
 
 export function CommandPalette() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [activeIndex, setActiveIndex] = useState(0);
   const { user } = useAuthStore();
-  const { currentSection, setCurrentSection } = useNavStore();
+  const { currentSection, setCurrentSection, recentSections } = useNavStore();
   const listRef = useRef<HTMLDivElement>(null);
 
-  const commands = user ? buildCommands(user.role) : [];
+  const commands = useMemo(() => (user ? buildCommands(user.role) : []), [user]);
 
-  const filtered = useMemo(() =>
-    query
-      ? commands.filter(c => c.label.toLowerCase().includes(query.toLowerCase()))
-      : commands,
-  [query, commands]);
+  // Filtered commands by query
+  const filteredPages = useMemo(
+    () =>
+      query
+        ? commands.filter(c => c.group === 'Pages' && c.label.toLowerCase().includes(query.toLowerCase()))
+        : commands.filter(c => c.group === 'Pages'),
+    [query, commands],
+  );
 
-  // Keep activeIndex in bounds
-  const clampedIndex = Math.min(activeIndex, Math.max(0, filtered.length - 1));
+  const filteredActions = useMemo(
+    () =>
+      query
+        ? commands.filter(c => c.group === 'Actions' && c.label.toLowerCase().includes(query.toLowerCase()))
+        : commands.filter(c => c.group === 'Actions'),
+    [query, commands],
+  );
 
-  // Group filtered results
-  const grouped = useMemo(() =>
-    filtered.reduce<Record<string, CommandItem[]>>((acc, item) => {
-      (acc[item.group] = acc[item.group] || []).push(item);
-      return acc;
-    }, {}),
-  [filtered]);
+  // Recent sections (max 3), exclude current and already shown in pages, only when no query
+  const recentItems = useMemo(() => {
+    if (query) return [];
+    const pageSections = new Set(filteredPages.map(p => p.section));
+    return recentSections
+      .filter(s => s !== currentSection && !pageSections.has(s))
+      .slice(0, 3);
+  }, [query, recentSections, currentSection, filteredPages]);
 
-  const navigate = useCallback((section: NavSection) => {
-    setCurrentSection(section);
-    setOpen(false);
-    setQuery('');
-  }, [setCurrentSection]);
+  // Total selectable item count
+  const totalItems = filteredPages.length + filteredActions.length + recentItems.length;
+  const clampedIndex = Math.min(activeIndex, Math.max(0, totalItems - 1));
+
+  // Build flat list
+  const flatItems = useMemo((): FlatEntry[] => {
+    const items: FlatEntry[] = [];
+    let gi = 0;
+
+    if (filteredPages.length > 0) {
+      items.push({ type: 'header', label: 'Pages', icon: LayoutDashboard });
+      for (const item of filteredPages) {
+        items.push({ type: 'item', item, globalIndex: gi });
+        gi++;
+      }
+    }
+
+    if (filteredActions.length > 0) {
+      items.push({ type: 'header', label: 'Actions', icon: Zap });
+      for (const item of filteredActions) {
+        items.push({ type: 'item', item, globalIndex: gi });
+        gi++;
+      }
+    }
+
+    if (recentItems.length > 0) {
+      items.push({ type: 'recent-header' });
+      for (const section of recentItems) {
+        items.push({ type: 'recent-item', section, globalIndex: gi });
+        gi++;
+      }
+    }
+
+    return items;
+  }, [filteredPages, filteredActions, recentItems]);
+
+  // Resolve a globalIndex to the actual item/section
+  const resolveIndex = useCallback(
+    (idx: number): { section: NavSection; toastMessage?: string } | null => {
+      // Pages
+      if (idx < filteredPages.length) {
+        const item = filteredPages[idx];
+        return { section: item.section };
+      }
+      // Actions
+      const actionIdx = idx - filteredPages.length;
+      if (actionIdx < filteredActions.length) {
+        const item = filteredActions[actionIdx];
+        return { section: item.section, toastMessage: item.toastMessage };
+      }
+      // Recent
+      const recentIdx = actionIdx - filteredActions.length;
+      if (recentIdx < recentItems.length) {
+        return { section: recentItems[recentIdx] };
+      }
+      return null;
+    },
+    [filteredPages, filteredActions, recentItems],
+  );
+
+  const navigate = useCallback(
+    (section: NavSection, toastMessage?: string) => {
+      setCurrentSection(section);
+      if (toastMessage) {
+        toast.success(toastMessage);
+      }
+      setOpen(false);
+      setQuery('');
+    },
+    [setCurrentSection],
+  );
+
+  // Reset active index on open or query change (handled in handlers, not effects)
+
+  const handleOpenChange = useCallback((v: boolean) => {
+    setOpen(v);
+    if (!v) setQuery('');
+    if (v) setActiveIndex(0);
+  }, []);
+
+  const handleQueryChange = useCallback((value: string) => {
+    setQuery(value);
+    setActiveIndex(0);
+  }, []);
 
   // Keyboard shortcut: Cmd+K or Ctrl+K
   useEffect(() => {
@@ -109,18 +266,21 @@ export function CommandPalette() {
       }
       if (e.key === 'ArrowDown') {
         e.preventDefault();
-        setActiveIndex(prev => Math.min(prev + 1, filtered.length - 1));
+        setActiveIndex(prev => Math.min(prev + 1, totalItems - 1));
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
         setActiveIndex(prev => Math.max(prev - 1, 0));
-      } else if (e.key === 'Enter' && filtered[clampedIndex]) {
-        e.preventDefault();
-        navigate(filtered[clampedIndex].section);
+      } else if (e.key === 'Enter') {
+        const target = resolveIndex(clampedIndex);
+        if (target) {
+          e.preventDefault();
+          navigate(target.section, target.toastMessage);
+        }
       }
     };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
-  }, [open, filtered, activeIndex, navigate]);
+  }, [open, totalItems, clampedIndex, resolveIndex, navigate]);
 
   // Scroll active item into view
   useEffect(() => {
@@ -129,19 +289,7 @@ export function CommandPalette() {
     activeEl?.scrollIntoView({ block: 'nearest' });
   }, [activeIndex, open]);
 
-  // Build flat list with group headers for index tracking
-  const flatItems = useMemo(() => {
-    const items: { type: 'group'; label: string } | { type: 'item'; item: CommandItem; globalIndex: number }[] = [];
-    let gi = 0;
-    for (const [group, groupItems] of Object.entries(grouped)) {
-      items.push({ type: 'group', label: group });
-      for (const item of groupItems) {
-        items.push({ type: 'item', item, globalIndex: gi });
-        gi++;
-      }
-    }
-    return items;
-  }, [grouped]);
+  const hasResults = totalItems > 0;
 
   if (!user) return null;
 
@@ -157,7 +305,7 @@ export function CommandPalette() {
         <kbd className="ml-auto rounded border bg-muted px-1.5 py-0.5 font-mono text-[10px] font-medium">⌘K</kbd>
       </button>
 
-      <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setQuery(''); }}>
+      <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogContent className="overflow-hidden p-0 sm:max-w-lg">
           <DialogTitle className="sr-only">Command Palette</DialogTitle>
           <div className="flex items-center border-b px-4">
@@ -165,7 +313,7 @@ export function CommandPalette() {
             <input
               placeholder="Type a command or search..."
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => handleQueryChange(e.target.value)}
               className="flex h-12 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
               autoFocus
             />
@@ -173,27 +321,68 @@ export function CommandPalette() {
           </div>
           <ScrollArea className="max-h-72 p-2">
             <div ref={listRef}>
-              {filtered.length === 0 ? (
-                <div className="py-6 text-center text-sm text-muted-foreground">
-                  No results found for &quot;{query}&quot;
+              {!hasResults ? (
+                <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
+                  <Search className="h-10 w-10 mb-3 opacity-30" />
+                  <p className="text-sm font-medium">No results found</p>
+                  <p className="text-xs mt-1 opacity-60">Try a different search term</p>
                 </div>
               ) : (
-                flatItems.map((entry) => {
-                  if (entry.type === 'group') {
+                flatItems.map((entry, i) => {
+                  if (entry.type === 'header') {
+                    const HeaderIcon = entry.icon;
                     return (
-                      <p key={entry.label} className="px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                        {entry.label}
-                      </p>
+                      <div key={`h-${entry.label}`} className="flex items-center gap-1.5 px-2 pt-3 pb-1 first:pt-1">
+                        <HeaderIcon className="h-3 w-3 text-muted-foreground/60" />
+                        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+                          {entry.label}
+                        </p>
+                      </div>
                     );
                   }
+                  if (entry.type === 'recent-header') {
+                    return (
+                      <div key="recent-header" className="flex items-center gap-1.5 px-2 pt-3 pb-1">
+                        <Activity className="h-3 w-3 text-muted-foreground/60" />
+                        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+                          Recent
+                        </p>
+                      </div>
+                    );
+                  }
+                  if (entry.type === 'recent-item') {
+                    const RecentIcon = sectionIcons[entry.section];
+                    const isHighlighted = entry.globalIndex === clampedIndex;
+                    return (
+                      <button
+                        key={`recent-${entry.section}`}
+                        data-active={isHighlighted}
+                        onClick={() => navigate(entry.section)}
+                        onMouseEnter={() => setActiveIndex(entry.globalIndex)}
+                        className={cn(
+                          'flex w-full items-center gap-3 rounded-md px-2.5 py-2 text-sm transition-colors',
+                          isHighlighted
+                            ? 'bg-accent text-accent-foreground'
+                            : 'text-foreground hover:bg-accent/50',
+                        )}
+                      >
+                        <RecentIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        <span className="flex-1 text-left">{sectionLabels[entry.section]}</span>
+                        {isHighlighted && (
+                          <span className="text-[10px] text-muted-foreground opacity-60">↵</span>
+                        )}
+                      </button>
+                    );
+                  }
+                  // type === 'item'
                   const { item, globalIndex } = entry;
                   const isCurrentSection = currentSection === item.section;
                   const isHighlighted = globalIndex === clampedIndex;
                   return (
                     <button
-                      key={item.section}
+                      key={`${item.group}-${item.section}`}
                       data-active={isHighlighted}
-                      onClick={() => navigate(item.section)}
+                      onClick={() => navigate(item.section, item.toastMessage)}
                       onMouseEnter={() => setActiveIndex(globalIndex)}
                       className={cn(
                         'flex w-full items-center gap-3 rounded-md px-2.5 py-2 text-sm transition-colors',
@@ -201,7 +390,7 @@ export function CommandPalette() {
                           ? 'bg-accent text-accent-foreground'
                           : isCurrentSection
                             ? 'bg-accent/60 text-accent-foreground'
-                            : 'text-foreground hover:bg-accent/50'
+                            : 'text-foreground hover:bg-accent/50',
                       )}
                     >
                       <item.icon className="h-4 w-4 shrink-0 text-muted-foreground" />

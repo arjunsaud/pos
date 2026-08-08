@@ -98,6 +98,7 @@ const tenantAdminMenu: SidebarGroup[] = [
     title: 'Settings',
     items: [
       { label: 'Subscription', section: 'tenant-subscription', icon: CreditCard },
+      { label: 'Store Profile', section: 'store-profile', icon: Store },
       { label: 'Staff', section: 'tenant-staff', icon: UserCog },
     ],
   },

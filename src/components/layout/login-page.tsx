@@ -2,7 +2,8 @@
 
 import { useAuthStore } from '@/features/auth/store';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Shield, Store, UserCheck, ArrowRight, Zap, Globe, Lock, Check } from 'lucide-react';
+import { Shield, Store, UserCheck, ArrowRight, Zap, Globe, Lock, Check, MoonStar } from 'lucide-react';
+import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
 import type { UserRole } from '@/lib/types';
 import { useState } from 'react';
@@ -62,6 +63,8 @@ const features: { icon: React.ElementType; label: string; borderColor: string }[
 export function LoginPage() {
   const { login } = useAuthStore();
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === 'dark';
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-muted/50 via-background to-muted/30 p-4 relative overflow-hidden">
@@ -79,10 +82,16 @@ export function LoginPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/20">
-            <Store className="h-8 w-8" />
+          <div className={cn(
+            'mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/20 transition-shadow duration-300',
+            isDark && 'shadow-[0_0_15px_rgba(99,102,241,0.3)]',
+          )}>
+            {isDark ? <MoonStar className="h-8 w-8" /> : <Store className="h-8 w-8" />}
           </div>
-          <h1 className="text-4xl font-bold tracking-tight">POS Nepal</h1>
+          <h1 className={cn(
+            'text-4xl font-bold tracking-tight',
+            isDark && 'bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent',
+          )}>POS Nepal</h1>
           {/* Animated gradient line below heading */}
           <motion.div
             className="mx-auto h-[2px] w-24 rounded-full bg-gradient-to-r from-purple-500 via-emerald-500 to-amber-500"
@@ -115,7 +124,10 @@ export function LoginPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.15 }}
         >
-          <Card className="border-0 shadow-xl relative overflow-hidden">
+          <Card className={cn(
+            'border-0 shadow-xl relative overflow-hidden',
+            'dark:border-border/50 dark:bg-card/50 dark:backdrop-blur-sm',
+          )}>
             {/* Subtle background pattern */}
             <div className="pointer-events-none absolute inset-0 opacity-[0.025] dark:opacity-[0.04]" style={{backgroundImage: 'radial-gradient(circle, currentColor 1px, transparent 1px)', backgroundSize: '24px 24px'}} />
             <CardHeader className="text-center pb-4 relative">
@@ -132,11 +144,11 @@ export function LoginPage() {
             <CardContent className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" placeholder="admin@posnepal.com" defaultValue="admin@posnepal.com" />
+                <Input id="email" type="email" placeholder="admin@posnepal.com" defaultValue="admin@posnepal.com" className="dark:border-border/60" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
-                <Input id="password" type="password" placeholder="••••••••" defaultValue="password" />
+                <Input id="password" type="password" placeholder="••••••••" defaultValue="password" className="dark:border-border/60" />
               </div>
 
               <div className="space-y-3">
@@ -225,10 +237,10 @@ export function LoginPage() {
           transition={{ delay: 0.7 }}
         >
           <div className="mx-auto w-32 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-          <p className="text-center text-xs text-muted-foreground">
+          <p className="text-center text-xs text-muted-foreground dark:text-muted-foreground/70">
             © 2025 POS Nepal · Multi-Tenant SaaS Platform
           </p>
-          <p className="text-center text-[10px] text-muted-foreground/60">
+          <p className="text-center text-[10px] text-muted-foreground/60 dark:text-muted-foreground/50">
             Built with Next.js, Tailwind CSS & ShadCN UI
           </p>
         </motion.div>

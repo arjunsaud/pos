@@ -56,11 +56,23 @@ interface NavState {
   currentSection: NavSection;
   setCurrentSection: (section: NavSection) => void;
   resetToDefault: (role: UserRole) => void;
+  recentSections: NavSection[];
+  pushRecent: (section: NavSection) => void;
 }
 
-export const useNavStore = create<NavState>((set) => ({
+export const useNavStore = create<NavState>((set, get) => ({
   currentSection: 'super-admin-dashboard',
-  setCurrentSection: (section: NavSection) => set({ currentSection: section }),
+  recentSections: [],
+  pushRecent: (section: NavSection) => {
+    const { recentSections } = get();
+    const filtered = recentSections.filter(s => s !== section);
+    set({ recentSections: [section, ...filtered].slice(0, 5) });
+  },
+  setCurrentSection: (section: NavSection) => {
+    const { pushRecent } = get();
+    pushRecent(section);
+    set({ currentSection: section });
+  },
   resetToDefault: (role: UserRole) => {
     const defaults: Record<UserRole, NavSection> = {
       'super-admin': 'super-admin-dashboard',

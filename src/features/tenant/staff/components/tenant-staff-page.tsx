@@ -32,11 +32,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Plus, Pencil, Power, PowerOff } from 'lucide-react';
+import { Plus, Pencil, Power, PowerOff, X } from 'lucide-react';
 import { mockTenantStaff } from '@/lib/mock-data';
 import { toast } from 'sonner';
 import type { StaffMember, TenantStaffRole } from '@/lib/types';
 import { getInitials, getRoleBadgeClasses, getStatusBadgeClasses } from '@/lib/helpers';
+import { cn } from '@/lib/utils';
+
+function getAvatarColor(name: string): string {
+  const colors = [
+    'bg-emerald-500', 'bg-blue-500', 'bg-amber-500', 'bg-purple-500', 'bg-rose-500',
+    'bg-cyan-500', 'bg-orange-500', 'bg-teal-500', 'bg-pink-500', 'bg-indigo-500'
+  ];
+  return colors[name.charCodeAt(0) % colors.length];
+}
+
+const ROLE_DESCRIPTIONS: Record<string, string> = {
+  manager: 'Full access to all features including settings',
+  cashier: 'Access to POS terminal and sales history',
+};
 
 const PERMISSIONS = [
   { key: 'pos_access', label: 'POS Access' },
@@ -67,24 +81,34 @@ export default function TenantStaffPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState<StaffForm>(emptyForm);
+  const [customPerm, setCustomPerm] = useState('');
 
   const openAdd = () => {
     setEditId(null);
     setForm(emptyForm);
+    setCustomPerm('');
     setDialogOpen(true);
   };
 
   const openEdit = (member: StaffMember) => {
     setEditId(member.id);
+    const perms = member.permissions.includes('all')
+      ? PERMISSIONS.map((p) => p.key)
+      : [...member.permissions];
+    // Also add any custom permissions not in the predefined list
+    member.permissions.forEach((perm) => {
+      if (!PERMISSIONS.some((p) => p.key === perm) && !perms.includes(perm)) {
+        perms.push(perm);
+      }
+    });
     setForm({
       name: member.name,
       email: member.email,
       phone: member.phone,
       role: member.role as TenantStaffRole,
-      permissions: member.permissions.includes('all')
-        ? PERMISSIONS.map((p) => p.key)
-        : [...member.permissions],
+      permissions: perms,
     });
+    setCustomPerm('');
     setDialogOpen(true);
   };
 
@@ -95,6 +119,33 @@ export default function TenantStaffPage() {
         ? prev.permissions.filter((p) => p !== key)
         : [...prev.permissions, key],
     }));
+  };
+
+  const addCustomPermission = () => {
+    const key = customPerm.trim().toLowerCase().replace(/\s+/g, '_');
+    if (!key) return;
+    if (form.permissions.includes(key)) {
+      toast.error('Permission already added');
+      return;
+    }
+    setForm((prev) => ({
+      ...prev,
+      permissions: [...prev.permissions, key],
+    }));
+    setCustomPerm('');
+  };
+
+  const removePermission = (key: string) => {
+    setForm((prev) => ({
+      ...prev,
+      permissions: prev.permissions.filter((p) => p !== key),
+    }));
+  };
+
+  const getPermissionLabel = (key: string): string => {
+    const found = PERMISSIONS.find((p) => p.key === key);
+    if (found) return found.label;
+    return key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
   };
 
   const handleSave = () => {
@@ -175,8 +226,12 @@ export default function TenantStaffPage() {
                 <TableRow key={member.id} className='transition-colors hover:bg-muted/50'>
                   <TableCell>
                     <div className='flex items-center gap-3'>
+                      <div className={cn(
+                        'h-2 w-2 rounded-full shrink-0',
+                        member.status === 'active' ? 'bg-emerald-500' : 'bg-gray-400'
+                      )} />
                       <Avatar className='h-8 w-8'>
-                        <AvatarFallback className='text-xs'>
+                        <AvatarFallback className={cn('text-xs text-white', getAvatarColor(member.name))}>
                           {getInitials(member.name)}
                         </AvatarFallback>
                       </Avatar>
@@ -299,9 +354,42 @@ export default function TenantStaffPage() {
                   <SelectItem value='manager'>Manager</SelectItem>
                 </SelectContent>
               </Select>
+              {form.role && ROLE_DESCRIPTIONS[form.role] && (
+                <p className='text-xs text-muted-foreground'>
+                  {ROLE_DESCRIPTIONS[form.role]}
+                </p>
+              )}
             </div>
             <div className='grid gap-3'>
-              <Label>Permissions</Label>
+              <div className='flex items-center justify-between'>
+                <Label>Permissions</Label>
+                {form.permissions.length > 0 && (
+                  <span className='text-xs text-muted-foreground'>
+                    {form.permissions.length} permission{form.permissions.length !== 1 ? 's' : ''} selected
+                  </span>
+                )}
+              </div>
+              {/* Permission badges */}
+              {form.permissions.length > 0 && (
+                <div className='flex flex-wrap gap-1.5'>
+                  {form.permissions.map((key) => (
+                    <Badge
+                      key={key}
+                      variant='outline'
+                      className='gap-1 pr-1 text-xs'
+                    >
+                      {getPermissionLabel(key)}
+                      <button
+                        type='button'
+                        onClick={() => removePermission(key)}
+                        className='ml-0.5 rounded-full p-0.5 hover:bg-muted'
+                      >
+                        <X className='h-3 w-3' />
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+              )}
               <div className='grid grid-cols-2 gap-2'>
                 {PERMISSIONS.map((perm) => (
                   <div key={perm.key} className='flex items-center gap-2'>
@@ -315,6 +403,19 @@ export default function TenantStaffPage() {
                     </Label>
                   </div>
                 ))}
+              </div>
+              {/* Custom permission input */}
+              <div className='flex items-center gap-2'>
+                <Input
+                  value={customPerm}
+                  onChange={(e) => setCustomPerm(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomPermission())}
+                  placeholder='Add custom permission...'
+                  className='h-8 text-sm'
+                />
+                <Button type='button' variant='outline' size='sm' onClick={addCustomPermission}>
+                  Add
+                </Button>
               </div>
             </div>
           </div>
