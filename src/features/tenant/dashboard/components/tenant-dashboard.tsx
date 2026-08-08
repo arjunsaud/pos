@@ -11,7 +11,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/
 import { ShoppingBag, Banknote, ClipboardList, AlertTriangle, Wallet, CreditCard, Smartphone, ArrowUpRight, ShoppingCart, FileText, Package, BarChart3 } from 'lucide-react';
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { mockTenantStats, mockSalesReportData, mockSales } from '@/lib/mock-data';
-import { npr, getStatusBadgeClasses } from '@/lib/helpers';
+import { npr, nprFull, getStatusBadgeClasses } from '@/lib/helpers';
 import { useAuthStore, useNavStore } from '@/features/auth/store';
 import { cn } from '@/lib/utils';
 import type { ChartConfig } from '@/components/ui/chart';
@@ -287,7 +287,7 @@ export default function TenantDashboard() {
                       >
                         {sale.status}
                       </Badge>
-                      <span className="text-sm font-semibold">NPR {npr(sale.total)}</span>
+                      <span className="text-sm font-semibold">NPR {nprFull(sale.total)}</span>
                     </div>
                   </div>
                 ))}

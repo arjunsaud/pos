@@ -30,18 +30,28 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Download, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Download, Eye, ChevronLeft, ChevronRight, ShoppingCart, DollarSign, TrendingUp, RotateCcw } from 'lucide-react';
 import { mockSales } from '@/lib/mock-data';
 import { toast } from 'sonner';
 import type { Sale } from '@/lib/types';
 import { cn } from '@/lib/utils';
-import { npr, getStatusBadgeClasses } from '@/lib/helpers';
+import { npr, nprFull, getStatusBadgeClasses } from '@/lib/helpers';
 
 const fmtDate = (d: string) => new Date(d).toLocaleDateString('en-GB');
 const formatDate = (d: Date) => d.toISOString().slice(0, 10);
 const ITEMS_PER_PAGE = 5;
 
 const DATE_PRESETS = ['Today', 'Last 7 Days', 'Last 30 Days', 'This Month'] as const;
+
+function getPaymentMethodColor(method: string): string {
+  switch (method) {
+    case 'Cash': return 'bg-emerald-500';
+    case 'Card': return 'bg-blue-500';
+    case 'eSewa': return 'bg-green-500';
+    case 'Khalti': return 'bg-purple-500';
+    default: return 'bg-gray-400';
+  }
+}
 
 export default function SalesPage() {
   const [sales] = useState<Sale[]>(mockSales);
@@ -80,6 +90,17 @@ export default function SalesPage() {
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
   const paged = filtered.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
   const totalSales = filtered.reduce((sum, s) => sum + s.total, 0);
+
+  // Quick stats - computed from all sales (unfiltered) for today
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const todaySales = useMemo(() => {
+    const today = sales.filter((s) => s.date.slice(0, 10) === todayStr && s.status === 'completed');
+    const count = today.length;
+    const revenue = today.reduce((sum, s) => sum + s.total, 0);
+    const refunds = sales.filter((s) => s.date.slice(0, 10) === todayStr && s.status === 'refunded').length;
+    const avg = count > 0 ? revenue / count : 0;
+    return { count, revenue, avg, refunds };
+  }, [sales, todayStr]);
 
   const applyPreset = (preset: string) => {
     const today = new Date();
@@ -147,6 +168,62 @@ export default function SalesPage() {
           <Download className="h-4 w-4" /> Export
         </Button>
       </PageHeader>
+
+      {/* Quick Stats Row */}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <Card className="transition-shadow hover:shadow-md">
+          <CardContent className="p-3">
+            <div className="flex items-center gap-2 text-sm">
+              <div className="rounded-lg bg-emerald-500/10 p-1.5">
+                <ShoppingCart className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-muted-foreground text-xs">Today&apos;s Sales</span>
+                <span className="font-semibold">{todaySales.count}</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="transition-shadow hover:shadow-md">
+          <CardContent className="p-3">
+            <div className="flex items-center gap-2 text-sm">
+              <div className="rounded-lg bg-blue-500/10 p-1.5">
+                <DollarSign className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-muted-foreground text-xs">Today&apos;s Revenue</span>
+                <span className="font-semibold">NPR {npr(todaySales.revenue)}</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="transition-shadow hover:shadow-md">
+          <CardContent className="p-3">
+            <div className="flex items-center gap-2 text-sm">
+              <div className="rounded-lg bg-purple-500/10 p-1.5">
+                <TrendingUp className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-muted-foreground text-xs">Avg Order Value</span>
+                <span className="font-semibold">NPR {npr(todaySales.avg)}</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="transition-shadow hover:shadow-md">
+          <CardContent className="p-3">
+            <div className="flex items-center gap-2 text-sm">
+              <div className="rounded-lg bg-amber-500/10 p-1.5">
+                <RotateCcw className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-muted-foreground text-xs">Refunds</span>
+                <span className="font-semibold">{todaySales.refunds}</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Filters */}
       <Card className="transition-shadow hover:shadow-md">
@@ -237,13 +314,18 @@ export default function SalesPage() {
                   <TableCell className="text-muted-foreground">{fmtDate(sale.date)}</TableCell>
                   <TableCell>{sale.customerName}</TableCell>
                   <TableCell className="text-center">{sale.items.length}</TableCell>
-                  <TableCell><Badge variant="outline">{sale.paymentMethod}</Badge></TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-1.5">
+                      <span className={cn('inline-block h-[3px] w-[3px] rounded-full', getPaymentMethodColor(sale.paymentMethod))} />
+                      <Badge variant="outline">{sale.paymentMethod}</Badge>
+                    </div>
+                  </TableCell>
                   <TableCell>
                     <Badge className={getStatusBadgeClasses(sale.status)} variant="secondary">
                       {sale.status}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-right font-bold">NPR {npr(sale.total)}</TableCell>
+                  <TableCell className="text-right font-semibold text-sm">NPR {nprFull(sale.total)}</TableCell>
                   <TableCell>
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedSale(sale)}>
                       <Eye className="h-3.5 w-3.5" />
@@ -255,7 +337,7 @@ export default function SalesPage() {
             <TableFooter>
               <TableRow>
                 <TableCell colSpan={6} className="font-medium">Total Sales</TableCell>
-                <TableCell className="text-right font-bold">NPR {npr(totalSales)}</TableCell>
+                <TableCell className="text-right font-bold">NPR {nprFull(totalSales)}</TableCell>
                 <TableCell />
               </TableRow>
             </TableFooter>
@@ -319,7 +401,10 @@ export default function SalesPage() {
                 </div>
                 <div>
                   <span className="text-muted-foreground">Payment:</span>{' '}
-                  <Badge variant="outline">{selectedSale.paymentMethod}</Badge>
+                  <div className="inline-flex items-center gap-1.5">
+                    <span className={cn('inline-block h-[3px] w-[3px] rounded-full', getPaymentMethodColor(selectedSale.paymentMethod))} />
+                    <Badge variant="outline">{selectedSale.paymentMethod}</Badge>
+                  </div>
                 </div>
                 <div>
                   <span className="text-muted-foreground">Status:</span>{' '}
@@ -344,7 +429,7 @@ export default function SalesPage() {
                 {selectedSale.items.map((item, idx) => (
                   <div key={idx} className="flex justify-between text-sm">
                     <span>{item.productName} x{item.quantity}</span>
-                    <span className="font-medium">NPR {npr(item.total)}</span>
+                    <span className="font-medium">NPR {nprFull(item.total)}</span>
                   </div>
                 ))}
               </div>
@@ -352,21 +437,21 @@ export default function SalesPage() {
               <div className="space-y-1 border-t pt-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Subtotal</span>
-                  <span>NPR {npr(selectedSale.subtotal)}</span>
+                  <span>NPR {nprFull(selectedSale.subtotal)}</span>
                 </div>
                 {selectedSale.discount > 0 && (
                   <div className="flex justify-between text-muted-foreground">
                     <span>Discount</span>
-                    <span>- NPR {npr(selectedSale.discount)}</span>
+                    <span>- NPR {nprFull(selectedSale.discount)}</span>
                   </div>
                 )}
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">VAT (13%)</span>
-                  <span>NPR {npr(selectedSale.vatAmount)}</span>
+                  <span>NPR {nprFull(selectedSale.vatAmount)}</span>
                 </div>
                 <div className="flex justify-between text-base font-bold">
                   <span>Total</span>
-                  <span>NPR {npr(selectedSale.total)}</span>
+                  <span>NPR {nprFull(selectedSale.total)}</span>
                 </div>
               </div>
             </div>

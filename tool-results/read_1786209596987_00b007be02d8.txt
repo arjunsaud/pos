@@ -1,0 +1,643 @@
+     1→'use client';
+     2→
+     3→import { useState, useMemo } from 'react';
+     4→import { PageHeader } from '@/components/shared/page-header';
+     5→import { Card, CardContent } from '@/components/ui/card';
+     6→import {
+     7→  Table,
+     8→  TableBody,
+     9→  TableCell,
+    10→  TableHead,
+    11→  TableHeader,
+    12→  TableRow,
+    13→} from '@/components/ui/table';
+    14→import {
+    15→  Dialog,
+    16→  DialogContent,
+    17→  DialogDescription,
+    18→  DialogFooter,
+    19→  DialogHeader,
+    20→  DialogTitle,
+    21→  DialogTrigger,
+    22→} from '@/components/ui/dialog';
+    23→import {
+    24→  Select,
+    25→  SelectContent,
+    26→  SelectItem,
+    27→  SelectTrigger,
+    28→  SelectValue,
+    29→} from '@/components/ui/select';
+    30→import { Button } from '@/components/ui/button';
+    31→import { Input } from '@/components/ui/input';
+    32→import { Label } from '@/components/ui/label';
+    33→import { Badge } from '@/components/ui/badge';
+    34→import { Separator } from '@/components/ui/separator';
+    35→import {
+    36→  Plus,
+    37→  Search,
+    38→  Eye,
+    39→  ToggleLeft,
+    40→  Trash2,
+    41→  ChevronLeft,
+    42→  ChevronRight,
+    43→  Building2,
+    44→  Users,
+    45→  CircleDollarSign,
+    46→  CalendarCheck,
+    47→  Globe,
+    48→  Phone,
+    49→  Mail,
+    50→  Package,
+    51→  Crown,
+    52→  ArrowUpRight,
+    53→  Clock,
+    54→  CheckCircle2,
+    55→} from 'lucide-react';
+    56→import { toast } from 'sonner';
+    57→import { mockTenants } from '@/lib/mock-data';
+    58→import type { Tenant, PlanType, TenantStatus } from '@/lib/types';
+    59→import { npr, nprFull, getStatusBadgeClasses, getPlanBadgeClasses, formatRelativeTime, formatDate } from '@/lib/helpers';
+    60→
+    61→const planBadgeVariant: Record<PlanType, 'secondary' | 'default' | 'outline'> = {
+    62→  basic: 'secondary',
+    63→  pro: 'default',
+    64→  enterprise: 'outline',
+    65→};
+    66→
+    67→const planColors: Record<PlanType, { border: string; bg: string; text: string; darkBg: string }> = {
+    68→  basic: { border: 'border-slate-200 dark:border-slate-700', bg: 'bg-slate-50 dark:bg-slate-900/30', text: 'text-slate-600 dark:text-slate-400' },
+    69→  pro: { border: 'border-primary/30 dark:border-primary/20', bg: 'bg-primary/5 dark:bg-primary/10', text: 'text-primary dark:text-primary' },
+    70→  enterprise: { border: 'border-amber-200 dark:border-amber-800/50', bg: 'bg-amber-50 dark:bg-amber-900/20', text: 'text-amber-700 dark:text-amber-400' },
+    71→};
+    72→
+    73→// Mock activity per tenant for detail dialog
+    74→const mockTenantActivity = [
+    75→  { action: 'New sale completed', time: '2024-06-15T17:30:00', type: 'success' as const },
+    76→  { action: 'Product inventory updated', time: '2024-06-15T14:20:00', type: 'info' as const },
+    77→  { action: 'Staff member added', time: '2024-06-14T11:00:00', type: 'info' as const },
+    78→  { action: 'Monthly subscription renewed', time: '2024-06-13T09:00:00', type: 'success' as const },
+    79→  { action: 'Low stock alert triggered', time: '2024-06-12T16:45:00', type: 'warning' as const },
+    80→];
+    81→
+    82→const activityDotColor: Record<string, string> = {
+    83→  success: 'bg-emerald-500',
+    84→  info: 'bg-blue-500',
+    85→  warning: 'bg-amber-500',
+    86→  error: 'bg-red-500',
+    87→};
+    88→
+    89→type StatusFilter = 'all' | 'active' | 'inactive';
+    90→
+    91→const ITEMS_PER_PAGE = 5;
+    92→
+    93→type TenantSortField = 'name' | 'plan' | 'status' | 'products';
+    94→
+    95→export default function TenantManagement() {
+    96→  const [search, setSearch] = useState('');
+    97→  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+    98→  const [page, setPage] = useState(0);
+    99→  const [addOpen, setAddOpen] = useState(false);
+   100→  const [detailOpen, setDetailOpen] = useState(false);
+   101→  const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
+   102→  const [sortField, setSortField] = useState<TenantSortField>('name');
+   103→  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+   104→
+   105→  // Add form state
+   106→  const [formName, setFormName] = useState('');
+   107→  const [formEmail, setFormEmail] = useState('');
+   108→  const [formPhone, setFormPhone] = useState('');
+   109→  const [formDomain, setFormDomain] = useState('');
+   110→  const [formPlan, setFormPlan] = useState<PlanType>('basic');
+   111→
+   112→  // Local tenant list for toggle/delete
+   113→  const [tenants, setTenants] = useState<Tenant[]>(mockTenants);
+   114→
+   115→  const filteredTenants = useMemo(() => {
+   116→    let result = tenants.filter((t) => {
+   117→      const matchesSearch = t.name.toLowerCase().includes(search.toLowerCase());
+   118→      const matchesStatus =
+   119→        statusFilter === 'all' || t.status === statusFilter;
+   120→      return matchesSearch && matchesStatus;
+   121→    });
+   122→    const planOrder: Record<PlanType, number> = { basic: 0, pro: 1, enterprise: 2 };
+   123→    result.sort((a, b) => {
+   124→      let cmp = 0;
+   125→      if (sortField === 'name') cmp = a.name.localeCompare(b.name);
+   126→      else if (sortField === 'plan') cmp = planOrder[a.plan] - planOrder[b.plan];
+   127→      else if (sortField === 'status') cmp = a.status.localeCompare(b.status);
+   128→      else cmp = a.productCount - b.productCount;
+   129→      return sortDir === 'asc' ? cmp : -cmp;
+   130→    });
+   131→    return result;
+   132→  }, [tenants, search, statusFilter, sortField, sortDir]);
+   133→
+   134→  const totalPages = Math.ceil(filteredTenants.length / ITEMS_PER_PAGE);
+   135→  const pagedTenants = filteredTenants.slice(
+   136→    page * ITEMS_PER_PAGE,
+   137→    (page + 1) * ITEMS_PER_PAGE
+   138→  );
+   139→
+   140→  const handleSort = (field: TenantSortField) => {
+   141→    if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+   142→    else { setSortField(field); setSortDir('asc'); }
+   143→  };
+   144→  const sortIcon = (field: TenantSortField) => sortField === field ? (sortDir === 'asc' ? '↑' : '↓') : '↕';
+   145→
+   146→  const handleAddTenant = () => {
+   147→    const newTenant: Tenant = {
+   148→      id: `t${Date.now()}`,
+   149→      name: formName,
+   150→      email: formEmail,
+   151→      phone: formPhone,
+   152→      domain: formDomain,
+   153→      plan: formPlan,
+   154→      status: 'active',
+   155→      createdAt: new Date().toISOString().slice(0, 10),
+   156→      ownerName: formName,
+   157→      productCount: 0,
+   158→      monthlyRevenue: 0,
+   159→    };
+   160→    setTenants(prev => [newTenant, ...prev]);
+   161→    toast.success('Tenant added successfully (mock)');
+   162→    setAddOpen(false);
+   163→    setFormName('');
+   164→    setFormEmail('');
+   165→    setFormPhone('');
+   166→    setFormDomain('');
+   167→    setFormPlan('basic');
+   168→  };
+   169→
+   170→  const handleToggleStatus = (tenant: Tenant) => {
+   171→    const newStatus: TenantStatus =
+   172→      tenant.status === 'active' ? 'inactive' : 'active';
+   173→    setTenants((prev) =>
+   174→      prev.map((t) => (t.id === tenant.id ? { ...t, status: newStatus } : t))
+   175→    );
+   176→    toast.success(`${tenant.name} ${newStatus === 'active' ? 'enabled' : 'disabled'}`);
+   177→  };
+   178→
+   179→  const handleDelete = (tenant: Tenant) => {
+   180→    setTenants((prev) => prev.filter((t) => t.id !== tenant.id));
+   181→    toast.success(`${tenant.name} deleted (mock)`);
+   182→  };
+   183→
+   184→  const handleViewDetails = (tenant: Tenant) => {
+   185→    setSelectedTenant(tenant);
+   186→    setDetailOpen(true);
+   187→  };
+   188→
+   189→  return (
+   190→    <div className="space-y-6">
+   191→      <PageHeader title="Tenant Management">
+   192→        <Dialog open={addOpen} onOpenChange={setAddOpen}>
+   193→          <DialogTrigger asChild>
+   194→            <Button>
+   195→              <Plus className="h-4 w-4" />
+   196→              Add Tenant
+   197→            </Button>
+   198→          </DialogTrigger>
+   199→          <DialogContent>
+   200→            <DialogHeader>
+   201→              <DialogTitle>Add New Tenant</DialogTitle>
+   202→              <DialogDescription>
+   203→                Fill in the details to register a new tenant on the platform.
+   204→              </DialogDescription>
+   205→            </DialogHeader>
+   206→            <div className="grid gap-4 py-2">
+   207→              <div className="grid gap-2">
+   208→                <Label htmlFor="tenant-name">Name</Label>
+   209→                <Input
+   210→                  id="tenant-name"
+   211→                  placeholder="Store name"
+   212→                  value={formName}
+   213→                  onChange={(e) => setFormName(e.target.value)}
+   214→                />
+   215→              </div>
+   216→              <div className="grid gap-2">
+   217→                <Label htmlFor="tenant-email">Email</Label>
+   218→                <Input
+   219→                  id="tenant-email"
+   220→                  type="email"
+   221→                  placeholder="admin@store.com"
+   222→                  value={formEmail}
+   223→                  onChange={(e) => setFormEmail(e.target.value)}
+   224→                />
+   225→              </div>
+   226→              <div className="grid gap-2">
+   227→                <Label htmlFor="tenant-phone">Phone</Label>
+   228→                <Input
+   229→                  id="tenant-phone"
+   230→                  placeholder="+977-98XXXXXXXX"
+   231→                  value={formPhone}
+   232→                  onChange={(e) => setFormPhone(e.target.value)}
+   233→                />
+   234→              </div>
+   235→              <div className="grid gap-2">
+   236→                <Label htmlFor="tenant-domain">Domain</Label>
+   237→                <Input
+   238→                  id="tenant-domain"
+   239→                  placeholder="store.posnepal.com"
+   240→                  value={formDomain}
+   241→                  onChange={(e) => setFormDomain(e.target.value)}
+   242→                />
+   243→              </div>
+   244→              <div className="grid gap-2">
+   245→                <Label htmlFor="tenant-plan">Plan</Label>
+   246→                <Select value={formPlan} onValueChange={(v: PlanType) => setFormPlan(v)}>
+   247→                  <SelectTrigger className="w-full">
+   248→                    <SelectValue />
+   249→                  </SelectTrigger>
+   250→                  <SelectContent>
+   251→                    <SelectItem value="basic">Basic</SelectItem>
+   252→                    <SelectItem value="pro">Pro</SelectItem>
+   253→                    <SelectItem value="enterprise">Enterprise</SelectItem>
+   254→                  </SelectContent>
+   255→                </Select>
+   256→              </div>
+   257→            </div>
+   258→            <DialogFooter>
+   259→              <Button variant="outline" onClick={() => setAddOpen(false)}>
+   260→                Cancel
+   261→              </Button>
+   262→              <Button onClick={handleAddTenant}>Add Tenant</Button>
+   263→            </DialogFooter>
+   264→          </DialogContent>
+   265→        </Dialog>
+   266→      </PageHeader>
+   267→
+   268→      {/* Summary Stats */}
+   269→      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+   270→        <Card className="transition-shadow hover:shadow-md">
+   271→          <CardContent className="p-4">
+   272→            <div className="flex items-center justify-between">
+   273→              <div>
+   274→                <p className="text-xs text-muted-foreground">Total Tenants</p>
+   275→                <p className="text-2xl font-semibold">{tenants.length}</p>
+   276→              </div>
+   277→              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">
+   278→                <Building2 className="h-5 w-5" />
+   279→              </div>
+   280→            </div>
+   281→          </CardContent>
+   282→        </Card>
+   283→        <Card className="transition-shadow hover:shadow-md">
+   284→          <CardContent className="p-4">
+   285→            <div className="flex items-center justify-between">
+   286→              <div>
+   287→                <p className="text-xs text-muted-foreground">Active Tenants</p>
+   288→                <p className="text-2xl font-semibold text-emerald-600 dark:text-emerald-400">{tenants.filter(t => t.status === 'active').length}</p>
+   289→              </div>
+   290→              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400">
+   291→                <CheckCircle2 className="h-5 w-5" />
+   292→              </div>
+   293→            </div>
+   294→          </CardContent>
+   295→        </Card>
+   296→        <Card className="transition-shadow hover:shadow-md">
+   297→          <CardContent className="p-4">
+   298→            <div className="flex items-center justify-between">
+   299→              <div>
+   300→                <p className="text-xs text-muted-foreground">Total Monthly Revenue</p>
+   301→                <p className="text-2xl font-semibold">NPR {npr(tenants.reduce((s, t) => s + t.monthlyRevenue, 0))}</p>
+   302→              </div>
+   303→              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400">
+   304→                <CircleDollarSign className="h-5 w-5" />
+   305→              </div>
+   306→            </div>
+   307→          </CardContent>
+   308→        </Card>
+   309→        <Card className="transition-shadow hover:shadow-md">
+   310→          <CardContent className="p-4">
+   311→            <div className="flex items-center justify-between">
+   312→              <div>
+   313→                <p className="text-xs text-muted-foreground">Avg Revenue / Tenant</p>
+   314→                <p className="text-2xl font-semibold">NPR {npr(tenants.reduce((s, t) => s + t.monthlyRevenue, 0) / tenants.length)}</p>
+   315→              </div>
+   316→              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">
+   317→                <ArrowUpRight className="h-5 w-5" />
+   318→              </div>
+   319→            </div>
+   320→          </CardContent>
+   321→        </Card>
+   322→      </div>
+   323→
+   324→      {/* Search & Filters */}
+   325→      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+   326→        <div className="relative w-full sm:max-w-xs">
+   327→          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+   328→          <Input
+   329→            placeholder="Search tenants..."
+   330→            className="pl-9"
+   331→            value={search}
+   332→            onChange={(e) => {
+   333→              setSearch(e.target.value);
+   334→              setPage(0);
+   335→            }}
+   336→          />
+   337→        </div>
+   338→        <div className="flex gap-1">
+   339→          {(['all', 'active', 'inactive'] as StatusFilter[]).map((filter) => (
+   340→            <Button
+   341→              key={filter}
+   342→              variant={statusFilter === filter ? 'default' : 'outline'}
+   343→              size="sm"
+   344→              onClick={() => {
+   345→                setStatusFilter(filter);
+   346→                setPage(0);
+   347→              }}
+   348→            >
+   349→              {filter.charAt(0).toUpperCase() + filter.slice(1)}
+   350→            </Button>
+   351→          ))}
+   352→        </div>
+   353→      </div>
+   354→
+   355→      {/* Tenant Table */}
+   356→      <Card className="transition-shadow hover:shadow-md">
+   357→        <CardContent className="p-0">
+   358→          <div className="overflow-x-auto">
+   359→          <Table>
+   360→            <TableHeader>
+   361→              <TableRow className="transition-colors hover:bg-muted/50">
+   362→                <TableHead className="cursor-pointer select-none" onClick={() => handleSort('name')}>Name <span className="ml-1 text-[10px] opacity-60">{sortIcon('name')}</span></TableHead>
+   363→                <TableHead className="hidden md:table-cell">Email</TableHead>
+   364→                <TableHead className="cursor-pointer select-none" onClick={() => handleSort('plan')}>Plan <span className="ml-1 text-[10px] opacity-60">{sortIcon('plan')}</span></TableHead>
+   365→                <TableHead className="cursor-pointer select-none" onClick={() => handleSort('status')}>Status <span className="ml-1 text-[10px] opacity-60">{sortIcon('status')}</span></TableHead>
+   366→                <TableHead className="hidden sm:table-cell cursor-pointer select-none" onClick={() => handleSort('products')}>Products <span className="ml-1 text-[10px] opacity-60">{sortIcon('products')}</span></TableHead>
+   367→                <TableHead className="hidden sm:table-cell">Revenue</TableHead>
+   368→                <TableHead className="text-right">Actions</TableHead>
+   369→              </TableRow>
+   370→            </TableHeader>
+   371→            <TableBody>
+   372→              {pagedTenants.length === 0 ? (
+   373→                <TableRow className="transition-colors hover:bg-muted/50">
+   374→                  <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+   375→                    No tenants found.
+   376→                  </TableCell>
+   377→                </TableRow>
+   378→              ) : (
+   379→                pagedTenants.map((tenant) => (
+   380→                  <TableRow key={tenant.id} className="transition-colors hover:bg-muted/50">
+   381→                    <TableCell className="font-medium">{tenant.name}</TableCell>
+   382→                    <TableCell className="hidden md:table-cell text-muted-foreground">
+   383→                      {tenant.email}
+   384→                    </TableCell>
+   385→                    <TableCell>
+   386→                      <Badge variant={planBadgeVariant[tenant.plan]}>
+   387→                        {tenant.plan.charAt(0).toUpperCase() + tenant.plan.slice(1)}
+   388→                      </Badge>
+   389→                    </TableCell>
+   390→                    <TableCell>
+   391→                      <Badge
+   392→                        className={getStatusBadgeClasses(tenant.status)}
+   393→                      >
+   394→                        {tenant.status.charAt(0).toUpperCase() + tenant.status.slice(1)}
+   395→                      </Badge>
+   396→                    </TableCell>
+   397→                    <TableCell className="hidden sm:table-cell">
+   398→                      {tenant.productCount}
+   399→                    </TableCell>
+   400→                    <TableCell className="hidden sm:table-cell">
+   401→                      NPR {npr(tenant.monthlyRevenue)}
+   402→                    </TableCell>
+   403→                    <TableCell className="text-right">
+   404→                      <div className="flex items-center justify-end gap-1">
+   405→                        <Button
+   406→                          variant="ghost"
+   407→                          size="icon"
+   408→                          onClick={() => handleViewDetails(tenant)}
+   409→                        >
+   410→                          <Eye className="h-4 w-4" />
+   411→                        </Button>
+   412→                        <Button
+   413→                          variant="ghost"
+   414→                          size="icon"
+   415→                          onClick={() => handleToggleStatus(tenant)}
+   416→                        >
+   417→                          <ToggleLeft className="h-4 w-4" />
+   418→                        </Button>
+   419→                        <Button
+   420→                          variant="ghost"
+   421→                          size="icon"
+   422→                          className="text-destructive hover:text-destructive"
+   423→                          onClick={() => handleDelete(tenant)}
+   424→                        >
+   425→                          <Trash2 className="h-4 w-4" />
+   426→                        </Button>
+   427→                      </div>
+   428→                    </TableCell>
+   429→                  </TableRow>
+   430→                ))
+   431→              )}
+   432→            </TableBody>
+   433→          </Table>
+   434→          </div>
+   435→        </CardContent>
+   436→      </Card>
+   437→
+   438→      {/* Pagination */}
+   439→      {totalPages > 1 && (
+   440→        <div className="flex items-center justify-between">
+   441→          <p className="text-sm text-muted-foreground">
+   442→            Showing {page * ITEMS_PER_PAGE + 1}–{Math.min((page + 1) * ITEMS_PER_PAGE, filteredTenants.length)} of{' '}
+   443→            {filteredTenants.length}
+   444→          </p>
+   445→          <div className="flex items-center gap-2">
+   446→            <Button
+   447→              variant="outline"
+   448→              size="icon"
+   449→              disabled={page === 0}
+   450→              onClick={() => setPage(page - 1)}
+   451→            >
+   452→              <ChevronLeft className="h-4 w-4" />
+   453→            </Button>
+   454→            {Array.from({ length: totalPages }, (_, i) => (
+   455→              <Button
+   456→                key={i}
+   457→                variant={page === i ? 'default' : 'outline'}
+   458→                size="icon"
+   459→                className="h-9 w-9"
+   460→                onClick={() => setPage(i)}
+   461→              >
+   462→                {i + 1}
+   463→              </Button>
+   464→            ))}
+   465→            <Button
+   466→              variant="outline"
+   467→              size="icon"
+   468→              disabled={page >= totalPages - 1}
+   469→              onClick={() => setPage(page + 1)}
+   470→            >
+   471→              <ChevronRight className="h-4 w-4" />
+   472→            </Button>
+   473→          </div>
+   474→        </div>
+   475→      )}
+   476→
+   477→      {/* View Details Dialog */}
+   478→      <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
+   479→        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+   480→          <DialogHeader>
+   481→            <DialogTitle className="flex items-center gap-2">
+   482→              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+   483→                <Building2 className="h-4 w-4" />
+   484→              </div>
+   485→              Tenant Details
+   486→            </DialogTitle>
+   487→            <DialogDescription>Full information and recent activity.</DialogDescription>
+   488→          </DialogHeader>
+   489→          {selectedTenant && (
+   490→            <div className="grid gap-5 py-2">
+   491→              {/* Tenant Header Card */}
+   492→              <div className={"rounded-lg border p-4 " + planColors[selectedTenant.plan].bg + ' ' + planColors[selectedTenant.plan].border}>
+   493→                <div className="flex items-start justify-between">
+   494→                  <div className="flex items-center gap-3">
+   495→                    <div className={"flex h-12 w-12 items-center justify-center rounded-xl text-lg font-bold text-white " + (selectedTenant.plan === 'enterprise' ? 'bg-amber-500' : selectedTenant.plan === 'pro' ? 'bg-primary' : 'bg-slate-500')}>
+   496→                      {selectedTenant.name.charAt(0)}
+   497→                    </div>
+   498→                    <div>
+   499→                      <p className="font-semibold text-base">{selectedTenant.name}</p>
+   500→                      <p className="text-xs text-muted-foreground">Owned by {selectedTenant.ownerName}</p>
+   501→                      <div className="mt-1 flex items-center gap-2">
+   502→                        <Badge className={getPlanBadgeClasses(selectedTenant.plan)}>
+   503→                          {selectedTenant.plan.charAt(0).toUpperCase() + selectedTenant.plan.slice(1)} Plan
+   504→                        </Badge>
+   505→                        <Badge className={getStatusBadgeClasses(selectedTenant.status)}>
+   506→                          {selectedTenant.status.charAt(0).toUpperCase() + selectedTenant.status.slice(1)}
+   507→                        </Badge>
+   508→                      </div>
+   509→                    </div>
+   510→                  </div>
+   511→                  {selectedTenant.plan === 'enterprise' && (
+   512→                    <Crown className="h-5 w-5 text-amber-500" />
+   513→                  )}
+   514→                </div>
+   515→              </div>
+   516→
+   517→              {/* Contact Info Grid */}
+   518→              <div className="grid grid-cols-2 gap-3">
+   519→                <div className="rounded-lg border p-3">
+   520→                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+   521→                    <Mail className="h-3 w-3" /> Email
+   522→                  </div>
+   523→                  <p className="mt-1 text-sm font-medium truncate">{selectedTenant.email}</p>
+   524→                </div>
+   525→                <div className="rounded-lg border p-3">
+   526→                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+   527→                    <Phone className="h-3 w-3" /> Phone
+   528→                  </div>
+   529→                  <p className="mt-1 text-sm font-medium">{selectedTenant.phone}</p>
+   530→                </div>
+   531→                <div className="rounded-lg border p-3">
+   532→                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+   533→                    <Globe className="h-3 w-3" /> Domain
+   534→                  </div>
+   535→                  <p className="mt-1 text-sm font-medium truncate">{selectedTenant.domain}</p>
+   536→                </div>
+   537→                <div className="rounded-lg border p-3">
+   538→                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+   539→                    <CalendarCheck className="h-3 w-3" /> Created
+   540→                  </div>
+   541→                  <p className="mt-1 text-sm font-medium">{formatDate(selectedTenant.createdAt)}</p>
+   542→                </div>
+   543→              </div>
+   544→
+   545→              {/* Business Stats */}
+   546→              <div className="grid grid-cols-2 gap-3">
+   547→                <div className="rounded-lg border p-3">
+   548→                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+   549→                    <Package className="h-3 w-3" /> Products
+   550→                  </div>
+   551→                  <p className="mt-1 text-xl font-semibold">{selectedTenant.productCount.toLocaleString()}</p>
+   552→                </div>
+   553→                <div className="rounded-lg border p-3">
+   554→                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+   555→                    <CircleDollarSign className="h-3 w-3" /> Monthly Revenue
+   556→                  </div>
+   557→                  <p className="mt-1 text-xl font-semibold">NPR {npr(selectedTenant.monthlyRevenue)}</p>
+   558→                </div>
+   559→              </div>
+   560→
+   561→              {/* Revenue Progress Bar */}
+   562→              <div className="rounded-lg border p-3">
+   563→                <div className="flex items-center justify-between text-xs">
+   564→                  <span className="text-muted-foreground">Revenue Contribution</span>
+   565→                  <span className="font-medium">
+   566→                    {tenants.length > 0 ? Math.round((selectedTenant.monthlyRevenue / tenants.reduce((s, t) => s + t.monthlyRevenue, 0)) * 100) : 0}%
+   567→                  </span>
+   568→                </div>
+   569→                <div className="mt-2 h-2 w-full rounded-full bg-muted">
+   570→                  <div
+   571→                    className="h-2 rounded-full bg-primary transition-all"
+   572→                    style={{
+   573→                      width: `${tenants.length > 0 ? (selectedTenant.monthlyRevenue / tenants.reduce((s, t) => s + t.monthlyRevenue, 0)) * 100 : 0}%`,
+   574→                      minWidth: selectedTenant.monthlyRevenue > 0 ? '2%' : '0%',
+   575→                    }}
+   576→                  />
+   577→                </div>
+   578→                <p className="mt-1 text-[10px] text-muted-foreground">
+   579→                  NPR {nprFull(selectedTenant.monthlyRevenue)} of NPR {nprFull(tenants.reduce((s, t) => s + t.monthlyRevenue, 0))} total platform revenue
+   580→                </p>
+   581→              </div>
+   582→
+   583→              <Separator />
+   584→
+   585→              {/* Recent Activity Timeline */}
+   586→              <div>
+   587→                <p className="mb-3 text-sm font-medium">Recent Activity</p>
+   588→                <div className="relative space-y-0">
+   589→                  {mockTenantActivity.map((activity, i) => (
+   590→                    <div key={i} className="flex gap-3 pb-4 last:pb-0">
+   591→                      {/* Timeline line + dot */}
+   592→                      <div className="flex flex-col items-center">
+   593→                        <div className={"mt-1.5 h-2.5 w-2.5 rounded-full flex-shrink-0 " + activityDotColor[activity.type]} />
+   594→                        {i < mockTenantActivity.length - 1 && (
+   595→                          <div className="w-px flex-1 bg-border mt-1" />
+   596→                        )}
+   597→                      </div>
+   598→                      <div className="flex-1 -mt-0.5">
+   599→                        <p className="text-sm font-medium">{activity.action}</p>
+   600→                        <p className="flex items-center gap-1 text-[11px] text-muted-foreground">
+   601→                          <Clock className="h-3 w-3" />
+   602→                          {formatRelativeTime(activity.time)}
+   603→                        </p>
+   604→                      </div>
+   605→                    </div>
+   606→                  ))}
+   607→                </div>
+   608→              </div>
+   609→
+   610→              {/* Quick Actions */}
+   611→              <Separator />
+   612→              <div className="flex gap-2">
+   613→                <Button
+   614→                  variant="outline"
+   615→                  size="sm"
+   616→                  className="flex-1 text-xs"
+   617→                  onClick={() => {
+   618→                    toast.info('Subscription management (mock)');
+   619→                  }}
+   620→                >
+   621→                  <Crown className="mr-1.5 h-3 w-3" />
+   622→                  Manage Plan
+   623→                </Button>
+   624→                <Button
+   625→                  variant="outline"
+   626→                  size="sm"
+   627→                  className="flex-1 text-xs"
+   628→                  onClick={() => {
+   629→                    toast.info('Login as tenant (mock)');
+   630→                  }}
+   631→                >
+   632→                  <Users className="mr-1.5 h-3 w-3" />
+   633→                  Login as Tenant
+   634→                </Button>
+   635→              </div>
+   636→            </div>
+   637→          )}
+   638→        </DialogContent>
+   639→      </Dialog>
+   640→    </div>
+   641→  );
+   642→}
+   643→

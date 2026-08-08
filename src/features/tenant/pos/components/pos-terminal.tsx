@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -10,13 +10,14 @@ import { Separator } from '@/components/ui/separator';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
-import { Search, Plus, Minus, X, ShoppingCart, Banknote, CreditCard, Smartphone, Wallet, Receipt, Barcode, Trash2, TrendingUp, Clock, Package, Pause, PlayCircle, Users } from 'lucide-react';
+import { Search, Plus, Minus, X, ShoppingCart, Banknote, CreditCard, Smartphone, Wallet, Receipt, Barcode, Trash2, TrendingUp, Clock, Pause, PlayCircle, Users, Printer } from 'lucide-react';
 import { mockProducts, mockCategories, mockCustomers } from '@/lib/mock-data';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/shared/page-header';
 import type { CartItem, Product, HeldSale, Customer } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { formatDateTime, npr, nprFull } from '@/lib/helpers';
+import { useAuthStore } from '@/features/auth/store';
 
 const PAYMENT_METHODS = [
   { id: 'cash', label: 'Cash', icon: Banknote, color: 'text-emerald-600 dark:text-emerald-400' },
@@ -28,6 +29,8 @@ const PAYMENT_METHODS = [
 type PaymentMethodId = (typeof PAYMENT_METHODS)[number]['id'];
 
 export default function POSTerminal() {
+  const barcodeRef = useRef<HTMLInputElement>(null);
+  const { user } = useAuthStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [barcodeInput, setBarcodeInput] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -36,6 +39,7 @@ export default function POSTerminal() {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethodId>('cash');
   const [receiptOpen, setReceiptOpen] = useState(false);
   const [lastSale, setLastSale] = useState<{ items: CartItem[]; subtotal: number; discount: number; vat: number; total: number; method: string; time: string } | null>(null);
+  const [receiptNumber, setReceiptNumber] = useState(0);
   // Hold/Resume state
   const [heldSales, setHeldSales] = useState<HeldSale[]>([]);
   const [heldListOpen, setHeldListOpen] = useState(false);
@@ -179,11 +183,96 @@ export default function POSTerminal() {
       time: new Date().toISOString(),
     };
     setLastSale(saleData);
+    setReceiptNumber(Math.floor(100000 + Math.random() * 900000));
     setReceiptOpen(true);
     toast.success(`Sale completed! NPR ${npr(saleData.total)} via ${saleData.method}${selectedCustomer ? ` for ${selectedCustomer.name}` : ''}`);
     setCart([]);
     setDiscount(0);
   };
+
+  const handlePrintReceipt = useCallback(() => {
+    if (!lastSale) return;
+    const receiptEl = document.getElementById('pos-receipt');
+    if (!receiptEl) return;
+    const printWin = window.open('', '_blank', 'width=400,height=600');
+    if (!printWin) return;
+    const cashierName = user?.name || 'Admin';
+    printWin.document.write(`<!DOCTYPE html><html><head><title>Receipt</title>
+      <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Courier New', monospace; font-size: 12px; padding: 20px; max-width: 320px; margin: 0 auto; }
+        .center { text-align: center; }
+        .bold { font-weight: bold; }
+        .muted { color: #666; }
+        .row { display: flex; justify-content: space-between; padding: 2px 0; }
+        .dashed { border-top: 1px dashed #999; margin: 8px 0; }
+        .item { display: flex; justify-content: space-between; padding: 3px 0; }
+        .item-detail { color: #666; font-size: 11px; }
+        .total { font-size: 14px; font-weight: bold; padding: 4px 0; }
+        .footer { text-align: center; margin-top: 12px; color: #666; font-size: 11px; }
+        .receipt-num { font-size: 11px; }
+        @media print { body { padding: 10px; } }
+      </style></head><body>
+      <div class="center">
+        <p class="bold" style="font-size:16px;">ABC Store</p>
+        <p class="muted">Kathmandu, Nepal &middot; PAN: 309876543</p>
+        <p class="muted">Tel: +977-9801234567</p>
+      </div>
+      <div class="dashed"></div>
+      <div class="row"><span class="muted">Receipt #</span><span>${String(receiptNumber).padStart(6, '0')}</span></div>
+      <div class="row"><span class="muted">Cashier</span><span>${cashierName}</span></div>
+      <div class="row"><span class="muted">Customer</span><span>${selectedCustomer ? selectedCustomer.name : 'Walk-in Customer'}</span></div>
+      ${selectedCustomer?.pan ? `<div class="row"><span class="muted">PAN</span><span>${selectedCustomer.pan}</span></div>` : ''}
+      <div class="row"><span class="muted">${formatDateTime(lastSale.time)}</span><span>${lastSale.method}</span></div>
+      <div class="dashed"></div>
+      ${lastSale.items.map(item => `
+        <div class="item"><span>${item.product.name}</span><span>NPR ${npr(item.product.price * item.quantity)}</span></div>
+        <div class="item-detail">${item.quantity} &times; NPR ${npr(item.product.price)}</div>
+      `).join('')}
+      <div class="dashed"></div>
+      <div class="row"><span class="muted">Subtotal</span><span>NPR ${npr(lastSale.subtotal)}</span></div>
+      ${lastSale.discount > 0 ? `<div class="row"><span>Discount</span><span>- NPR ${npr(lastSale.discount)}</span></div>` : ''}
+      <div class="row"><span class="muted">VAT (13%)</span><span>NPR ${nprFull(lastSale.vat)}</span></div>
+      <div class="dashed"></div>
+      <div class="row total"><span>TOTAL</span><span>NPR ${nprFull(lastSale.total)}</span></div>
+      <div class="dashed"></div>
+      <p class="footer">Thank you for shopping with us!</p>
+      </body></html>`);
+    printWin.document.close();
+    printWin.focus();
+    printWin.print();
+    printWin.close();
+  }, [lastSale, receiptNumber, user, selectedCustomer]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'F2') {
+        e.preventDefault();
+        barcodeRef.current?.focus();
+      }
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        if (receiptOpen) {
+          setReceiptOpen(false);
+        } else if (heldListOpen) {
+          setHeldListOpen(false);
+        } else if (cart.length > 0) {
+          setCart([]);
+          setDiscount(0);
+          toast.success('Cart cleared');
+        } else if (searchQuery) {
+          setSearchQuery('');
+        }
+      }
+      if (e.key === 'F9' && cart.length > 0 && !receiptOpen && !heldListOpen) {
+        e.preventDefault();
+        handleCompleteSale();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [cart, receiptOpen, heldListOpen, searchQuery, handleCompleteSale]);
 
   return (
     <div className="space-y-4">
@@ -253,6 +342,7 @@ export default function POSTerminal() {
             <div className="relative w-44 hidden sm:block">
               <Barcode className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
+                ref={barcodeRef}
                 placeholder="Scan barcode/PLU"
                 value={barcodeInput}
                 onChange={(e) => setBarcodeInput(e.target.value)}
@@ -322,6 +412,15 @@ export default function POSTerminal() {
                 </Card>
               );
             })}
+          </div>
+
+          {/* Keyboard Shortcuts Hint */}
+          <div className="hidden md:flex items-center justify-center gap-4 text-xs text-muted-foreground pt-1">
+            <span className="flex items-center gap-1.5"><kbd className="bg-muted px-1.5 py-0.5 rounded text-[10px] font-mono">F2</kbd> Barcode</span>
+            <span className="text-border">·</span>
+            <span className="flex items-center gap-1.5"><kbd className="bg-muted px-1.5 py-0.5 rounded text-[10px] font-mono">F9</kbd> Checkout</span>
+            <span className="text-border">·</span>
+            <span className="flex items-center gap-1.5"><kbd className="bg-muted px-1.5 py-0.5 rounded text-[10px] font-mono">Esc</kbd> Clear</span>
           </div>
         </div>
 
@@ -609,11 +708,20 @@ export default function POSTerminal() {
           </DialogHeader>
           {lastSale && (
             <div className="space-y-4">
-              <div className="rounded-lg border bg-muted/30 p-4 space-y-3 text-sm">
+              <div id="pos-receipt" className="rounded-lg bg-stone-50 dark:bg-stone-900/30 p-4 space-y-3 text-sm">
                 <div className="text-center space-y-1">
                   <p className="font-bold text-base">ABC Store</p>
                   <p className="text-xs text-muted-foreground">Kathmandu, Nepal · PAN: 309876543</p>
                   <p className="text-xs text-muted-foreground">Tel: +977-9801234567</p>
+                </div>
+                <div className="border-t border-dashed" />
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">Receipt #</span>
+                  <span className="font-medium">{String(receiptNumber).padStart(6, '0')}</span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">Cashier</span>
+                  <span className="font-medium">{user?.name || 'Admin'}</span>
                 </div>
                 {/* Customer Info */}
                 <div className="flex justify-between text-xs">
@@ -626,12 +734,12 @@ export default function POSTerminal() {
                     <span>{selectedCustomer.pan}</span>
                   </div>
                 )}
-                <Separator />
+                <div className="border-t border-dashed" />
                 <div className="flex justify-between text-xs text-muted-foreground">
                   <span>{formatDateTime(lastSale.time)}</span>
                   <span>{lastSale.method}</span>
                 </div>
-                <Separator />
+                <div className="border-t border-dashed" />
                 {/* Items */}
                 <div className="space-y-1.5">
                   {lastSale.items.map((item, i) => (
@@ -644,7 +752,7 @@ export default function POSTerminal() {
                     </div>
                   ))}
                 </div>
-                <Separator />
+                <div className="border-t border-dashed" />
                 {/* Totals */}
                 <div className="space-y-1.5 text-sm">
                   <div className="flex justify-between">
@@ -661,20 +769,26 @@ export default function POSTerminal() {
                     <span className="text-muted-foreground">VAT (13%)</span>
                     <span>NPR {nprFull(lastSale.vat)}</span>
                   </div>
-                  <Separator />
+                  <div className="border-t border-dashed" />
                   <div className="flex justify-between text-base font-bold">
                     <span>Total</span>
                     <span>NPR {nprFull(lastSale.total)}</span>
                   </div>
                 </div>
-                <Separator />
+                <div className="border-t border-dashed" />
                 <div className="text-center text-xs text-muted-foreground pt-1">
                   Thank you for shopping with us!
                 </div>
               </div>
-              <Button className="w-full" variant="outline" onClick={() => setReceiptOpen(false)}>
-                Close Receipt
-              </Button>
+              <div className="flex gap-2">
+                <Button className="flex-1 gap-2" variant="outline" onClick={handlePrintReceipt}>
+                  <Printer className="h-4 w-4" />
+                  Print Receipt
+                </Button>
+                <Button className="flex-1" onClick={() => setReceiptOpen(false)}>
+                  Close
+                </Button>
+              </div>
             </div>
           )}
         </DialogContent>

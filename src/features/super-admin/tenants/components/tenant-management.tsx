@@ -31,6 +31,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 import {
   Plus,
   Search,
@@ -39,16 +40,50 @@ import {
   Trash2,
   ChevronLeft,
   ChevronRight,
+  Building2,
+  Users,
+  CircleDollarSign,
+  CalendarCheck,
+  Globe,
+  Phone,
+  Mail,
+  Package,
+  Crown,
+  ArrowUpRight,
+  Clock,
+  CheckCircle2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { mockTenants } from '@/lib/mock-data';
 import type { Tenant, PlanType, TenantStatus } from '@/lib/types';
-import { npr, getStatusBadgeClasses } from '@/lib/helpers';
+import { npr, nprFull, getStatusBadgeClasses, getPlanBadgeClasses, formatRelativeTime, formatDate } from '@/lib/helpers';
 
 const planBadgeVariant: Record<PlanType, 'secondary' | 'default' | 'outline'> = {
   basic: 'secondary',
   pro: 'default',
   enterprise: 'outline',
+};
+
+const planColors: Record<PlanType, { border: string; bg: string; text: string }> = {
+  basic: { border: 'border-slate-200 dark:border-slate-700', bg: 'bg-slate-50 dark:bg-slate-900/30', text: 'text-slate-600 dark:text-slate-400' },
+  pro: { border: 'border-primary/30 dark:border-primary/20', bg: 'bg-primary/5 dark:bg-primary/10', text: 'text-primary dark:text-primary' },
+  enterprise: { border: 'border-amber-200 dark:border-amber-800/50', bg: 'bg-amber-50 dark:bg-amber-900/20', text: 'text-amber-700 dark:text-amber-400' },
+};
+
+// Mock activity per tenant for detail dialog
+const mockTenantActivity = [
+  { action: 'New sale completed', time: '2024-06-15T17:30:00', type: 'success' as const },
+  { action: 'Product inventory updated', time: '2024-06-15T14:20:00', type: 'info' as const },
+  { action: 'Staff member added', time: '2024-06-14T11:00:00', type: 'info' as const },
+  { action: 'Monthly subscription renewed', time: '2024-06-13T09:00:00', type: 'success' as const },
+  { action: 'Low stock alert triggered', time: '2024-06-12T16:45:00', type: 'warning' as const },
+];
+
+const activityDotColor: Record<string, string> = {
+  success: 'bg-emerald-500',
+  info: 'bg-blue-500',
+  warning: 'bg-amber-500',
+  error: 'bg-red-500',
 };
 
 type StatusFilter = 'all' | 'active' | 'inactive';
@@ -230,6 +265,62 @@ export default function TenantManagement() {
         </Dialog>
       </PageHeader>
 
+      {/* Summary Stats */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Card className="transition-shadow hover:shadow-md">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-muted-foreground">Total Tenants</p>
+                <p className="text-2xl font-semibold">{tenants.length}</p>
+              </div>
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">
+                <Building2 className="h-5 w-5" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="transition-shadow hover:shadow-md">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-muted-foreground">Active Tenants</p>
+                <p className="text-2xl font-semibold text-emerald-600 dark:text-emerald-400">{tenants.filter(t => t.status === 'active').length}</p>
+              </div>
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400">
+                <CheckCircle2 className="h-5 w-5" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="transition-shadow hover:shadow-md">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-muted-foreground">Total Monthly Revenue</p>
+                <p className="text-2xl font-semibold">NPR {npr(tenants.reduce((s, t) => s + t.monthlyRevenue, 0))}</p>
+              </div>
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400">
+                <CircleDollarSign className="h-5 w-5" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="transition-shadow hover:shadow-md">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-muted-foreground">Avg Revenue / Tenant</p>
+                <p className="text-2xl font-semibold">NPR {npr(tenants.reduce((s, t) => s + t.monthlyRevenue, 0) / tenants.length)}</p>
+              </div>
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">
+                <ArrowUpRight className="h-5 w-5" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Search & Filters */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative w-full sm:max-w-xs">
@@ -385,70 +476,162 @@ export default function TenantManagement() {
 
       {/* View Details Dialog */}
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Tenant Details</DialogTitle>
-            <DialogDescription>Full information for the tenant.</DialogDescription>
+            <DialogTitle className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <Building2 className="h-4 w-4" />
+              </div>
+              Tenant Details
+            </DialogTitle>
+            <DialogDescription>Full information and recent activity.</DialogDescription>
           </DialogHeader>
           {selectedTenant && (
-            <div className="grid gap-4 py-2">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-xs text-muted-foreground">Name</p>
-                  <p className="text-sm font-medium">{selectedTenant.name}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Owner</p>
-                  <p className="text-sm font-medium">{selectedTenant.ownerName}</p>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-xs text-muted-foreground">Email</p>
-                  <p className="text-sm font-medium">{selectedTenant.email}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Phone</p>
-                  <p className="text-sm font-medium">{selectedTenant.phone}</p>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-xs text-muted-foreground">Domain</p>
-                  <p className="text-sm font-medium">{selectedTenant.domain}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Plan</p>
-                  <Badge variant={planBadgeVariant[selectedTenant.plan]}>
-                    {selectedTenant.plan.charAt(0).toUpperCase() + selectedTenant.plan.slice(1)}
-                  </Badge>
+            <div className="grid gap-5 py-2">
+              {/* Tenant Header Card */}
+              <div className={"rounded-lg border p-4 " + planColors[selectedTenant.plan].bg + ' ' + planColors[selectedTenant.plan].border}>
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className={"flex h-12 w-12 items-center justify-center rounded-xl text-lg font-bold text-white " + (selectedTenant.plan === 'enterprise' ? 'bg-amber-500' : selectedTenant.plan === 'pro' ? 'bg-primary' : 'bg-slate-500')}>
+                      {selectedTenant.name.charAt(0)}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-base">{selectedTenant.name}</p>
+                      <p className="text-xs text-muted-foreground">Owned by {selectedTenant.ownerName}</p>
+                      <div className="mt-1 flex items-center gap-2">
+                        <Badge className={getPlanBadgeClasses(selectedTenant.plan)}>
+                          {selectedTenant.plan.charAt(0).toUpperCase() + selectedTenant.plan.slice(1)} Plan
+                        </Badge>
+                        <Badge className={getStatusBadgeClasses(selectedTenant.status)}>
+                          {selectedTenant.status.charAt(0).toUpperCase() + selectedTenant.status.slice(1)}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                  {selectedTenant.plan === 'enterprise' && (
+                    <Crown className="h-5 w-5 text-amber-500" />
+                  )}
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-xs text-muted-foreground">Status</p>
-                  <Badge
-                    className={getStatusBadgeClasses(selectedTenant.status)}
-                  >
-                    {selectedTenant.status.charAt(0).toUpperCase() + selectedTenant.status.slice(1)}
-                  </Badge>
+
+              {/* Contact Info Grid */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-lg border p-3">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Mail className="h-3 w-3" /> Email
+                  </div>
+                  <p className="mt-1 text-sm font-medium truncate">{selectedTenant.email}</p>
                 </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Created</p>
-                  <p className="text-sm font-medium">{selectedTenant.createdAt}</p>
+                <div className="rounded-lg border p-3">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Phone className="h-3 w-3" /> Phone
+                  </div>
+                  <p className="mt-1 text-sm font-medium">{selectedTenant.phone}</p>
+                </div>
+                <div className="rounded-lg border p-3">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Globe className="h-3 w-3" /> Domain
+                  </div>
+                  <p className="mt-1 text-sm font-medium truncate">{selectedTenant.domain}</p>
+                </div>
+                <div className="rounded-lg border p-3">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <CalendarCheck className="h-3 w-3" /> Created
+                  </div>
+                  <p className="mt-1 text-sm font-medium">{formatDate(selectedTenant.createdAt)}</p>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-xs text-muted-foreground">Products</p>
-                  <p className="text-sm font-medium">{selectedTenant.productCount}</p>
+
+              {/* Business Stats */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-lg border p-3">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Package className="h-3 w-3" /> Products
+                  </div>
+                  <p className="mt-1 text-xl font-semibold">{selectedTenant.productCount.toLocaleString()}</p>
                 </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Monthly Revenue</p>
-                  <p className="text-sm font-medium">
-                    NPR {npr(selectedTenant.monthlyRevenue)}
-                  </p>
+                <div className="rounded-lg border p-3">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <CircleDollarSign className="h-3 w-3" /> Monthly Revenue
+                  </div>
+                  <p className="mt-1 text-xl font-semibold">NPR {npr(selectedTenant.monthlyRevenue)}</p>
                 </div>
+              </div>
+
+              {/* Revenue Progress Bar */}
+              <div className="rounded-lg border p-3">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground">Revenue Contribution</span>
+                  <span className="font-medium">
+                    {tenants.length > 0 ? Math.round((selectedTenant.monthlyRevenue / tenants.reduce((s, t) => s + t.monthlyRevenue, 0)) * 100) : 0}%
+                  </span>
+                </div>
+                <div className="mt-2 h-2 w-full rounded-full bg-muted">
+                  <div
+                    className="h-2 rounded-full bg-primary transition-all"
+                    style={{
+                      width: `${tenants.length > 0 ? (selectedTenant.monthlyRevenue / tenants.reduce((s, t) => s + t.monthlyRevenue, 0)) * 100 : 0}%`,
+                      minWidth: selectedTenant.monthlyRevenue > 0 ? '2%' : '0%',
+                    }}
+                  />
+                </div>
+                <p className="mt-1 text-[10px] text-muted-foreground">
+                  NPR {nprFull(selectedTenant.monthlyRevenue)} of NPR {nprFull(tenants.reduce((s, t) => s + t.monthlyRevenue, 0))} total platform revenue
+                </p>
+              </div>
+
+              <Separator />
+
+              {/* Recent Activity Timeline */}
+              <div>
+                <p className="mb-3 text-sm font-medium">Recent Activity</p>
+                <div className="relative space-y-0">
+                  {mockTenantActivity.map((activity, i) => (
+                    <div key={i} className="flex gap-3 pb-4 last:pb-0">
+                      {/* Timeline line + dot */}
+                      <div className="flex flex-col items-center">
+                        <div className={"mt-1.5 h-2.5 w-2.5 rounded-full flex-shrink-0 " + activityDotColor[activity.type]} />
+                        {i < mockTenantActivity.length - 1 && (
+                          <div className="w-px flex-1 bg-border mt-1" />
+                        )}
+                      </div>
+                      <div className="flex-1 -mt-0.5">
+                        <p className="text-sm font-medium">{activity.action}</p>
+                        <p className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                          <Clock className="h-3 w-3" />
+                          {formatRelativeTime(activity.time)}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Quick Actions */}
+              <Separator />
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 text-xs"
+                  onClick={() => {
+                    toast.info('Subscription management (mock)');
+                  }}
+                >
+                  <Crown className="mr-1.5 h-3 w-3" />
+                  Manage Plan
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 text-xs"
+                  onClick={() => {
+                    toast.info('Login as tenant (mock)');
+                  }}
+                >
+                  <Users className="mr-1.5 h-3 w-3" />
+                  Login as Tenant
+                </Button>
               </div>
             </div>
           )}

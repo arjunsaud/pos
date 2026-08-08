@@ -28,6 +28,25 @@ import { cn } from '@/lib/utils';
 
 const ITEMS_PER_PAGE = 8;
 
+const AVATAR_COLORS = [
+  { bg: 'bg-emerald-100 dark:bg-emerald-900/30', text: 'text-emerald-600 dark:text-emerald-400' },
+  { bg: 'bg-blue-100 dark:bg-blue-900/30', text: 'text-blue-600 dark:text-blue-400' },
+  { bg: 'bg-amber-100 dark:bg-amber-900/30', text: 'text-amber-600 dark:text-amber-400' },
+  { bg: 'bg-purple-100 dark:bg-purple-900/30', text: 'text-purple-600 dark:text-purple-400' },
+  { bg: 'bg-rose-100 dark:bg-rose-900/30', text: 'text-rose-600 dark:text-rose-400' },
+  { bg: 'bg-cyan-100 dark:bg-cyan-900/30', text: 'text-cyan-600 dark:text-cyan-400' },
+  { bg: 'bg-orange-100 dark:bg-orange-900/30', text: 'text-orange-600 dark:text-orange-400' },
+  { bg: 'bg-teal-100 dark:bg-teal-900/30', text: 'text-teal-600 dark:text-teal-400' },
+  { bg: 'bg-pink-100 dark:bg-pink-900/30', text: 'text-pink-600 dark:text-pink-400' },
+  { bg: 'bg-indigo-100 dark:bg-indigo-900/30', text: 'text-indigo-600 dark:text-indigo-400' },
+];
+
+function getAvatarColor(name: string) {
+  const char = name.trim().charAt(0).toUpperCase();
+  const code = char.charCodeAt(0);
+  return AVATAR_COLORS[code % AVATAR_COLORS.length];
+}
+
 type SortField = 'name' | 'totalSpent' | 'totalPurchases' | 'lastVisit';
 type SortDir = 'asc' | 'desc';
 
@@ -66,6 +85,7 @@ export default function CustomersPage() {
   const activeCustomers = customers.filter(c => c.isActive).length;
   const totalRevenue = customers.reduce((s, c) => s + c.totalSpent, 0);
   const avgSpend = totalCustomers > 0 ? Math.round(totalRevenue / totalCustomers) : 0;
+  const maxTotalSpent = Math.max(...customers.map(c => c.totalSpent), 1);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
@@ -165,10 +185,10 @@ export default function CustomersPage() {
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Total Customers" value={totalCustomers} icon={Users} />
-        <StatCard title="Active Customers" value={activeCustomers} icon={Star} iconClassName="bg-emerald-100 dark:bg-emerald-900/30" iconColor="text-emerald-600 dark:text-emerald-400" />
-        <StatCard title="Total Revenue" value={`NPR ${npr(totalRevenue)}`} icon={TrendingUp} iconClassName="bg-amber-100 dark:bg-amber-900/30" iconColor="text-amber-600 dark:text-amber-400" />
-        <StatCard title="Avg. Spend" value={`NPR ${npr(avgSpend)}`} icon={Calendar} iconClassName="bg-purple-100 dark:bg-purple-900/30" iconColor="text-purple-600 dark:text-purple-400" />
+        <StatCard title="Total Customers" value={totalCustomers} icon={Users} className="border-l-4 border-l-blue-500 dark:border-l-blue-400" />
+        <StatCard title="Active Customers" value={activeCustomers} icon={Star} iconClassName="bg-emerald-100 dark:bg-emerald-900/30" iconColor="text-emerald-600 dark:text-emerald-400" className="border-l-4 border-l-emerald-500 dark:border-l-emerald-400" />
+        <StatCard title="Total Revenue" value={`NPR ${npr(totalRevenue)}`} icon={TrendingUp} iconClassName="bg-purple-100 dark:bg-purple-900/30" iconColor="text-purple-600 dark:text-purple-400" className="border-l-4 border-l-purple-500 dark:border-l-purple-400" />
+        <StatCard title="Avg. Spend" value={`NPR ${npr(avgSpend)}`} icon={Calendar} iconClassName="bg-amber-100 dark:bg-amber-900/30" iconColor="text-amber-600 dark:text-amber-400" className="border-l-4 border-l-amber-500 dark:border-l-amber-400" />
       </div>
 
       {/* Table */}
@@ -226,9 +246,14 @@ export default function CustomersPage() {
                   >
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
-                          {getInitials(customer.name)}
-                        </div>
+                        {(() => {
+                          const avatarColor = getAvatarColor(customer.name);
+                          return (
+                            <div className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold', avatarColor.bg, avatarColor.text)}>
+                              {getInitials(customer.name)}
+                            </div>
+                          );
+                        })()}
                         <div className="min-w-0">
                           <div className="text-sm font-medium truncate">{customer.name}</div>
                           <div className="text-xs text-muted-foreground truncate">{customer.email}</div>
@@ -238,7 +263,15 @@ export default function CustomersPage() {
                     <TableCell className="hidden md:table-cell text-sm">{customer.phone}</TableCell>
                     <TableCell className="hidden lg:table-cell text-sm font-mono">{customer.pan || '—'}</TableCell>
                     <TableCell className="text-center text-sm">{customer.totalPurchases}</TableCell>
-                    <TableCell className="text-right text-sm font-semibold">NPR {npr(customer.totalSpent)}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="text-sm font-semibold">NPR {npr(customer.totalSpent)}</div>
+                      <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-muted">
+                        <div
+                          className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400 dark:from-emerald-600 dark:to-emerald-500"
+                          style={{ width: `${Math.max((customer.totalSpent / maxTotalSpent) * 100, customer.totalSpent > 0 ? 2 : 0)}%` }}
+                        />
+                      </div>
+                    </TableCell>
                     <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">{formatDateTime(customer.lastVisit)}</TableCell>
                     <TableCell className="text-center">
                       <Badge variant="secondary" className={cn('text-xs', customer.isActive ? getStatusBadgeClasses('active') : getStatusBadgeClasses('inactive'))}>
@@ -339,9 +372,14 @@ export default function CustomersPage() {
             <div className="space-y-6">
               {/* Header with avatar */}
               <div className="flex items-center gap-4">
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary/10 text-lg font-bold text-primary">
-                  {getInitials(viewingCustomer.name)}
-                </div>
+                {(() => {
+                  const avatarColor = getAvatarColor(viewingCustomer.name);
+                  return (
+                    <div className={cn('flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-lg font-bold', avatarColor.bg, avatarColor.text)}>
+                      {getInitials(viewingCustomer.name)}
+                    </div>
+                  );
+                })()}
                 <div className="min-w-0 flex-1">
                   <h3 className="text-lg font-semibold truncate">{viewingCustomer.name}</h3>
                   <Badge variant="secondary" className={cn('mt-1', viewingCustomer.isActive ? getStatusBadgeClasses('active') : getStatusBadgeClasses('inactive'))}>

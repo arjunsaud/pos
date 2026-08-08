@@ -16,9 +16,10 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Cell, Pie, PieChart, Legend } from 'recharts';
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Cell, Pie, PieChart, Legend, Area, AreaChart } from 'recharts';
 import { Button } from '@/components/ui/button';
-import { TrendingUp, DollarSign, ShoppingCart, Calendar, Download, PieChart as PieChartIcon } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { TrendingUp, DollarSign, ShoppingCart, Calendar, Download, PieChart as PieChartIcon, BarChart3 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   mockSalesReportData,
@@ -40,6 +41,36 @@ const vatChartConfig: ChartConfig = {
   vatCollected: { label: 'VAT Collected', color: 'hsl(var(--chart-1))' },
   vatPaid: { label: 'VAT Paid', color: 'hsl(var(--chart-3))' },
 };
+
+const topCategoriesChartConfig: ChartConfig = {
+  revenue: { label: 'Revenue (NPR)', color: 'hsl(var(--chart-1))' },
+  units: { label: 'Units Sold', color: 'hsl(var(--chart-2))' },
+};
+
+const vatTrendChartConfig: ChartConfig = {
+  collected: { label: 'VAT Collected', color: 'hsl(var(--chart-1))' },
+  paid: { label: 'VAT Paid', color: 'hsl(var(--chart-3))' },
+};
+
+const topCategoriesData = [
+  { category: 'Dairy & Eggs', revenue: 89000, units: 340 },
+  { category: 'Snacks & Chips', revenue: 72400, units: 520 },
+  { category: 'Beverages', revenue: 65800, units: 410 },
+  { category: 'Rice & Grains', revenue: 58200, units: 89 },
+  { category: 'Personal Care', revenue: 44500, units: 64 },
+  { category: 'Cooking Essentials', revenue: 38700, units: 102 },
+  { category: 'Cleaning Products', revenue: 28300, units: 87 },
+  { category: 'Frozen Foods', revenue: 22100, units: 45 },
+];
+
+const vatTrendData = [
+  { month: 'Jan', collected: 42000, paid: 18000 },
+  { month: 'Feb', collected: 38500, paid: 16500 },
+  { month: 'Mar', collected: 51200, paid: 22000 },
+  { month: 'Apr', collected: 46800, paid: 20100 },
+  { month: 'May', collected: 55300, paid: 23800 },
+  { month: 'Jun', collected: 49200, paid: 21200 },
+];
 
 const pieChartConfig = {
   cash: { label: 'Cash', color: 'hsl(var(--chart-1))' },
@@ -73,6 +104,7 @@ export default function ReportsPage() {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [datePreset, setDatePreset] = useState('');
+  const [categoriesView, setCategoriesView] = useState<'revenue' | 'units'>('revenue');
 
   const applyPreset = (key: string) => {
     const today = new Date();
@@ -212,6 +244,10 @@ export default function ReportsPage() {
           <TabsTrigger value="payment">Payment Breakdown</TabsTrigger>
           <TabsTrigger value="inventory">Inventory Report</TabsTrigger>
           <TabsTrigger value="vat">VAT Report</TabsTrigger>
+          <TabsTrigger value="categories" className="gap-1.5">
+            <BarChart3 className="h-3.5 w-3.5" />
+            Top Categories
+          </TabsTrigger>
         </TabsList>
 
         {/* Sales Report */}
@@ -397,6 +433,24 @@ export default function ReportsPage() {
           </div>
           <Card className="transition-shadow hover:shadow-md">
             <CardHeader>
+              <CardTitle>VAT Trends</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ChartContainer config={vatTrendChartConfig} className="h-[200px] w-full">
+                <AreaChart data={vatTrendData}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} />
+                  <YAxis tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(v) => `NPR ${(v / 1000).toFixed(0)}k`} />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Area type="monotone" dataKey="collected" stroke="var(--color-collected)" fill="var(--color-collected)" fillOpacity={0.15} strokeWidth={2} />
+                  <Area type="monotone" dataKey="paid" stroke="var(--color-paid)" fill="var(--color-paid)" fillOpacity={0.15} strokeWidth={2} />
+                </AreaChart>
+              </ChartContainer>
+            </CardContent>
+          </Card>
+
+          <Card className="transition-shadow hover:shadow-md">
+            <CardHeader>
               <CardTitle>VAT Collected vs VAT Paid</CardTitle>
             </CardHeader>
             <CardContent>
@@ -441,6 +495,90 @@ export default function ReportsPage() {
                 </TableBody>
               </Table>
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Top Categories */}
+        <TabsContent value="categories" className="space-y-6">
+          {/* Summary Stats */}
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="rounded-lg border bg-muted/50 px-4 py-2.5">
+              <p className="text-xs text-muted-foreground">Total Revenue</p>
+              <p className="text-lg font-bold">NPR {npr(topCategoriesData.reduce((s, d) => s + d.revenue, 0))}</p>
+            </div>
+            <div className="flex items-center gap-2 rounded-lg border bg-muted/50 px-4 py-2.5">
+              <p className="text-xs text-muted-foreground">Top Category</p>
+              <Badge variant="default" className="ml-1">{topCategoriesData[0].category}</Badge>
+            </div>
+            <div className="ml-auto">
+              <div className="inline-flex rounded-lg border p-0.5">
+                <button
+                  onClick={() => setCategoriesView('revenue')}
+                  className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                    categoriesView === 'revenue'
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  Revenue
+                </button>
+                <button
+                  onClick={() => setCategoriesView('units')}
+                  className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                    categoriesView === 'units'
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  Units Sold
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <Card className="transition-shadow hover:shadow-md">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BarChart3 className="h-4 w-4" />
+                Top Categories by {categoriesView === 'revenue' ? 'Revenue' : 'Units Sold'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ChartContainer config={topCategoriesChartConfig} className="h-[350px] w-full">
+                <BarChart
+                  data={topCategoriesData}
+                  layout="vertical"
+                  margin={{ left: 20 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                  <XAxis
+                    type="number"
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={8}
+                    tickFormatter={categoriesView === 'revenue'
+                      ? (v) => `NPR ${(v / 1000).toFixed(0)}k`
+                      : (v) => String(v)
+                    }
+                  />
+                  <YAxis
+                    type="category"
+                    dataKey="category"
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={8}
+                    width={120}
+                    tick={{ fontSize: 12 }}
+                  />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Bar
+                    dataKey={categoriesView}
+                    fill={categoriesView === 'revenue' ? 'var(--color-revenue)' : 'var(--color-units)'}
+                    radius={[0, 4, 4, 0]}
+                  />
+                </BarChart>
+              </ChartContainer>
             </CardContent>
           </Card>
         </TabsContent>
