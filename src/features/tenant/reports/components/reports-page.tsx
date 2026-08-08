@@ -270,6 +270,13 @@ export default function ReportsPage() {
             />
           </div>
 
+          {/* Data Summary Strip */}
+          <div className="flex items-center justify-center gap-6 bg-muted/30 rounded-lg px-4 py-2 text-sm text-muted-foreground">
+            <span>Total: <strong className="text-foreground">NPR {npr(totalRevenue)}</strong></span>
+            <span>Orders: <strong className="text-foreground">{totalOrders}</strong></span>
+            <span>Avg: <strong className="text-foreground">NPR {npr(avgDailySales)}</strong></span>
+          </div>
+
           <Card className="transition-shadow hover:shadow-md">
             <CardHeader>
               <CardTitle>Daily Sales</CardTitle>

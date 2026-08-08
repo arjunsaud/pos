@@ -18,9 +18,6 @@ import {
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
 } from '@/components/ui/dialog';
 import {
   Select,
@@ -30,7 +27,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Download, Eye, ChevronLeft, ChevronRight, ShoppingCart, DollarSign, TrendingUp, RotateCcw } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import { Download, Eye, ChevronLeft, ChevronRight, ShoppingCart, DollarSign, TrendingUp, RotateCcw, Printer, FileText } from 'lucide-react';
 import { mockSales } from '@/lib/mock-data';
 import { toast } from 'sonner';
 import type { Sale } from '@/lib/types';
@@ -381,77 +379,125 @@ export default function SalesPage() {
         </div>
       )}
 
-      {/* View Details Dialog */}
+      {/* Invoice Detail Dialog */}
       <Dialog open={!!selectedSale} onOpenChange={(open) => !open && setSelectedSale(null)}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Sale Details</DialogTitle>
-            <DialogDescription>{selectedSale?.invoiceNumber}</DialogDescription>
-          </DialogHeader>
+        <DialogContent className="sm:max-w-xl">
           {selectedSale && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="text-muted-foreground">Customer:</span>{' '}
-                  <span className="font-medium">{selectedSale.customerName}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Date:</span>{' '}
-                  <span className="font-medium">{new Date(selectedSale.date).toLocaleString('en-GB')}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Payment:</span>{' '}
-                  <div className="inline-flex items-center gap-1.5">
-                    <span className={cn('inline-block h-[3px] w-[3px] rounded-full', getPaymentMethodColor(selectedSale.paymentMethod))} />
-                    <Badge variant="outline">{selectedSale.paymentMethod}</Badge>
+            <div className="space-y-5">
+              {/* Invoice Header */}
+              <div className="flex items-start justify-between">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-muted-foreground" />
+                    <span className="text-xl font-bold tracking-wide">INVOICE</span>
                   </div>
+                  <span className="font-mono text-sm text-muted-foreground">{selectedSale.invoiceNumber}</span>
                 </div>
-                <div>
-                  <span className="text-muted-foreground">Status:</span>{' '}
+                <div className="flex items-center gap-2">
                   <Badge className={getStatusBadgeClasses(selectedSale.status)} variant="secondary">
                     {selectedSale.status}
                   </Badge>
-                </div>
-                {selectedSale.customerPAN && (
-                  <div>
-                    <span className="text-muted-foreground">PAN:</span>{' '}
-                    <span className="font-medium">{selectedSale.customerPAN}</span>
-                  </div>
-                )}
-                <div>
-                  <span className="text-muted-foreground">Staff:</span>{' '}
-                  <span className="font-medium">{selectedSale.staffName}</span>
+                  <Badge variant="outline" className="gap-1.5">
+                    <span className={cn('inline-block h-2 w-2 rounded-full', getPaymentMethodColor(selectedSale.paymentMethod))} />
+                    {selectedSale.paymentMethod}
+                  </Badge>
                 </div>
               </div>
 
-              <div className="space-y-1 text-sm">
-                <div className="font-medium">Items</div>
-                {selectedSale.items.map((item, idx) => (
-                  <div key={idx} className="flex justify-between text-sm">
-                    <span>{item.productName} x{item.quantity}</span>
-                    <span className="font-medium">NPR {nprFull(item.total)}</span>
+              <Separator className="border-dashed" />
+
+              {/* Customer & Sale Info Grid */}
+              <div className="grid grid-cols-2 gap-4">
+                {/* Left: Bill To */}
+                <div className="space-y-2">
+                  <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Bill To</p>
+                  <div className="space-y-1.5">
+                    <p className="text-sm font-semibold">{selectedSale.customerName}</p>
+                    {selectedSale.customerPAN && (
+                      <p className="text-xs text-muted-foreground">PAN: <span className="font-mono">{selectedSale.customerPAN}</span></p>
+                    )}
+                    <p className="text-xs text-muted-foreground italic">Kathmandu, Nepal</p>
                   </div>
-                ))}
+                </div>
+                {/* Right: Invoice Details */}
+                <div className="space-y-2 text-right">
+                  <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Invoice Details</p>
+                  <div className="space-y-1.5">
+                    <div>
+                      <p className="text-[11px] text-muted-foreground">Date</p>
+                      <p className="text-sm font-medium">{new Date(selectedSale.date).toLocaleString('en-GB')}</p>
+                    </div>
+                    <div>
+                      <p className="text-[11px] text-muted-foreground">Staff</p>
+                      <p className="text-sm font-medium">{selectedSale.staffName}</p>
+                    </div>
+                    <div>
+                      <p className="text-[11px] text-muted-foreground">Payment Method</p>
+                      <p className="text-sm font-medium">{selectedSale.paymentMethod}</p>
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              <div className="space-y-1 border-t pt-2 text-sm">
-                <div className="flex justify-between">
+              {/* Items Table */}
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-8">#</TableHead>
+                    <TableHead>Item</TableHead>
+                    <TableHead className="text-center">Qty</TableHead>
+                    <TableHead className="text-right">Unit Price</TableHead>
+                    <TableHead className="text-right">Total</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {selectedSale.items.map((item, idx) => (
+                    <TableRow key={idx} className={cn(idx % 2 === 0 && 'bg-muted/30')}>
+                      <TableCell className="text-muted-foreground">{idx + 1}</TableCell>
+                      <TableCell className="font-medium">{item.productName}</TableCell>
+                      <TableCell className="text-center">{item.quantity}</TableCell>
+                      <TableCell className="text-right font-mono text-muted-foreground">NPR {nprFull(item.unitPrice)}</TableCell>
+                      <TableCell className="text-right font-mono font-medium">NPR {nprFull(item.total)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+
+              {/* Totals Section */}
+              <div className="ml-auto w-64 space-y-1.5">
+                <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Subtotal</span>
-                  <span>NPR {nprFull(selectedSale.subtotal)}</span>
+                  <span className="font-mono">NPR {nprFull(selectedSale.subtotal)}</span>
                 </div>
                 {selectedSale.discount > 0 && (
-                  <div className="flex justify-between text-muted-foreground">
+                  <div className="flex justify-between text-sm text-muted-foreground">
                     <span>Discount</span>
-                    <span>- NPR {nprFull(selectedSale.discount)}</span>
+                    <span className="font-mono">- NPR {nprFull(selectedSale.discount)}</span>
                   </div>
                 )}
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">VAT (13%)</span>
-                  <span>NPR {nprFull(selectedSale.vatAmount)}</span>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">VAT 13%</span>
+                  <span className="font-mono">NPR {nprFull(selectedSale.vatAmount)}</span>
                 </div>
-                <div className="flex justify-between text-base font-bold">
+                <div className="flex justify-between rounded-md bg-muted/50 px-3 py-2 font-bold">
                   <span>Total</span>
-                  <span>NPR {nprFull(selectedSale.total)}</span>
+                  <span className="font-mono">NPR {nprFull(selectedSale.total)}</span>
+                </div>
+              </div>
+
+              <Separator className="border-dashed" />
+
+              {/* Footer */}
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-muted-foreground">Thank you for your business!</p>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" onClick={() => window.print()}>
+                    <Printer className="h-3.5 w-3.5" />
+                    Print Receipt
+                  </Button>
+                  <Button variant="default" size="sm" onClick={() => setSelectedSale(null)}>
+                    Close
+                  </Button>
                 </div>
               </div>
             </div>

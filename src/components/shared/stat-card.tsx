@@ -17,7 +17,8 @@ interface StatCardProps {
 
 export function StatCard({ title, value, description, icon: Icon, trend, className, iconClassName, iconColor }: StatCardProps) {
   return (
-    <Card className={cn('group transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5', className)}>
+    <Card className={cn('group relative overflow-hidden transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 animate-card-shine', className)}>
+      <div className="before:absolute before:inset-x-0 before:h-[2px] before:top-0 before:bg-gradient-to-r before:from-transparent before:via-primary/20 before:to-transparent before:rounded-t-lg" />
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
         <div className={cn(
@@ -34,10 +35,10 @@ export function StatCard({ title, value, description, icon: Icon, trend, classNa
           <p className="mt-1.5 text-xs text-muted-foreground">
             {trend && (
               <span className={cn(
-                'inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[11px] font-semibold',
+                'inline-flex items-center gap-0.5 rounded-full px-2 py-1 text-xs font-semibold',
                 trend.value >= 0 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
               )}>
-                {trend.value >= 0 ? '↑' : '↓'} {Math.abs(trend.value)}%
+                {trend.value >= 0 ? '↑ +' : '↓ -'}{Math.abs(trend.value)}%
               </span>
             )}
             {trend && description && (

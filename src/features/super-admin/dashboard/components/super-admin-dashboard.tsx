@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Building2, CreditCard, TrendingUp, IndianRupee, Store, Activity, Settings } from 'lucide-react';
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, XAxis, YAxis } from 'recharts';
 import { mockSuperAdminStats, mockSalesReportData } from '@/lib/mock-data';
 import { formatRelativeTime, getLogDotColor, npr } from '@/lib/helpers';
 import { useNavStore } from '@/features/auth/store';
@@ -20,6 +20,19 @@ const chartConfig = {
   sales: {
     label: 'Sales (NPR)',
     color: 'hsl(var(--chart-1))',
+  },
+} satisfies ChartConfig;
+
+const planRevenueData = [
+  { plan: 'Basic', revenue: 110000, tenants: 2 },
+  { plan: 'Pro', revenue: 203000, tenants: 1 },
+  { plan: 'Enterprise', revenue: 2346000, tenants: 2 },
+];
+
+const planChartConfig = {
+  revenue: {
+    label: 'Revenue (NPR)',
+    color: 'hsl(38 92% 50%)',
   },
 } satisfies ChartConfig;
 
@@ -277,6 +290,29 @@ export default function SuperAdminDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Revenue by Plan */}
+      <Card className="transition-shadow hover:shadow-md">
+        <CardHeader>
+          <CardTitle>Revenue by Plan</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ChartContainer config={planChartConfig} className="h-[200px] w-full">
+            <BarChart data={planRevenueData}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} />
+              <XAxis dataKey="plan" tickLine={false} axisLine={false} tickMargin={8} />
+              <YAxis tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
+              <ChartTooltip content={<ChartTooltipContent />} />
+              <Bar dataKey="revenue" radius={[4, 4, 0, 0]}>
+                {planRevenueData.map((_, index) => {
+                  const colors = ['hsl(38 92% 50%)', 'hsl(160 84% 39%)', 'hsl(217 91% 60%)'];
+                  return <Cell key={index} fill={colors[index]} />;
+                })}
+              </Bar>
+            </BarChart>
+          </ChartContainer>
+        </CardContent>
+      </Card>
     </div>
   );
 }

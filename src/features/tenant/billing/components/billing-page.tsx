@@ -195,6 +195,21 @@ export default function BillingPage() {
       {/* Table */}
       <Card className="transition-shadow hover:shadow-md">
         <CardContent className="p-0">
+          {/* Visual Summary Strip */}
+          <div className="flex items-center justify-center divide-x divide-border border-b">
+            <div className="flex-1 flex flex-col items-center gap-0.5 bg-muted/30 py-3 px-4">
+              <span className="text-xs text-muted-foreground">Total Invoices</span>
+              <span className="text-sm font-semibold">{filtered.length}</span>
+            </div>
+            <div className="flex-1 flex flex-col items-center gap-0.5 bg-muted/30 py-3 px-4">
+              <span className="text-xs text-muted-foreground">Total Value</span>
+              <span className="text-sm font-semibold">NPR {nprFull(filtered.reduce((sum, s) => sum + s.total, 0))}</span>
+            </div>
+            <div className="flex-1 flex flex-col items-center gap-0.5 bg-muted/30 py-3 px-4">
+              <span className="text-xs text-muted-foreground">Pending</span>
+              <span className="text-sm font-semibold">{filtered.filter(s => s.status === 'pending').length}</span>
+            </div>
+          </div>
           <div className="overflow-x-auto">
           <Table>
             <TableHeader>

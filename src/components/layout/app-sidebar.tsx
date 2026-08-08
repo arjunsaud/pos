@@ -22,6 +22,7 @@ import {
   Monitor,
   Menu,
   Users,
+  Calculator,
   type LucideIcon,
 } from 'lucide-react';
 import { CommandPalette } from '@/components/layout/command-palette';
@@ -77,6 +78,7 @@ const tenantAdminMenu: SidebarGroup[] = [
       { label: 'POS Terminal', section: 'pos', icon: ShoppingCart },
       { label: 'Customers', section: 'customers', icon: Users },
       { label: 'Billing', section: 'billing', icon: Receipt },
+      { label: 'Settlement', section: 'settlement', icon: Calculator },
     ],
   },
   {

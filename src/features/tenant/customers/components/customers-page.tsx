@@ -14,14 +14,16 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Users, UserPlus, Search, Mail, Phone, MapPin, Hash, Calendar, TrendingUp, Star, MoreHorizontal, Pencil, Trash2, Eye, Download,
+  Users, UserPlus, Search, Mail, Phone, MapPin, Hash, Calendar, TrendingUp, Star, MoreHorizontal, Pencil, Trash2, Eye, Download, ShoppingBag,
 } from 'lucide-react';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Area, AreaChart, ResponsiveContainer } from 'recharts';
 import { mockCustomers } from '@/lib/mock-data';
-import { npr, formatDateTime, formatDate, getInitials, getStatusBadgeClasses } from '@/lib/helpers';
+import { npr, nprFull, formatDateTime, formatDate, getInitials, getStatusBadgeClasses } from '@/lib/helpers';
 import { toast } from 'sonner';
 import type { Customer } from '@/lib/types';
 import { cn } from '@/lib/utils';
@@ -45,6 +47,58 @@ function getAvatarColor(name: string) {
   const char = name.trim().charAt(0).toUpperCase();
   const code = char.charCodeAt(0);
   return AVATAR_COLORS[code % AVATAR_COLORS.length];
+}
+
+function getPaymentMethodColor(method: string): string {
+  switch (method) {
+    case 'Cash': return 'bg-emerald-500';
+    case 'Card': return 'bg-blue-500';
+    case 'eSewa': return 'bg-green-500';
+    case 'Khalti': return 'bg-purple-500';
+    default: return 'bg-gray-400';
+  }
+}
+
+const PAYMENT_METHODS = ['Cash', 'Card', 'eSewa', 'Khalti'];
+const ORDER_STATUSES: Array<'completed' | 'pending' | 'refunded'> = ['completed', 'completed', 'completed', 'completed', 'pending'];
+
+function generateSpendingTrend(totalSpent: number) {
+  const now = new Date();
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const base = totalSpent / 6;
+  return Array.from({ length: 6 }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - 5 + i, 1);
+    const factor = 0.5 + Math.random() * 1.0;
+    return {
+      month: months[d.getMonth()],
+      amount: Math.round(base * factor),
+    };
+  });
+}
+
+function simpleHash(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
+}
+
+function generateMockOrders(customer: Customer) {
+  const statuses = ORDER_STATUSES;
+  const seed = simpleHash(customer.id);
+  const baseDate = new Date(customer.lastVisit);
+  return Array.from({ length: 5 }, (_, i) => {
+    const date = new Date(baseDate);
+    date.setDate(date.getDate() - (i + 1) * Math.floor(3 + (seed % 10)));
+    const itemCount = 1 + ((seed * (i + 1)) % 5);
+    const total = Math.round((customer.totalSpent / Math.max(customer.totalPurchases, 1)) * (0.5 + ((seed * (i + 2)) % 10) / 10) * 100) / 100;
+    const payment = PAYMENT_METHODS[(seed + i) % PAYMENT_METHODS.length];
+    const status = customer.totalPurchases > 0 ? statuses[i] : 'pending';
+    const invNum = `INV-${String(1000 + ((seed + i * 7) % 9000))}`;
+    return { invoiceNumber: invNum, date: date.toISOString(), items: itemCount, total, paymentMethod: payment, status };
+  });
 }
 
 type SortField = 'name' | 'totalSpent' | 'totalPurchases' | 'lastVisit';
@@ -364,90 +418,186 @@ export default function CustomersPage() {
 
       {/* Customer Detail Dialog */}
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>Customer Details</DialogTitle>
           </DialogHeader>
-          {viewingCustomer && (
-            <div className="space-y-6">
-              {/* Header with avatar */}
-              <div className="flex items-center gap-4">
-                {(() => {
-                  const avatarColor = getAvatarColor(viewingCustomer.name);
-                  return (
+          {viewingCustomer && (() => {
+            const avatarColor = getAvatarColor(viewingCustomer.name);
+            const avgOrder = viewingCustomer.totalPurchases > 0 ? Math.round(viewingCustomer.totalSpent / viewingCustomer.totalPurchases) : 0;
+            const spendingTrend = generateSpendingTrend(viewingCustomer.totalSpent);
+            const mockOrders = generateMockOrders(viewingCustomer);
+            return (
+              <Tabs defaultValue="overview" className="w-full">
+                {/* Header section with gradient background */}
+                <div className="bg-gradient-to-b from-muted/30 to-transparent -mx-6 -mt-2 px-6 pt-2 pb-4 rounded-t-lg">
+                  <div className="flex items-center gap-4">
                     <div className={cn('flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-lg font-bold', avatarColor.bg, avatarColor.text)}>
                       {getInitials(viewingCustomer.name)}
                     </div>
-                  );
-                })()}
-                <div className="min-w-0 flex-1">
-                  <h3 className="text-lg font-semibold truncate">{viewingCustomer.name}</h3>
-                  <Badge variant="secondary" className={cn('mt-1', viewingCustomer.isActive ? getStatusBadgeClasses('active') : getStatusBadgeClasses('inactive'))}>
-                    {viewingCustomer.isActive ? 'Active' : 'Inactive'}
-                  </Badge>
-                </div>
-              </div>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-lg font-semibold truncate">{viewingCustomer.name}</h3>
+                      <Badge variant="secondary" className={cn('mt-1', viewingCustomer.isActive ? getStatusBadgeClasses('active') : getStatusBadgeClasses('inactive'))}>
+                        {viewingCustomer.isActive ? 'Active' : 'Inactive'}
+                      </Badge>
+                    </div>
+                  </div>
 
-              {/* Contact info grid */}
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="flex items-center gap-2.5 rounded-lg border p-3">
-                  <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
-                  <div className="min-w-0">
-                    <p className="text-[11px] text-muted-foreground">Email</p>
-                    <p className="text-sm truncate">{viewingCustomer.email || '—'}</p>
+                  {/* Stat cards with colored backgrounds */}
+                  <div className="grid grid-cols-3 gap-3 mt-5">
+                    <div className="rounded-xl border border-emerald-200 dark:border-emerald-800/50 bg-emerald-50 dark:bg-emerald-950/20 p-3 text-center transition-shadow hover:shadow-md">
+                      <p className="text-lg font-bold text-emerald-700 dark:text-emerald-400">{viewingCustomer.totalPurchases}</p>
+                      <p className="text-[11px] text-emerald-600/70 dark:text-emerald-400/70">Purchases</p>
+                    </div>
+                    <div className="rounded-xl border border-purple-200 dark:border-purple-800/50 bg-purple-50 dark:bg-purple-950/20 p-3 text-center transition-shadow hover:shadow-md">
+                      <p className="text-lg font-bold text-purple-700 dark:text-purple-400">NPR {npr(viewingCustomer.totalSpent)}</p>
+                      <p className="text-[11px] text-purple-600/70 dark:text-purple-400/70">Total Spent</p>
+                    </div>
+                    <div className="rounded-xl border border-amber-200 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-950/20 p-3 text-center transition-shadow hover:shadow-md">
+                      <p className="text-lg font-bold text-amber-700 dark:text-amber-400">NPR {npr(avgOrder)}</p>
+                      <p className="text-[11px] text-amber-600/70 dark:text-amber-400/70">Avg. Order</p>
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2.5 rounded-lg border p-3">
-                  <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
-                  <div className="min-w-0">
-                    <p className="text-[11px] text-muted-foreground">Phone</p>
-                    <p className="text-sm">{viewingCustomer.phone}</p>
+
+                <TabsList className="mt-2 w-full">
+                  <TabsTrigger value="overview" className="flex-1">Overview</TabsTrigger>
+                  <TabsTrigger value="history" className="flex-1">Purchase History</TabsTrigger>
+                </TabsList>
+
+                {/* Overview Tab */}
+                <TabsContent value="overview" className="space-y-4 mt-3">
+                  {/* Contact info grid */}
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="flex items-center gap-2.5 rounded-lg border p-3">
+                      <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-[11px] text-muted-foreground">Email</p>
+                        <p className="text-sm truncate">{viewingCustomer.email || '—'}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2.5 rounded-lg border p-3">
+                      <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-[11px] text-muted-foreground">Phone</p>
+                        <p className="text-sm">{viewingCustomer.phone}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2.5 rounded-lg border p-3">
+                      <Hash className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-[11px] text-muted-foreground">PAN</p>
+                        <p className="text-sm font-mono">{viewingCustomer.pan || 'Not provided'}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2.5 rounded-lg border p-3">
+                      <MapPin className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-[11px] text-muted-foreground">Address</p>
+                        <p className="text-sm truncate">{viewingCustomer.address || '—'}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Spending trend sparkline */}
+                  <div className="rounded-xl border p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm font-medium">Spending Trend</span>
+                      </div>
+                      <span className="text-xs text-muted-foreground">Last 6 months</span>
+                    </div>
+                    <div className="h-[60px] w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={spendingTrend} margin={{ top: 2, right: 2, bottom: 2, left: 2 }}>
+                          <defs>
+                            <linearGradient id="spendingGradient" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                              <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.02} />
+                            </linearGradient>
+                          </defs>
+                          <Area
+                            type="monotone"
+                            dataKey="amount"
+                            stroke="hsl(var(--primary))"
+                            strokeWidth={2}
+                            fill="url(#spendingGradient)"
+                          />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+
+                  {/* Dates */}
+                  <div className="flex justify-between text-xs text-muted-foreground border-t pt-3">
+                    <span>Customer since: {formatDate(viewingCustomer.createdAt)}</span>
+                    <span>Last visit: {formatDateTime(viewingCustomer.lastVisit)}</span>
+                  </div>
+                </TabsContent>
+
+                {/* Purchase History Tab */}
+                <TabsContent value="history" className="mt-3">
+                  <div className="rounded-xl border overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-xs">Invoice #</TableHead>
+                          <TableHead className="text-xs">Date</TableHead>
+                          <TableHead className="text-center text-xs">Items</TableHead>
+                          <TableHead className="text-xs">Payment</TableHead>
+                          <TableHead className="text-xs">Status</TableHead>
+                          <TableHead className="text-right text-xs">Total</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {mockOrders.map((order, idx) => (
+                          <TableRow key={idx} className="transition-colors hover:bg-muted/50">
+                            <TableCell className="text-xs font-mono font-medium">{order.invoiceNumber}</TableCell>
+                            <TableCell className="text-xs text-muted-foreground">{formatDate(order.date)}</TableCell>
+                            <TableCell className="text-center text-xs">{order.items}</TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-1.5">
+                                <span className={cn('inline-block h-[3px] w-[3px] rounded-full', getPaymentMethodColor(order.paymentMethod))} />
+                                <span className="text-xs">{order.paymentMethod}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="secondary" className={cn('text-[10px]', getStatusBadgeClasses(order.status))}>
+                                {order.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right text-xs font-semibold">NPR {nprFull(order.total)}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground mt-2 text-center">
+                    Showing 5 most recent of {viewingCustomer.totalPurchases} total purchases
+                  </p>
+                </TabsContent>
+
+                {/* Action buttons */}
+                <div className="flex justify-between pt-2 border-t">
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" className="gap-1.5" onClick={() => { toast.info('Email compose would open here'); }}>
+                      <Mail className="h-3.5 w-3.5" /> Send Email
+                    </Button>
+                    <Button variant="outline" size="sm" className="gap-1.5" onClick={() => { toast.info('POS would open with this customer pre-selected'); }}>
+                      <ShoppingBag className="h-3.5 w-3.5" /> New Sale
+                    </Button>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={() => { openEdit(viewingCustomer); setDetailOpen(false); }}>
+                      <Pencil className="h-3.5 w-3.5 mr-1" /> Edit
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => setDetailOpen(false)}>Close</Button>
                   </div>
                 </div>
-                <div className="flex items-center gap-2.5 rounded-lg border p-3">
-                  <Hash className="h-4 w-4 text-muted-foreground shrink-0" />
-                  <div className="min-w-0">
-                    <p className="text-[11px] text-muted-foreground">PAN</p>
-                    <p className="text-sm font-mono">{viewingCustomer.pan || 'Not provided'}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2.5 rounded-lg border p-3">
-                  <MapPin className="h-4 w-4 text-muted-foreground shrink-0" />
-                  <div className="min-w-0">
-                    <p className="text-[11px] text-muted-foreground">Address</p>
-                    <p className="text-sm truncate">{viewingCustomer.address || '—'}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Stats row */}
-              <div className="grid grid-cols-3 gap-3">
-                <div className="rounded-xl border bg-card p-3 text-center">
-                  <p className="text-lg font-bold">{viewingCustomer.totalPurchases}</p>
-                  <p className="text-[11px] text-muted-foreground">Purchases</p>
-                </div>
-                <div className="rounded-xl border bg-card p-3 text-center">
-                  <p className="text-lg font-bold">NPR {npr(viewingCustomer.totalSpent)}</p>
-                  <p className="text-[11px] text-muted-foreground">Total Spent</p>
-                </div>
-                <div className="rounded-xl border bg-card p-3 text-center">
-                  <p className="text-lg font-bold">NPR {npr(viewingCustomer.totalPurchases > 0 ? Math.round(viewingCustomer.totalSpent / viewingCustomer.totalPurchases) : 0)}</p>
-                  <p className="text-[11px] text-muted-foreground">Avg. Order</p>
-                </div>
-              </div>
-
-              {/* Dates */}
-              <div className="flex justify-between text-xs text-muted-foreground border-t pt-3">
-                <span>Customer since: {formatDate(viewingCustomer.createdAt)}</span>
-                <span>Last visit: {formatDateTime(viewingCustomer.lastVisit)}</span>
-              </div>
-
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => { openEdit(viewingCustomer); setDetailOpen(false); }}>Edit</Button>
-                <Button variant="outline" onClick={() => setDetailOpen(false)}>Close</Button>
-              </div>
-            </div>
-          )}
+              </Tabs>
+            );
+          })()}
         </DialogContent>
       </Dialog>
     </div>

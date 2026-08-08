@@ -1,95 +1,90 @@
 # POS Nepal - Multi-Tenant POS, Inventory & Billing System
 
-## Current Project Status (as of Round 9 Development Session)
+## Current Project Status (as of Round 10 Development Session)
 
 ### Assessment
-The project is in a **production-quality UI prototype state** with **19 feature pages** across 3 roles (added Store Profile). Round 9 focused on **1 new page, 3 new features, and extensive styling polish across 10+ pages**. The codebase compiles cleanly with 0 ESLint errors. All QA tests pass via agent-browser.
+The project is in a **production-quality UI prototype state** with **20 feature pages** across 3 roles. Round 10 focused on **1 new page (Settlement), 2 enhanced detail dialogs, and extensive visual polish across 10+ files**. The codebase compiles cleanly with 0 ESLint errors. All QA tests pass via agent-browser.
 
 ### Architecture
 - **Framework**: Next.js 16 (App Router) + TypeScript 5
 - **Styling**: Tailwind CSS 4 + shadcn/ui (New York style)
 - **State**: Zustand (auth, navigation, recent sections)
-- **Charts**: Recharts with shadcn/ui ChartContainer (Area, Bar charts)
+- **Charts**: Recharts with shadcn/ui ChartContainer (Area, Bar charts) + ResponsiveContainer for sparklines
 - **Icons**: Lucide React
 - **Structure**: Feature-based folder structure with layered architecture
 - **Data**: 100% mock/static data (no backend)
+- **Animations**: Framer Motion (page transitions, login, bulk actions), CSS @keyframes (card-shine, gentle-pulse)
 
-### What Was Done This Session (Round 9)
+### What Was Done This Session (Round 10)
 
-#### Bug Fixes (0)
-No new bugs found. All pages render correctly. Fast Refresh runtime warning is benign (HMR artifact).
+#### Bug Fixes (1)
+1. **Customer Detail Dialog RangeError**: `generateMockOrders()` used `charCodeAt(2)` and `charCodeAt(4)` on short customer IDs (e.g., `'c1'`), returning `NaN` and causing `date.toISOString()` to throw `RangeError`. Fixed by replacing with a proper `simpleHash()` string hash function. Also fixed division by zero potential with `Math.max(customer.totalPurchases, 1)`.
 
-#### New Features (4)
-1. **Store Profile Page** (NEW PAGE — 19th page):
-   - Added `'store-profile'` to `NavSection` type
-   - Added route in page.tsx and sidebar menu item (Store icon, under Settings)
-   - Store Information card: editable name, business type, PAN, phone, email, address, registration date
-   - Store Settings card: currency (NPR), timezone (Asia/Kathmandu), language, tax rate (13% VAT), receipt footer
-   - Business Hours card: 7-day visual grid with today/weekend highlighting
-   - Recent Activity mini-timeline (3 entries with colored dots)
-   - Save button with toast notification
+#### New Features (3)
+1. **Daily Settlement / Reconciliation Page** (NEW PAGE — 20th page):
+   - Added `'settlement'` to `NavSection` type union
+   - Sidebar menu item under Point of Sale (Calculator icon)
+   - 4 summary stat cards with trend indicators
+   - Payment method breakdown grid with percentage bars (Cash 53%, Card 24%, eSewa 13%, Khalti 10%)
+   - Reconciliation table (Expected/Actual/Difference/Status with Matched/Warning badges)
+   - Staff performance table with colored avatar circles
+   - Shift notes textarea with save functionality
+   - Close Register (destructive) and Print Report (outline) action buttons
 
-2. **Products Bulk Actions**:
-   - Floating selection bar (Framer Motion slide-up animation) when items selected
-   - Bulk Activate All, Deactivate All, Delete Selected actions
-   - Export Selected and Clear Selection buttons
-   - Select All checkbox targets only visible (filtered + paged) items
-   - Confirmation AlertDialog for delete
+2. **Customer Detail Dialog Enhancement**:
+   - Tabbed layout (Overview + Purchase History) using shadcn/ui Tabs
+   - Overview: contact grid, spending trend sparkline (60px AreaChart with gradient fill), dates
+   - Purchase History: compact table with 5 mock orders, payment method color dots, status badges
+   - Gradient header section with colored stat cards (emerald/purple/amber)
+   - Action buttons: Send Email, New Sale, Edit, Close
 
-3. **Enhanced Command Palette**:
-   - Grouped results with section headers: "Pages" and "Actions"
-   - 4 quick action shortcuts: New Sale, Create Invoice, Add Product, View Reports
-   - Recent pages section (max 3) tracked via `recentSections` in NavState
-   - Improved empty state: large search icon, "No results found", help text
-   - `pushRecent()` auto-tracks navigation history (max 5, deduplicated)
+3. **Sales Detail Dialog — Invoice Layout**:
+   - Professional invoice header with INVOICE title (font-mono), status + payment badges
+   - Customer & Sale Info Grid (Bill To + Invoice Details)
+   - Proper items table with #, Item, Qty, Unit Price, Total (alternating rows)
+   - Right-aligned totals section with Subtotal, Discount, VAT 13%, bold Total
+   - Print Receipt button (calls `window.print()`) + footer
 
-4. **Staff Pages Enhancement** (both Tenant and Super Admin):
-   - Avatar color coding (10-color palette based on name character)
-   - Active/inactive status dots before staff names in tables
-   - Role descriptions in add/edit dialogs
-   - Permission badges in tenant staff dialog (with custom permission input)
-   - Permission tags display in super admin staff table (max 3 + "+N more")
-
-#### Styling Enhancements (10 pages)
-1. **Categories Page**: 3 stat cards (Total Categories, Total Products, Most Popular), colored category icons (8 unique icons: Milk, Coffee, Cookie, Wheat, Flame, Sparkles, SprayCan, Snowflake), product count progress bars, hover:shadow-md + -translate-y-0.5
-2. **Content Management**: Social media post cards with image placeholder, platform icon badges, engagement row (heart/comment/share), announcement banner preview with dismiss
-3. **Login Page Dark Mode**: MoonStar logo icon in dark mode with indigo glow, premium glass card effect (backdrop-blur, subtle borders), input border visibility, footer opacity
-4. **Store Profile**: Clean form layout with proper labels, grid layout, business hours visual grid, mini timeline
-5. **Products**: Animated bulk action bar with spring animation, clear visual hierarchy
-6. **Tenant Staff**: Colored avatars, status dots, permission badges in dialog
-7. **Super Admin Staff**: Colored avatars, status dots, permission tags truncation in table
-8. **Command Palette**: Grouped layout with section headers and empty state
-9. **All Cards**: Consistent `hover:shadow-md` transitions
-10. **Tables**: Consistent `hover:bg-muted/50` row transitions
+#### Styling Enhancements (12 files)
+1. **StatCard Component**: Animated gradient shine effect (`@keyframes card-shine`), subtle top border gradient (before pseudo-element), larger trend badges, `+`/`-` prefix on trend values
+2. **Super Admin Dashboard**: New "Revenue by Plan" BarChart card (per-bar coloring: Basic=amber, Pro=emerald, Enterprise=blue)
+3. **Billing Page**: Visual summary strip above invoices table (Total Invoices, Total Value, Pending)
+4. **Reports Page**: Data summary strip in Sales tab (Total, Orders, Avg values)
+5. **Notification Panel**: Category-specific colored icons (5 categories), left color indicators, relative time formatting, unread/read visual states, "Mark all as read" with toast, "View All" footer link, enhanced empty state with BellOff icon
+6. **POS Terminal Cart**: 2px left color accent per item (stock status), gradient summary wrapper, pulsing total amount, payment method colored bottom borders with transaction count badges, gradient Complete Sale button
+7. **Tenant Subscription Page**: Shimmer overlay on current plan card, colored plan initial circles, color-coded usage progress bars (green/amber/red thresholds), streamlined plan comparison with key features
+8. **globals.css**: Added `animate-card-shine` and `animate-gentle-pulse` CSS utilities
 
 #### Verification Results
-- ✅ ESLint: 0 errors, 0 warnings (verified 3 times during session)
-- ✅ Dev server: All compiles clean, no runtime errors
-- ✅ Agent-browser QA: Login page renders clean (no stray chars)
-- ✅ Tenant Dashboard: all stats correct, nprFull amounts (2 decimal places)
-- ✅ Store Profile page: fully functional with editable fields, business hours, settings
-- ✅ Categories page: shows stat cards and product count bars (verified indirectly via lint pass)
-- ✅ Sidebar: "Store Profile" button visible in Settings section
-- ✅ All 3 role logins navigate correctly (inherited from Round 7/8 fixes)
+- ✅ ESLint: 0 errors, 0 warnings (verified multiple times during session)
+- ✅ Dev server: All compiles clean
+- ✅ Agent-browser QA:
+  - All 3 role logins navigate correctly
+  - Settlement page renders with full reconciliation table, staff performance, shift notes
+  - Customer detail dialog opens with tabs, spending chart, purchase history table
+  - Sales detail dialog shows professional invoice layout with items table and totals
+  - Notification panel opens with category filters and rich items
+  - No console errors during normal navigation
 
 ### Cumulative Feature Count
-- **19 feature pages** across 3 roles (Super Admin × 7, Tenant Admin × 12, Staff × 2)
-  - *New: Store Profile (Tenant Settings → Store Profile)*
+- **20 feature pages** across 3 roles (Super Admin × 7, Tenant Admin × 13, Staff × 2)
+  - *New: Daily Settlement (Tenant POS → Settlement)*
 - **7 shared components** (StatCard, PageHeader, EmptyState, ErrorBoundary, NotificationPanel, CommandPalette, Skeletons)
-- **12 shared utility functions** in helpers.ts (npr, nprFull, formatRelativeTime, formatDateTime, formatDate, getInitials, getStatusBadgeClasses, getPlanBadgeClasses, getRoleBadgeClasses, getStockBadgeClasses, getStockStatus, getLogDotColor)
-- **11 shared layout features** (mobile drawer, notification panel with categories, command palette with groups + recent, login animations, branding preview, period toggles, error boundary, system theme, keyboard shortcuts, enhanced receipt)
+- **12 shared utility functions** in helpers.ts
+- **13 shared layout features** (mobile drawer, notification panel with categories + relative time, command palette with groups + recent, login animations, branding preview, period toggles, error boundary, system theme, keyboard shortcuts, enhanced receipt, card shine animation)
 - **Pages with column sorting**: Sales, Customers, Inventory, Tenants (4 pages)
-- **Pages with CSV export**: Sales, Reports (3 tabs), Inventory, Customers, Products, Activity Logs (8 export points)
+- **Pages with CSV export**: Sales, Reports (3 tabs), Inventory, Customers, Products, Activity Logs, Settlement (8 export points)
 - **Pages with date presets**: Reports, Sales (2 pages)
-- **Pages with table footers**: Sales, Billing, Inventory (3 pages)
+- **Pages with table footers**: Sales, Billing, Inventory, Settlement (4 pages)
 - **Pages with Quick Actions**: Tenant Dashboard, Super Admin Dashboard (2 pages)
 - **Pages with stock progress bars**: Inventory (1 page)
 - **Pages with chart tabs**: Reports (5 tabs: Sales, Payment, Inventory, VAT, Top Categories) (1 page)
 - **Pages with dual views**: Activity Logs (Table + Timeline) (1 page)
 - **Pages with keyboard shortcuts**: POS Terminal (1 page)
 - **Pages with bulk actions**: Products (1 page)
-- **Pages with avatar color coding**: Customers, Tenant Staff, Super Admin Staff (3 pages)
-- **Pages with store profile**: Tenant (1 page)
+- **Pages with avatar color coding**: Customers, Tenant Staff, Super Admin Staff, Settlement (4 pages)
+- **Pages with detailed dialog views**: Customers (tabbed with chart + history), Sales (invoice layout) (2 pages)
+- **Pages with bar charts**: Super Admin Dashboard (2 charts), Reports (1 page)
 
 ### Unresolved Issues or Risks
 
@@ -98,71 +93,113 @@ No new bugs found. All pages render correctly. Fast Refresh runtime warning is b
 - No PDF export for invoices/reports yet
 - No drag-and-drop reordering for categories/products
 - No data table column resizing
-- Business hours in Store Profile is static (no day-of-week calculation for current date in edge cases)
+- Business hours in Store Profile is static
+- Notification panel "View All" link doesn't navigate to a dedicated notifications page
 
 ### Priority Recommendations for Next Phase
-1. Make Create Invoice flow update dashboard stats in real-time
+1. Comprehensive mobile responsive audit for all 20 pages (highest priority)
 2. Export PDF for invoices and reports
-3. Drag-and-drop reordering for categories or products
-4. Data table column resizing
-5. Comprehensive mobile responsive audit for all 19 pages
-6. Add more mock data to Store Profile (business metrics, revenue chart)
+3. Make Create Invoice flow update dashboard stats in real-time
+4. Drag-and-drop reordering for categories or products
+5. Data table column resizing
+6. Tenant onboarding flow (first-time setup wizard)
 7. Barcode scanner simulation improvement in POS
-8. Add data table column resizing
-9. Tenant onboarding flow (first-time setup wizard)
+8. Add dedicated Notifications page with full history
+9. Real-time stock level indicators on POS product grid
 
 ---
-Task ID: 3+5+6
+Task ID: 10-4a
 Agent: general-purpose
-Task: Store Profile page + Categories enhancement + Content polish
+Task: Customer Detail Dialog enhancement
 
 Work Log:
-- Created Store Profile page with store info, business hours, settings
-- Added store-profile NavSection, sidebar item, page route
-- Enhanced categories with colored icons and progress bars
-- Added stat cards to categories page
-- Enhanced content management with social media card styling
-- Verified with lint: 0 errors
+- Added Tabs, AreaChart/ResponsiveContainer (recharts), ShoppingBag imports
+- Added getPaymentMethodColor helper, generateSpendingTrend, generateMockOrders helpers
+- Replaced basic customer detail dialog with tabbed version (Overview + Purchase History)
+- Overview: gradient header, colored stat cards, contact grid, spending sparkline
+- Purchase History: compact table with 5 mock orders per customer
+- Added action buttons (Send Email, New Sale, Edit, Close)
 
 Stage Summary:
-- Store Profile is a new functional page with editable fields
-- Categories page now has visual icons and product count bars
-- Content management has richer social media post cards
+- Customer detail dialog now has tabs with spending chart and purchase history table
 
 ---
-Task ID: 7+8+9
+Task ID: 10-4b
 Agent: general-purpose
-Task: Products bulk actions + Staff pages polish
+Task: Sale Detail Dialog invoice-style layout enhancement
 
 Work Log:
-- Added floating selection bar with bulk actions (activate/deactivate/delete)
-- Added Framer Motion slide-up animation
-- Enhanced staff pages with avatar colors and status dots
-- Added permission badges to staff dialogs
-- Added role descriptions to staff dialogs
-- Enhanced super admin staff with permission tags display
-- Verified with lint: 0 errors
+- Replaced basic dialog with professional invoice layout
+- Added invoice header, customer/sale info grid, items table, totals section
+- Added Print Receipt button (window.print()) and footer
 
 Stage Summary:
-- Products page has professional bulk selection with animated action bar
-- Both staff pages have colorful avatars and status indicators
-- Staff dialogs show role descriptions and permission badges
+- Sales detail shows professional invoice with items table and styled totals
 
 ---
-Task ID: extra1
+Task ID: 10-5a
 Agent: general-purpose
-Task: Command palette enhancement + dark mode polish
+Task: Daily Settlement / Reconciliation page (20th page)
 
 Work Log:
-- Enhanced command palette with grouped results and section headers
-- Added 4 quick action items (New Sale, Create Invoice, Add Product, View Reports)
-- Added recent pages tracking to nav store (max 5, deduplicated)
-- Improved empty state for no results
-- Enhanced login page dark mode with glow effects
-- Added MoonStar icon for dark mode
-- Verified with lint: 0 errors
+- Added 'settlement' NavSection, sidebar item, page route
+- Created settlement page with 8 sections: header, date picker, stat cards, payment breakdown, reconciliation table, staff performance, shift notes, action buttons
 
 Stage Summary:
-- Command palette has professional grouped layout with quick actions
-- Recent pages tracked in nav store for fast re-access
-- Login page has premium dark mode appearance with glow effects
+- 20th page: Daily Settlement with full reconciliation workflow
+
+---
+Task ID: 10-5b
+Agent: general-purpose
+Task: Notification Panel enhancement
+
+Work Log:
+- Added category-specific icons and color indicators
+- Added relative time formatting
+- Enhanced unread/read visual states
+- Added Mark all as read and View All footer
+- Enhanced empty state
+
+Stage Summary:
+- Notification panel now has rich category-based styling with relative timestamps
+
+---
+Task ID: 10-6a
+Agent: general-purpose
+Task: Global card/table styling improvements
+
+Work Log:
+- Enhanced StatCard with shine animation, gradient top border, larger trend badges
+- Added Revenue by Plan BarChart to Super Admin Dashboard
+- Added visual summary strips to Billing and Reports pages
+
+Stage Summary:
+- StatCard has professional animations, Super Admin has new chart, Billing/Reports have summary strips
+
+---
+Task ID: 10-6b
+Agent: general-purpose
+Task: POS Terminal + Tenant Subscription visual refinement
+
+Work Log:
+- Added animate-gentle-pulse CSS utility
+- POS cart: stock color accents, gradient summary, pulsing total, colored payment indicators
+- Tenant Subscription: shimmer overlay, colored plan initials, usage progress bars, streamlined plan comparison
+
+Stage Summary:
+- POS cart has professional visual hierarchy; Subscription page completely redesigned with progress bars
+
+---
+Task ID: 10-fix
+Agent: main
+Task: Fix Customer Detail Dialog RangeError bug
+
+Work Log:
+- Identified root cause: generateMockOrders used charCodeAt(2/4) on short IDs ('c1', 'c2') returning NaN
+- Replaced with simpleHash() function for deterministic number generation
+- Added Math.max(customer.totalPurchases, 1) to prevent division by zero
+- Verified fix via agent-browser: customer detail dialog opens correctly with both tabs working
+
+Stage Summary:
+- Customer detail dialog no longer crashes on short customer IDs
+- Fixed with proper string hash function and safe division

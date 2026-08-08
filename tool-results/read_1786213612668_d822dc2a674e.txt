@@ -1,0 +1,799 @@
+     1→'use client';
+     2→
+     3→import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+     4→import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+     5→import { Input } from '@/components/ui/input';
+     6→import { Button } from '@/components/ui/button';
+     7→import { Badge } from '@/components/ui/badge';
+     8→import { ScrollArea } from '@/components/ui/scroll-area';
+     9→import { Separator } from '@/components/ui/separator';
+    10→import {
+    11→  Dialog, DialogContent, DialogHeader, DialogTitle,
+    12→} from '@/components/ui/dialog';
+    13→import { Search, Plus, Minus, X, ShoppingCart, Banknote, CreditCard, Smartphone, Wallet, Receipt, Barcode, Trash2, TrendingUp, Clock, Pause, PlayCircle, Users, Printer } from 'lucide-react';
+    14→import { mockProducts, mockCategories, mockCustomers } from '@/lib/mock-data';
+    15→import { toast } from 'sonner';
+    16→import { PageHeader } from '@/components/shared/page-header';
+    17→import type { CartItem, Product, HeldSale, Customer } from '@/lib/types';
+    18→import { cn } from '@/lib/utils';
+    19→import { formatDateTime, npr, nprFull } from '@/lib/helpers';
+    20→import { useAuthStore } from '@/features/auth/store';
+    21→
+    22→const PAYMENT_METHODS = [
+    23→  { id: 'cash', label: 'Cash', icon: Banknote, color: 'text-emerald-600 dark:text-emerald-400' },
+    24→  { id: 'card', label: 'Card', icon: CreditCard, color: 'text-blue-600 dark:text-blue-400' },
+    25→  { id: 'esewa', label: 'eSewa', icon: Smartphone, color: 'text-green-600 dark:text-green-400' },
+    26→  { id: 'khalti', label: 'Khalti', icon: Wallet, color: 'text-purple-600 dark:text-purple-400' },
+    27→] as const;
+    28→
+    29→type PaymentMethodId = (typeof PAYMENT_METHODS)[number]['id'];
+    30→
+    31→export default function POSTerminal() {
+    32→  const barcodeRef = useRef<HTMLInputElement>(null);
+    33→  const { user } = useAuthStore();
+    34→  const [searchQuery, setSearchQuery] = useState('');
+    35→  const [barcodeInput, setBarcodeInput] = useState('');
+    36→  const [selectedCategory, setSelectedCategory] = useState('All');
+    37→  const [cart, setCart] = useState<CartItem[]>([]);
+    38→  const [discount, setDiscount] = useState(0);
+    39→  const [paymentMethod, setPaymentMethod] = useState<PaymentMethodId>('cash');
+    40→  const [receiptOpen, setReceiptOpen] = useState(false);
+    41→  const [lastSale, setLastSale] = useState<{ items: CartItem[]; subtotal: number; discount: number; vat: number; total: number; method: string; time: string } | null>(null);
+    42→  const [receiptNumber, setReceiptNumber] = useState(0);
+    43→  // Hold/Resume state
+    44→  const [heldSales, setHeldSales] = useState<HeldSale[]>([]);
+    45→  const [heldListOpen, setHeldListOpen] = useState(false);
+    46→  // Customer selection state
+    47→  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+    48→  const [customerSearch, setCustomerSearch] = useState('');
+    49→  const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
+    50→
+    51→  const filteredCustomers = useMemo(() => {
+    52→    if (!customerSearch.trim()) return mockCustomers;
+    53→    const q = customerSearch.toLowerCase();
+    54→    return mockCustomers.filter((c) =>
+    55→      c.name.toLowerCase().includes(q) || c.phone.toLowerCase().includes(q)
+    56→    );
+    57→  }, [customerSearch]);
+    58→
+    59→  const filteredProducts = useMemo(() => {
+    60→    return mockProducts.filter((p) => {
+    61→      if (!p.isActive) return false;
+    62→      const q = searchQuery.toLowerCase();
+    63→      const matchesSearch = !q || p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q);
+    64→      const matchesCategory = selectedCategory === 'All' || p.category === selectedCategory;
+    65→      return matchesSearch && matchesCategory;
+    66→    });
+    67→  }, [searchQuery, selectedCategory]);
+    68→
+    69→  const categories = ['All', ...mockCategories.map((c) => c.name)];
+    70→
+    71→  const addToCart = (product: Product) => {
+    72→    if (product.stock <= 0) return;
+    73→    setCart((prev) => {
+    74→      const existing = prev.find((item) => item.product.id === product.id);
+    75→      if (existing) {
+    76→        if (existing.quantity >= product.stock) {
+    77→          toast.error(`Maximum stock reached for ${product.name}`);
+    78→          return prev;
+    79→        }
+    80→        return prev.map((item) =>
+    81→          item.product.id === product.id
+    82→            ? { ...item, quantity: item.quantity + 1 }
+    83→            : item
+    84→        );
+    85→      }
+    86→      return [...prev, { product, quantity: 1, discount: 0 }];
+    87→    });
+    88→  };
+    89→
+    90→  const updateQuantity = (productId: string, delta: number) => {
+    91→    setCart((prev) =>
+    92→      prev
+    93→        .map((item) => {
+    94→          if (item.product.id !== productId) return item;
+    95→          const newQty = item.quantity + delta;
+    96→          if (newQty <= 0) return null;
+    97→          if (newQty > item.product.stock) {
+    98→            toast.error(`Maximum stock reached for ${item.product.name}`);
+    99→            return item;
+   100→          }
+   101→          return { ...item, quantity: newQty };
+   102→        })
+   103→        .filter(Boolean) as CartItem[]
+   104→    );
+   105→  };
+   106→
+   107→  const removeFromCart = (productId: string) => {
+   108→    setCart((prev) => prev.filter((item) => item.product.id !== productId));
+   109→  };
+   110→
+   111→  const subtotal = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+   112→  const discountAmount = Math.min(discount, subtotal);
+   113→  const taxableAmount = subtotal - discountAmount;
+   114→  const vat = taxableAmount * 0.13;
+   115→  const total = taxableAmount + vat;
+   116→
+   117→  const handleBarcodeScan = () => {
+   118→    if (!barcodeInput.trim()) return;
+   119→    const product = mockProducts.find(p => p.sku.toLowerCase() === barcodeInput.trim().toLowerCase());
+   120→    if (product) {
+   121→      addToCart(product);
+   122→      toast.success(`Added ${product.name} to cart`);
+   123→    } else {
+   124→      toast.error(`Product not found: ${barcodeInput}`);
+   125→    }
+   126→    setBarcodeInput('');
+   127→  };
+   128→
+   129→  const handleHoldSale = () => {
+   130→    if (cart.length === 0) {
+   131→      toast.error('Cart is empty');
+   132→      return;
+   133→    }
+   134→    const held: HeldSale = {
+   135→      id: `held-${Date.now()}`,
+   136→      cart: [...cart],
+   137→      customerName: 'Walk-in',
+   138→      heldAt: new Date().toISOString(),
+   139→      total: Math.round(total * 100) / 100,
+   140→    };
+   141→    setHeldSales(prev => [held, ...prev]);
+   142→    setCart([]);
+   143→    setDiscount(0);
+   144→    toast.success('Sale held! You can resume it later.');
+   145→  };
+   146→
+   147→  const handleResumeSale = (held: HeldSale) => {
+   148→    if (cart.length > 0) {
+   149→      // Auto-hold current cart if not empty
+   150→      const autoHeld: HeldSale = {
+   151→        id: `held-${Date.now()}`,
+   152→        cart: [...cart],
+   153→        customerName: 'Walk-in',
+   154→        heldAt: new Date().toISOString(),
+   155→        total: Math.round(total * 100) / 100,
+   156→      };
+   157→      setHeldSales(prev => [autoHeld, ...prev]);
+   158→    }
+   159→    setCart(held.cart);
+   160→    setHeldSales(prev => prev.filter(h => h.id !== held.id));
+   161→    setHeldListOpen(false);
+   162→    toast.success('Sale resumed!');
+   163→  };
+   164→
+   165→  const handleDeleteHeld = (id: string) => {
+   166→    setHeldSales(prev => prev.filter(h => h.id !== id));
+   167→    toast.success('Held sale discarded');
+   168→  };
+   169→
+   170→  const handleCompleteSale = () => {
+   171→    if (cart.length === 0) {
+   172→      toast.error('Cart is empty');
+   173→      return;
+   174→    }
+   175→    const method = PAYMENT_METHODS.find((m) => m.id === paymentMethod);
+   176→    const saleData = {
+   177→      items: [...cart],
+   178→      subtotal,
+   179→      discount: discountAmount,
+   180→      vat: Math.round(vat * 100) / 100,
+   181→      total: Math.round(total * 100) / 100,
+   182→      method: method?.label || 'Cash',
+   183→      time: new Date().toISOString(),
+   184→    };
+   185→    setLastSale(saleData);
+   186→    setReceiptNumber(Math.floor(100000 + Math.random() * 900000));
+   187→    setReceiptOpen(true);
+   188→    toast.success(`Sale completed! NPR ${npr(saleData.total)} via ${saleData.method}${selectedCustomer ? ` for ${selectedCustomer.name}` : ''}`);
+   189→    setCart([]);
+   190→    setDiscount(0);
+   191→  };
+   192→
+   193→  const handlePrintReceipt = useCallback(() => {
+   194→    if (!lastSale) return;
+   195→    const receiptEl = document.getElementById('pos-receipt');
+   196→    if (!receiptEl) return;
+   197→    const printWin = window.open('', '_blank', 'width=400,height=600');
+   198→    if (!printWin) return;
+   199→    const cashierName = user?.name || 'Admin';
+   200→    printWin.document.write(`<!DOCTYPE html><html><head><title>Receipt</title>
+   201→      <style>
+   202→        * { margin: 0; padding: 0; box-sizing: border-box; }
+   203→        body { font-family: 'Courier New', monospace; font-size: 12px; padding: 20px; max-width: 320px; margin: 0 auto; }
+   204→        .center { text-align: center; }
+   205→        .bold { font-weight: bold; }
+   206→        .muted { color: #666; }
+   207→        .row { display: flex; justify-content: space-between; padding: 2px 0; }
+   208→        .dashed { border-top: 1px dashed #999; margin: 8px 0; }
+   209→        .item { display: flex; justify-content: space-between; padding: 3px 0; }
+   210→        .item-detail { color: #666; font-size: 11px; }
+   211→        .total { font-size: 14px; font-weight: bold; padding: 4px 0; }
+   212→        .footer { text-align: center; margin-top: 12px; color: #666; font-size: 11px; }
+   213→        .receipt-num { font-size: 11px; }
+   214→        @media print { body { padding: 10px; } }
+   215→      </style></head><body>
+   216→      <div class="center">
+   217→        <p class="bold" style="font-size:16px;">ABC Store</p>
+   218→        <p class="muted">Kathmandu, Nepal &middot; PAN: 309876543</p>
+   219→        <p class="muted">Tel: +977-9801234567</p>
+   220→      </div>
+   221→      <div class="dashed"></div>
+   222→      <div class="row"><span class="muted">Receipt #</span><span>${String(receiptNumber).padStart(6, '0')}</span></div>
+   223→      <div class="row"><span class="muted">Cashier</span><span>${cashierName}</span></div>
+   224→      <div class="row"><span class="muted">Customer</span><span>${selectedCustomer ? selectedCustomer.name : 'Walk-in Customer'}</span></div>
+   225→      ${selectedCustomer?.pan ? `<div class="row"><span class="muted">PAN</span><span>${selectedCustomer.pan}</span></div>` : ''}
+   226→      <div class="row"><span class="muted">${formatDateTime(lastSale.time)}</span><span>${lastSale.method}</span></div>
+   227→      <div class="dashed"></div>
+   228→      ${lastSale.items.map(item => `
+   229→        <div class="item"><span>${item.product.name}</span><span>NPR ${npr(item.product.price * item.quantity)}</span></div>
+   230→        <div class="item-detail">${item.quantity} &times; NPR ${npr(item.product.price)}</div>
+   231→      `).join('')}
+   232→      <div class="dashed"></div>
+   233→      <div class="row"><span class="muted">Subtotal</span><span>NPR ${npr(lastSale.subtotal)}</span></div>
+   234→      ${lastSale.discount > 0 ? `<div class="row"><span>Discount</span><span>- NPR ${npr(lastSale.discount)}</span></div>` : ''}
+   235→      <div class="row"><span class="muted">VAT (13%)</span><span>NPR ${nprFull(lastSale.vat)}</span></div>
+   236→      <div class="dashed"></div>
+   237→      <div class="row total"><span>TOTAL</span><span>NPR ${nprFull(lastSale.total)}</span></div>
+   238→      <div class="dashed"></div>
+   239→      <p class="footer">Thank you for shopping with us!</p>
+   240→      </body></html>`);
+   241→    printWin.document.close();
+   242→    printWin.focus();
+   243→    printWin.print();
+   244→    printWin.close();
+   245→  }, [lastSale, receiptNumber, user, selectedCustomer]);
+   246→
+   247→  // Keyboard shortcuts
+   248→  useEffect(() => {
+   249→    const handler = (e: KeyboardEvent) => {
+   250→      if (e.key === 'F2') {
+   251→        e.preventDefault();
+   252→        barcodeRef.current?.focus();
+   253→      }
+   254→      if (e.key === 'Escape') {
+   255→        e.preventDefault();
+   256→        if (receiptOpen) {
+   257→          setReceiptOpen(false);
+   258→        } else if (heldListOpen) {
+   259→          setHeldListOpen(false);
+   260→        } else if (cart.length > 0) {
+   261→          setCart([]);
+   262→          setDiscount(0);
+   263→          toast.success('Cart cleared');
+   264→        } else if (searchQuery) {
+   265→          setSearchQuery('');
+   266→        }
+   267→      }
+   268→      if (e.key === 'F9' && cart.length > 0 && !receiptOpen && !heldListOpen) {
+   269→        e.preventDefault();
+   270→        handleCompleteSale();
+   271→      }
+   272→    };
+   273→    window.addEventListener('keydown', handler);
+   274→    return () => window.removeEventListener('keydown', handler);
+   275→  }, [cart, receiptOpen, heldListOpen, searchQuery, handleCompleteSale]);
+   276→
+   277→  return (
+   278→    <div className="space-y-4">
+   279→      <PageHeader
+   280→        title="POS Terminal"
+   281→        description="Process sales and accept payments"
+   282→      >
+   283→        <div className="flex items-center gap-2">
+   284→          {heldSales.length > 0 && (
+   285→            <Button variant="outline" size="sm" className="hidden sm:flex gap-1.5 border-amber-300 text-amber-700 dark:border-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30" onClick={() => setHeldListOpen(true)}>
+   286→              <Pause className="h-3.5 w-3.5" />
+   287→              {heldSales.length} Held
+   288→            </Button>
+   289→          )}
+   290→          <Badge variant="outline" className="hidden sm:flex gap-1.5">
+   291→            <ShoppingCart className="h-3 w-3" />
+   292→            {cart.length} items · NPR {npr(total)}
+   293→          </Badge>
+   294→        </div>
+   295→      </PageHeader>
+   296→
+   297→      {/* Quick Stats Bar */}
+   298→      <div className="grid grid-cols-3 gap-3">
+   299→        <div className="flex items-center gap-2.5 rounded-xl border bg-card p-3 transition-shadow hover:shadow-md">
+   300→          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
+   301→            <TrendingUp className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+   302→          </div>
+   303→          <div className="min-w-0">
+   304→            <p className="text-[11px] text-muted-foreground">Today's Sales</p>
+   305→            <p className="text-sm font-bold">NPR {npr(35200)}</p>
+   306→          </div>
+   307→        </div>
+   308→        <div className="flex items-center gap-2.5 rounded-xl border bg-card p-3 transition-shadow hover:shadow-md">
+   309→          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30">
+   310→            <ShoppingCart className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+   311→          </div>
+   312→          <div className="min-w-0">
+   313→            <p className="text-[11px] text-muted-foreground">Items Sold</p>
+   314→            <p className="text-sm font-bold">47</p>
+   315→          </div>
+   316→        </div>
+   317→        <div className="flex items-center gap-2.5 rounded-xl border bg-card p-3 transition-shadow hover:shadow-md">
+   318→          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-purple-100 dark:bg-purple-900/30">
+   319→            <Clock className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+   320→          </div>
+   321→          <div className="min-w-0">
+   322→            <p className="text-[11px] text-muted-foreground">Avg. Order</p>
+   323→            <p className="text-sm font-bold">NPR {npr(749)}</p>
+   324→          </div>
+   325→        </div>
+   326→      </div>
+   327→
+   328→      <div className="flex flex-col gap-4 lg:flex-row lg:gap-6">
+   329→        {/* Left: Products */}
+   330→        <div className="flex-1 space-y-4">
+   331→          {/* Search + Barcode */}
+   332→          <div className="flex gap-2">
+   333→            <div className="relative flex-1">
+   334→              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+   335→              <Input
+   336→                placeholder="Search products..."
+   337→                value={searchQuery}
+   338→                onChange={(e) => setSearchQuery(e.target.value)}
+   339→                className="pl-9"
+   340→              />
+   341→            </div>
+   342→            <div className="relative w-44 hidden sm:block">
+   343→              <Barcode className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+   344→              <Input
+   345→                ref={barcodeRef}
+   346→                placeholder="Scan barcode/PLU"
+   347→                value={barcodeInput}
+   348→                onChange={(e) => setBarcodeInput(e.target.value)}
+   349→                onKeyDown={(e) => e.key === 'Enter' && handleBarcodeScan()}
+   350→                className="pl-9"
+   351→              />
+   352→            </div>
+   353→          </div>
+   354→
+   355→          {/* Category Pills */}
+   356→          <ScrollArea className="w-full">
+   357→            <div className="flex gap-2 pb-1">
+   358→              {categories.map((cat) => (
+   359→                <Button
+   360→                  key={cat}
+   361→                  variant={selectedCategory === cat ? 'default' : 'outline'}
+   362→                  size="sm"
+   363→                  onClick={() => setSelectedCategory(cat)}
+   364→                  className="shrink-0"
+   365→                >
+   366→                  {cat}
+   367→                </Button>
+   368→              ))}
+   369→            </div>
+   370→          </ScrollArea>
+   371→
+   372→          {/* Product Grid */}
+   373→          <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-3">
+   374→            {filteredProducts.map((product) => {
+   375→              const isOutOfStock = product.stock <= 0;
+   376→              const isLowStock = product.stock > 0 && product.stock <= product.minStock;
+   377→              return (
+   378→                <Card
+   379→                  key={product.id}
+   380→                  className={cn(
+   381→                    'cursor-pointer transition-all duration-200 hover:shadow-md hover:-translate-y-0.5',
+   382→                    isOutOfStock && 'cursor-not-allowed opacity-50',
+   383→                    isLowStock && !isOutOfStock && 'border-amber-400 dark:border-amber-600'
+   384→                  )}
+   385→                  onClick={() => !isOutOfStock && addToCart(product)}
+   386→                >
+   387→                  <CardContent className="p-3">
+   388→                    <div className="space-y-2">
+   389→                      <div className="flex items-start justify-between gap-1">
+   390→                        <div className="text-sm font-medium leading-tight min-w-0">
+   391→                          {product.name}
+   392→                        </div>
+   393→                        {isLowStock && !isOutOfStock && (
+   394→                          <Badge variant="secondary" className="shrink-0 bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 text-[10px] px-1.5">
+   395→                            Low
+   396→                          </Badge>
+   397→                        )}
+   398→                      </div>
+   399→                      <div className="text-lg font-bold">NPR {npr(product.price)}</div>
+   400→                      <div className="flex items-center justify-between">
+   401→                        <span className="text-xs text-muted-foreground">Stock: {product.stock}</span>
+   402→                        {!isOutOfStock ? (
+   403→                          <Button size="sm" className="h-7 text-xs gap-1">
+   404→                            <Plus className="h-3 w-3" /> Add
+   405→                          </Button>
+   406→                        ) : (
+   407→                          <Badge variant="destructive" className="text-[10px]">Out</Badge>
+   408→                        )}
+   409→                      </div>
+   410→                    </div>
+   411→                  </CardContent>
+   412→                </Card>
+   413→              );
+   414→            })}
+   415→          </div>
+   416→
+   417→          {/* Keyboard Shortcuts Hint */}
+   418→          <div className="hidden md:flex items-center justify-center gap-4 text-xs text-muted-foreground pt-1">
+   419→            <span className="flex items-center gap-1.5"><kbd className="bg-muted px-1.5 py-0.5 rounded text-[10px] font-mono">F2</kbd> Barcode</span>
+   420→            <span className="text-border">·</span>
+   421→            <span className="flex items-center gap-1.5"><kbd className="bg-muted px-1.5 py-0.5 rounded text-[10px] font-mono">F9</kbd> Checkout</span>
+   422→            <span className="text-border">·</span>
+   423→            <span className="flex items-center gap-1.5"><kbd className="bg-muted px-1.5 py-0.5 rounded text-[10px] font-mono">Esc</kbd> Clear</span>
+   424→          </div>
+   425→        </div>
+   426→
+   427→        {/* Right: Cart */}
+   428→        <div className="w-full lg:w-[400px]">
+   429→          <Card className="sticky top-20">
+   430→            <CardHeader className="pb-3">
+   431→              <div className="flex items-center justify-between">
+   432→                <div className="flex items-center gap-2">
+   433→                  <CardTitle className="flex items-center gap-2 text-base">
+   434→                    <ShoppingCart className="h-5 w-5" />
+   435→                    Cart
+   436→                  </CardTitle>
+   437→                  {/* Customer Selection */}
+   438→                  <div className="relative">
+   439→                    <Button
+   440→                      variant="outline"
+   441→                      size="sm"
+   442→                      className="h-7 gap-1.5 text-xs"
+   443→                      onClick={() => { setShowCustomerDropdown(!showCustomerDropdown); setCustomerSearch(''); }}
+   444→                    >
+   445→                      <Users className="h-3 w-3" />
+   446→                      {selectedCustomer ? selectedCustomer.name : 'Walk-in'}
+   447→                    </Button>
+   448→                    {showCustomerDropdown && (
+   449→                      <>
+   450→                        <div className="fixed inset-0 z-40" onClick={() => setShowCustomerDropdown(false)} />
+   451→                        <div className="absolute right-0 top-full mt-1 z-50 w-64 rounded-lg border bg-popover p-2 shadow-md">
+   452→                          <div className="relative">
+   453→                            <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+   454→                            <Input
+   455→                              placeholder="Search by name or phone..."
+   456→                              value={customerSearch}
+   457→                              onChange={(e) => setCustomerSearch(e.target.value)}
+   458→                              className="h-8 pl-8 text-xs"
+   459→                              autoFocus
+   460→                            />
+   461→                          </div>
+   462→                          <div className="max-h-48 overflow-y-auto mt-1">
+   463→                            {filteredCustomers.length === 0 ? (
+   464→                              <div className="px-2 py-3 text-center text-xs text-muted-foreground">No customers found</div>
+   465→                            ) : (
+   466→                              filteredCustomers.map((customer) => (
+   467→                                <div
+   468→                                  key={customer.id}
+   469→                                  className="flex items-center justify-between px-2 py-1.5 rounded-md text-sm hover:bg-accent cursor-pointer transition-colors"
+   470→                                  onClick={() => {
+   471→                                    setSelectedCustomer(customer);
+   472→                                    setShowCustomerDropdown(false);
+   473→                                    setCustomerSearch('');
+   474→                                  }}
+   475→                                >
+   476→                                  <div className="min-w-0">
+   477→                                    <div className="text-xs font-medium truncate">{customer.name}</div>
+   478→                                    <div className="text-[11px] text-muted-foreground">{customer.phone}</div>
+   479→                                  </div>
+   480→                                  {customer.pan && (
+   481→                                    <Badge variant="secondary" className="text-[10px] px-1.5 shrink-0 ml-1">PAN</Badge>
+   482→                                  )}
+   483→                                </div>
+   484→                              ))
+   485→                            )}
+   486→                          </div>
+   487→                          <Separator className="my-1" />
+   488→                          <div
+   489→                            className="flex items-center justify-between px-2 py-1.5 rounded-md text-sm hover:bg-accent cursor-pointer transition-colors text-muted-foreground"
+   490→                            onClick={() => {
+   491→                              setSelectedCustomer(null);
+   492→                              setShowCustomerDropdown(false);
+   493→                              setCustomerSearch('');
+   494→                            }}
+   495→                          >
+   496→                            <span className="text-xs">Clear (Walk-in Customer)</span>
+   497→                            <X className="h-3 w-3" />
+   498→                          </div>
+   499→                        </div>
+   500→                      </>
+   501→                    )}
+   502→                  </div>
+   503→                </div>
+   504→                {cart.length > 0 && (
+   505→                  <div className="flex items-center gap-2">
+   506→                    <Badge variant="secondary">{cart.reduce((s, i) => s + i.quantity, 0)} items</Badge>
+   507→                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => { setCart([]); setDiscount(0); }}>
+   508→                      <Trash2 className="h-3.5 w-3.5" />
+   509→                    </Button>
+   510→                  </div>
+   511→                )}
+   512→              </div>
+   513→            </CardHeader>
+   514→
+   515→            <CardContent className="space-y-4">
+   516→              {/* Cart Items */}
+   517→              <ScrollArea className="max-h-72">
+   518→                {cart.length === 0 ? (
+   519→                  <div className="flex h-32 flex-col items-center justify-center gap-2 text-sm text-muted-foreground">
+   520→                    <ShoppingCart className="h-8 w-8 opacity-30" />
+   521→                    Cart is empty
+   522→                  </div>
+   523→                ) : (
+   524→                  <div className="space-y-2 pr-3">
+   525→                    {cart.map((item) => (
+   526→                      <div key={item.product.id} className="flex items-center gap-2 rounded-lg bg-muted/50 p-2 transition-colors hover:bg-muted">
+   527→                        <div className="min-w-0 flex-1">
+   528→                          <div className="text-sm font-medium leading-tight truncate">{item.product.name}</div>
+   529→                          <div className="text-xs text-muted-foreground">NPR {npr(item.product.price)} each</div>
+   530→                        </div>
+   531→                        <div className="flex items-center gap-1 shrink-0">
+   532→                          <Button
+   533→                            variant="outline"
+   534→                            size="icon"
+   535→                            className="h-6 w-6"
+   536→                            onClick={() => updateQuantity(item.product.id, -1)}
+   537→                          >
+   538→                            <Minus className="h-3 w-3" />
+   539→                          </Button>
+   540→                          <span className="w-7 text-center text-sm font-medium">{item.quantity}</span>
+   541→                          <Button
+   542→                            variant="outline"
+   543→                            size="icon"
+   544→                            className="h-6 w-6"
+   545→                            onClick={() => updateQuantity(item.product.id, 1)}
+   546→                          >
+   547→                            <Plus className="h-3 w-3" />
+   548→                          </Button>
+   549→                        </div>
+   550→                        <div className="w-20 text-right text-sm font-semibold shrink-0">
+   551→                          NPR {npr(item.product.price * item.quantity)}
+   552→                        </div>
+   553→                        <Button
+   554→                          variant="ghost"
+   555→                          size="icon"
+   556→                          className="h-6 w-6 shrink-0 text-muted-foreground hover:text-destructive"
+   557→                          onClick={() => removeFromCart(item.product.id)}
+   558→                        >
+   559→                          <X className="h-3 w-3" />
+   560→                        </Button>
+   561→                      </div>
+   562→                    ))}
+   563→                  </div>
+   564→                )}
+   565→              </ScrollArea>
+   566→
+   567→              {/* Totals */}
+   568→              {cart.length > 0 && (
+   569→                <>
+   570→                  <Separator />
+   571→                  <div className="space-y-2 text-sm">
+   572→                    <div className="flex justify-between">
+   573→                      <span className="text-muted-foreground">Subtotal</span>
+   574→                      <span>NPR {npr(subtotal)}</span>
+   575→                    </div>
+   576→                    <div className="flex items-center justify-between gap-2">
+   577→                      <span className="text-muted-foreground">Discount</span>
+   578→                      <Input
+   579→                        type="number"
+   580→                        min={0}
+   581→                        value={discount || ''}
+   582→                        onChange={(e) => setDiscount(Math.max(0, Number(e.target.value)))}
+   583→                        placeholder="0"
+   584→                        className="h-8 w-28 text-right"
+   585→                      />
+   586→                    </div>
+   587→                    <div className="flex justify-between">
+   588→                      <span className="text-muted-foreground">VAT (13%)</span>
+   589→                      <span>NPR {nprFull(vat)}</span>
+   590→                    </div>
+   591→                    <Separator />
+   592→                    <div className="flex justify-between text-lg font-bold">
+   593→                      <span>Total</span>
+   594→                      <span>NPR {nprFull(total)}</span>
+   595→                    </div>
+   596→                  </div>
+   597→
+   598→                  {/* Payment Methods */}
+   599→                  <div className="space-y-2">
+   600→                    <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Payment Method</div>
+   601→                    <div className="grid grid-cols-2 gap-2">
+   602→                      {PAYMENT_METHODS.map((method) => {
+   603→                        const Icon = method.icon;
+   604→                        return (
+   605→                          <Button
+   606→                            key={method.id}
+   607→                            variant={paymentMethod === method.id ? 'default' : 'outline'}
+   608→                            className={cn('h-10 justify-start gap-2 transition-all',
+   609→                              paymentMethod === method.id && 'shadow-sm'
+   610→                            )}
+   611→                            onClick={() => setPaymentMethod(method.id)}
+   612→                          >
+   613→                            <Icon className="h-4 w-4" />
+   614→                            {method.label}
+   615→                          </Button>
+   616→                        );
+   617→                      })}
+   618→                    </div>
+   619→                  </div>
+   620→
+   621→                  {/* Action Buttons */}
+   622→                  <div className="flex gap-2">
+   623→                    <Button
+   624→                      variant="outline"
+   625→                      className="flex-1 gap-2 border-amber-300 text-amber-700 hover:bg-amber-50 dark:border-amber-700 dark:text-amber-400 dark:hover:bg-amber-950/30"
+   626→                      onClick={handleHoldSale}
+   627→                    >
+   628→                      <Pause className="h-4 w-4" />
+   629→                      Hold
+   630→                    </Button>
+   631→                    <Button className="flex-[2] h-12 text-base font-semibold gap-2" onClick={handleCompleteSale}>
+   632→                      <Receipt className="h-5 w-5" />
+   633→                      Complete Sale
+   634→                    </Button>
+   635→                  </div>
+   636→                </>
+   637→              )}
+   638→
+   639→              {/* Held Sales - Mobile Access */}
+   640→              {heldSales.length > 0 && cart.length === 0 && (
+   641→                <>
+   642→                  <Separator />
+   643→                  <Button
+   644→                    variant="outline"
+   645→                    className="w-full gap-2 border-amber-300 text-amber-700 hover:bg-amber-50 dark:border-amber-700 dark:text-amber-400 dark:hover:bg-amber-950/30"
+   646→                    onClick={() => setHeldListOpen(true)}
+   647→                  >
+   648→                    <PlayCircle className="h-4 w-4" />
+   649→                    Resume Held Sale ({heldSales.length})
+   650→                  </Button>
+   651→                </>
+   652→              )}
+   653→            </CardContent>
+   654→          </Card>
+   655→        </div>
+   656→      </div>
+   657→
+   658→      {/* Held Sales Dialog */}
+   659→      <Dialog open={heldListOpen} onOpenChange={setHeldListOpen}>
+   660→        <DialogContent className="sm:max-w-md">
+   661→          <DialogHeader>
+   662→            <DialogTitle className="flex items-center gap-2">
+   663→              <Pause className="h-5 w-5" />
+   664→              Held Sales ({heldSales.length})
+   665→            </DialogTitle>
+   666→          </DialogHeader>
+   667→          <ScrollArea className="max-h-80">
+   668→            {heldSales.length === 0 ? (
+   669→              <div className="py-8 text-center text-sm text-muted-foreground">
+   670→                No held sales
+   671→              </div>
+   672→            ) : (
+   673→              <div className="space-y-2">
+   674→                {heldSales.map((held) => (
+   675→                  <div key={held.id} className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50">
+   676→                    <div className="min-w-0 flex-1">
+   677→                      <div className="text-sm font-medium">{held.cart.reduce((s, i) => s + i.quantity, 0)} items</div>
+   678→                      <div className="text-xs text-muted-foreground">
+   679→                        {held.cart.map(i => i.product.name).join(', ')}
+   680→                      </div>
+   681→                      <div className="mt-1 text-xs text-muted-foreground">Held at {formatDateTime(held.heldAt)}</div>
+   682→                    </div>
+   683→                    <div className="flex items-center gap-2 shrink-0">
+   684→                      <span className="text-sm font-bold mr-1">NPR {npr(held.total)}</span>
+   685→                      <Button size="sm" className="h-7 gap-1" onClick={() => handleResumeSale(held)}>
+   686→                        <PlayCircle className="h-3.5 w-3.5" /> Resume
+   687→                      </Button>
+   688→                      <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => handleDeleteHeld(held.id)}>
+   689→                        <X className="h-3.5 w-3.5" />
+   690→                      </Button>
+   691→                    </div>
+   692→                  </div>
+   693→                ))}
+   694→              </div>
+   695→            )}
+   696→          </ScrollArea>
+   697→        </DialogContent>
+   698→      </Dialog>
+   699→
+   700→      {/* Receipt Dialog */}
+   701→      <Dialog open={receiptOpen} onOpenChange={setReceiptOpen}>
+   702→        <DialogContent className="sm:max-w-md">
+   703→          <DialogHeader>
+   704→            <DialogTitle className="flex items-center gap-2">
+   705→              <Receipt className="h-5 w-5" />
+   706→              Sale Receipt
+   707→            </DialogTitle>
+   708→          </DialogHeader>
+   709→          {lastSale && (
+   710→            <div className="space-y-4">
+   711→              <div id="pos-receipt" className="rounded-lg bg-stone-50 dark:bg-stone-900/30 p-4 space-y-3 text-sm">
+   712→                <div className="text-center space-y-1">
+   713→                  <p className="font-bold text-base">ABC Store</p>
+   714→                  <p className="text-xs text-muted-foreground">Kathmandu, Nepal · PAN: 309876543</p>
+   715→                  <p className="text-xs text-muted-foreground">Tel: +977-9801234567</p>
+   716→                </div>
+   717→                <div className="border-t border-dashed" />
+   718→                <div className="flex justify-between text-xs">
+   719→                  <span className="text-muted-foreground">Receipt #</span>
+   720→                  <span className="font-medium">{String(receiptNumber).padStart(6, '0')}</span>
+   721→                </div>
+   722→                <div className="flex justify-between text-xs">
+   723→                  <span className="text-muted-foreground">Cashier</span>
+   724→                  <span className="font-medium">{user?.name || 'Admin'}</span>
+   725→                </div>
+   726→                {/* Customer Info */}
+   727→                <div className="flex justify-between text-xs">
+   728→                  <span className="text-muted-foreground">Customer</span>
+   729→                  <span className="font-medium">{selectedCustomer ? selectedCustomer.name : 'Walk-in Customer'}</span>
+   730→                </div>
+   731→                {selectedCustomer?.pan && (
+   732→                  <div className="flex justify-between text-xs">
+   733→                    <span className="text-muted-foreground">PAN</span>
+   734→                    <span>{selectedCustomer.pan}</span>
+   735→                  </div>
+   736→                )}
+   737→                <div className="border-t border-dashed" />
+   738→                <div className="flex justify-between text-xs text-muted-foreground">
+   739→                  <span>{formatDateTime(lastSale.time)}</span>
+   740→                  <span>{lastSale.method}</span>
+   741→                </div>
+   742→                <div className="border-t border-dashed" />
+   743→                {/* Items */}
+   744→                <div className="space-y-1.5">
+   745→                  {lastSale.items.map((item, i) => (
+   746→                    <div key={i} className="flex justify-between text-sm">
+   747→                      <div className="flex-1 min-w-0">
+   748→                        <span className="truncate block">{item.product.name}</span>
+   749→                        <span className="text-xs text-muted-foreground">{item.quantity} × NPR {npr(item.product.price)}</span>
+   750→                      </div>
+   751→                      <span className="font-medium shrink-0 ml-2">NPR {npr(item.product.price * item.quantity)}</span>
+   752→                    </div>
+   753→                  ))}
+   754→                </div>
+   755→                <div className="border-t border-dashed" />
+   756→                {/* Totals */}
+   757→                <div className="space-y-1.5 text-sm">
+   758→                  <div className="flex justify-between">
+   759→                    <span className="text-muted-foreground">Subtotal</span>
+   760→                    <span>NPR {npr(lastSale.subtotal)}</span>
+   761→                  </div>
+   762→                  {lastSale.discount > 0 && (
+   763→                    <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
+   764→                      <span>Discount</span>
+   765→                      <span>- NPR {npr(lastSale.discount)}</span>
+   766→                    </div>
+   767→                  )}
+   768→                  <div className="flex justify-between">
+   769→                    <span className="text-muted-foreground">VAT (13%)</span>
+   770→                    <span>NPR {nprFull(lastSale.vat)}</span>
+   771→                  </div>
+   772→                  <div className="border-t border-dashed" />
+   773→                  <div className="flex justify-between text-base font-bold">
+   774→                    <span>Total</span>
+   775→                    <span>NPR {nprFull(lastSale.total)}</span>
+   776→                  </div>
+   777→                </div>
+   778→                <div className="border-t border-dashed" />
+   779→                <div className="text-center text-xs text-muted-foreground pt-1">
+   780→                  Thank you for shopping with us!
+   781→                </div>
+   782→              </div>
+   783→              <div className="flex gap-2">
+   784→                <Button className="flex-1 gap-2" variant="outline" onClick={handlePrintReceipt}>
+   785→                  <Printer className="h-4 w-4" />
+   786→                  Print Receipt
+   787→                </Button>
+   788→                <Button className="flex-1" onClick={() => setReceiptOpen(false)}>
+   789→                  Close
+   790→                </Button>
+   791→              </div>
+   792→            </div>
+   793→          )}
+   794→        </DialogContent>
+   795→      </Dialog>
+   796→    </div>
+   797→  );
+   798→}
+   799→

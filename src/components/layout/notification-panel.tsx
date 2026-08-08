@@ -1,16 +1,19 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Popover, PopoverContent, PopoverTrigger,
 } from '@/components/ui/popover';
-import { Bell, BellOff, Package, CreditCard, AlertTriangle, Users, ShoppingBag, Settings } from 'lucide-react';
+import {
+  Bell, BellOff, ShoppingCart, Settings, AlertTriangle,
+  CreditCard, Info, ExternalLink,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 
-type NotificationCategory = 'all' | 'order' | 'system' | 'alert';
+type NotificationCategory = 'all' | 'order' | 'system' | 'alert' | 'payment' | 'info';
 
 type NotificationType = 'order' | 'system' | 'alert' | 'payment' | 'warning' | 'info' | 'success';
 
@@ -21,17 +24,66 @@ interface Notification {
   type: NotificationType;
   category: NotificationCategory;
   read: boolean;
-  time: string;
-  icon: React.ElementType;
+  time: string; // ISO string for relative time formatting
+}
+
+// Category-specific icon mapping
+const CATEGORY_ICONS: Record<string, React.ElementType> = {
+  order: ShoppingCart,
+  system: Settings,
+  alert: AlertTriangle,
+  payment: CreditCard,
+  info: Info,
+};
+
+// Category-specific colors
+const CATEGORY_STYLES: Record<string, { indicator: string; iconBg: string; iconText: string }> = {
+  order: {
+    indicator: 'bg-emerald-500',
+    iconBg: 'bg-emerald-100 dark:bg-emerald-900/30',
+    iconText: 'text-emerald-600 dark:text-emerald-400',
+  },
+  system: {
+    indicator: 'bg-blue-500',
+    iconBg: 'bg-blue-100 dark:bg-blue-900/30',
+    iconText: 'text-blue-600 dark:text-blue-400',
+  },
+  alert: {
+    indicator: 'bg-amber-500',
+    iconBg: 'bg-amber-100 dark:bg-amber-900/30',
+    iconText: 'text-amber-600 dark:text-amber-400',
+  },
+  payment: {
+    indicator: 'bg-purple-500',
+    iconBg: 'bg-purple-100 dark:bg-purple-900/30',
+    iconText: 'text-purple-600 dark:text-purple-400',
+  },
+  info: {
+    indicator: 'bg-gray-400',
+    iconBg: 'bg-gray-100 dark:bg-gray-900/30',
+    iconText: 'text-gray-600 dark:text-gray-400',
+  },
+};
+
+// Generate recent ISO timestamps for mock data
+function minutesAgo(m: number): string {
+  return new Date(Date.now() - m * 60 * 1000).toISOString();
+}
+function hoursAgo(h: number): string {
+  return new Date(Date.now() - h * 60 * 60 * 1000).toISOString();
+}
+function daysAgo(d: number): string {
+  return new Date(Date.now() - d * 24 * 60 * 60 * 1000).toISOString();
 }
 
 const mockNotifications: Notification[] = [
-  { id: '1', title: 'Low Stock Alert', message: 'Surf Excel (1kg) is below minimum stock level (3/5)', type: 'alert', category: 'alert', read: false, time: '2024-06-15T10:30:00', icon: AlertTriangle },
-  { id: '2', title: 'New Order #1042', message: 'Ram Kumar placed an order for NPR 3,450', type: 'order', category: 'order', read: false, time: '2024-06-15T09:15:00', icon: ShoppingBag },
-  { id: '3', title: 'Payment Received', message: 'NPR 7,999 from Biratnagar Hardware', type: 'payment', category: 'order', read: false, time: '2024-06-15T08:00:00', icon: CreditCard },
-  { id: '4', title: 'Stock Depleted', message: 'Frozen Chicken (1kg) is out of stock', type: 'alert', category: 'alert', read: true, time: '2024-06-14T16:00:00', icon: Package },
-  { id: '5', title: 'New Tenant Signup', message: 'Chitwan Fresh registered for Basic plan', type: 'system', category: 'system', read: true, time: '2024-06-14T14:00:00', icon: Users },
-  { id: '6', title: 'System Update', message: 'Platform updated to v2.4.1 successfully', type: 'system', category: 'system', read: true, time: '784 days ago', icon: Settings },
+  { id: '1', title: 'New Order #1042', message: 'Ram Kumar placed an order for NPR 3,450', type: 'order', category: 'order', read: false, time: minutesAgo(2) },
+  { id: '2', title: 'Payment Received', message: 'NPR 7,999 from Biratnagar Hardware', type: 'payment', category: 'payment', read: false, time: minutesAgo(15) },
+  { id: '3', title: 'Low Stock Alert', message: 'Surf Excel (1kg) is below minimum stock level (3/5)', type: 'alert', category: 'alert', read: false, time: minutesAgo(45) },
+  { id: '4', title: 'System Update', message: 'Platform updated to v2.4.1 successfully', type: 'system', category: 'system', read: false, time: hoursAgo(3) },
+  { id: '5', title: 'Stock Depleted', message: 'Frozen Chicken (1kg) is out of stock', type: 'alert', category: 'alert', read: true, time: daysAgo(1) },
+  { id: '6', title: 'New Tenant Signup', message: 'Chitwan Fresh registered for Basic plan', type: 'system', category: 'system', read: true, time: daysAgo(2) },
+  { id: '7', title: 'Weekly Report Ready', message: 'Your sales report for last week is available', type: 'info', category: 'info', read: true, time: daysAgo(3) },
 ];
 
 const categoryPills: { label: string; value: NotificationCategory }[] = [
@@ -41,41 +93,48 @@ const categoryPills: { label: string; value: NotificationCategory }[] = [
   { label: 'Alerts', value: 'alert' },
 ];
 
-function getTypeColor(type: NotificationType) {
-  switch (type) {
-    case 'order':
-    case 'payment':
-      return {
-        border: 'border-l-emerald-500 dark:border-l-emerald-400',
-        bg: 'bg-emerald-100 dark:bg-emerald-900/30',
-        text: 'text-emerald-600 dark:text-emerald-400',
-      };
-    case 'system':
-    case 'info':
-    case 'success':
-      return {
-        border: 'border-l-blue-500 dark:border-l-blue-400',
-        bg: 'bg-blue-100 dark:bg-blue-900/30',
-        text: 'text-blue-600 dark:text-blue-400',
-      };
-    case 'alert':
-    case 'warning':
-      return {
-        border: 'border-l-amber-500 dark:border-l-amber-400',
-        bg: 'bg-amber-100 dark:bg-amber-900/30',
-        text: 'text-amber-600 dark:text-amber-400',
-      };
-    default:
-      return {
-        border: 'border-l-gray-500 dark:border-l-gray-400',
-        bg: 'bg-gray-100 dark:bg-gray-900/30',
-        text: 'text-gray-600 dark:text-gray-400',
-      };
+// Simple relative time formatting
+function formatRelativeTime(isoString: string): string {
+  const now = Date.now();
+  const then = new Date(isoString).getTime();
+  const diffMs = now - then;
+  const diffSec = Math.floor(diffMs / 1000);
+  const diffMin = Math.floor(diffSec / 60);
+  const diffHour = Math.floor(diffMin / 60);
+  const diffDay = Math.floor(diffHour / 24);
+
+  if (diffSec < 60) return 'Just now';
+  if (diffMin < 60) return `${diffMin} min ago`;
+  if (diffHour < 24) return `${diffHour} hour${diffHour > 1 ? 's' : ''} ago`;
+
+  // Check if yesterday
+  const thenDate = new Date(isoString);
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  if (
+    thenDate.getFullYear() === yesterday.getFullYear() &&
+    thenDate.getMonth() === yesterday.getMonth() &&
+    thenDate.getDate() === yesterday.getDate()
+  ) {
+    return 'Yesterday';
   }
+
+  // Older: show date
+  return thenDate.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+  });
 }
 
-function isEarlier(time: string): boolean {
-  return /\d{3,}\s+days?\s+ago/.test(time);
+// Determine category for styling (fallback for types that don't map directly)
+function getCategoryStyle(type: NotificationType, category: NotificationCategory): { indicator: string; iconBg: string; iconText: string } {
+  const key = category === 'all' ? type : category;
+  return CATEGORY_STYLES[key] || CATEGORY_STYLES.info;
+}
+
+function getCategoryIcon(type: NotificationType, category: NotificationCategory): React.ElementType {
+  const key = category === 'all' ? type : category;
+  return CATEGORY_ICONS[key] || Info;
 }
 
 export function NotificationPanel() {
@@ -84,7 +143,9 @@ export function NotificationPanel() {
   const unreadCount = notifications.filter(n => !n.read).length;
 
   const markAllRead = () => {
+    if (unreadCount === 0) return;
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    toast.success('All notifications marked as read');
   };
 
   const filtered = useMemo(() => {
@@ -92,15 +153,22 @@ export function NotificationPanel() {
     return notifications.filter(n => n.category === activeCategory);
   }, [notifications, activeCategory]);
 
-  const todayNotifications = filtered.filter(n => !isEarlier(n.time));
-  const earlierNotifications = filtered.filter(n => isEarlier(n.time));
+  // Group into "Today" (within 24h) and "Earlier"
+  const todayNotifications = filtered.filter(n => {
+    const diffHour = (Date.now() - new Date(n.time).getTime()) / (1000 * 60 * 60);
+    return diffHour < 24;
+  });
+  const earlierNotifications = filtered.filter(n => {
+    const diffHour = (Date.now() - new Date(n.time).getTime()) / (1000 * 60 * 60);
+    return diffHour >= 24;
+  });
 
   const hasNotifications = filtered.length > 0;
 
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative h-9 w-9">
+        <button className="relative h-9 w-9 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent hover:text-accent-foreground transition-colors">
           <Bell className="h-4 w-4" />
           {unreadCount > 0 && (
             <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground">
@@ -108,18 +176,21 @@ export function NotificationPanel() {
             </span>
           )}
           <span className="sr-only">Notifications</span>
-        </Button>
+        </button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-80 p-0">
         {/* Header */}
         <div className="flex items-center justify-between border-b px-4 py-3">
           <h3 className="text-sm font-semibold">Notifications</h3>
-          <Button variant="ghost" size="sm" className={cn(
-            'h-auto p-0 text-xs transition-opacity',
-            unreadCount > 0 ? 'text-muted-foreground hover:text-foreground' : 'text-muted-foreground/50 cursor-default'
-          )} onClick={unreadCount > 0 ? markAllRead : undefined}>
-            Mark all read
-          </Button>
+          <button
+            className={cn(
+              'text-xs text-primary hover:underline transition-colors',
+              unreadCount === 0 && 'pointer-events-none opacity-40'
+            )}
+            onClick={markAllRead}
+          >
+            Mark all as read
+          </button>
         </div>
 
         {/* Category Filter Pills */}
@@ -145,7 +216,7 @@ export function NotificationPanel() {
           {!hasNotifications ? (
             <div className="flex flex-col items-center justify-center gap-2 py-12 text-muted-foreground">
               <BellOff className="h-8 w-8 opacity-40" />
-              <p className="text-sm">No notifications</p>
+              <p className="text-sm">No new notifications</p>
             </div>
           ) : (
             <div>
@@ -154,34 +225,42 @@ export function NotificationPanel() {
                   <div className="px-4 pt-3 pb-1">
                     <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Today</span>
                   </div>
-                  <div className="divide-y">
-                    {todayNotifications.map((notification) => {
-                      const Icon = notification.icon;
-                      const colors = getTypeColor(notification.type);
-                      return (
-                        <button
-                          key={notification.id}
-                          className={cn(
-                            'flex w-full items-start gap-3 border-l-[3px] pl-3 pr-4 py-3 text-left transition-all hover:bg-muted/50',
-                            colors.border,
-                            !notification.read && 'bg-primary/5'
-                          )}
-                        >
-                          <div className={cn('mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg', colors.bg, colors.text)}>
-                            <Icon className="h-4 w-4" />
+                  {todayNotifications.map((notification, index) => {
+                    const Icon = getCategoryIcon(notification.type, notification.category);
+                    const styles = getCategoryStyle(notification.type, notification.category);
+                    return (
+                      <div
+                        key={notification.id}
+                        className={cn(
+                          'flex items-start gap-3 px-4 py-3 border-b last:border-b-0 hover:bg-muted/50 transition-colors cursor-pointer',
+                          notification.read && 'opacity-70',
+                          !notification.read && 'bg-primary/5'
+                        )}
+                      >
+                        {/* Left color indicator */}
+                        <div className={cn('w-1 shrink-0 self-stretch rounded-full', styles.indicator)} />
+                        {/* Category icon */}
+                        <div className={cn(
+                          'mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg',
+                          styles.iconBg, styles.iconText
+                        )}>
+                          <Icon className="h-4 w-4" />
+                        </div>
+                        {/* Content */}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <p className={cn(
+                              'text-sm truncate font-medium',
+                              notification.read && 'font-normal'
+                            )}>{notification.title}</p>
+                            {!notification.read && <span className="h-2 w-2 shrink-0 rounded-full bg-primary" />}
                           </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2">
-                              <p className={cn('text-sm truncate', !notification.read && 'font-semibold')}>{notification.title}</p>
-                              {!notification.read && <span className="h-2 w-2 shrink-0 rounded-full bg-primary" />}
-                            </div>
-                            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{notification.message}</p>
-                            <p className="text-[10px] text-muted-foreground mt-1">{notification.time}</p>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
+                          <p className="text-sm text-muted-foreground mt-0.5 line-clamp-2">{notification.message}</p>
+                          <p className="text-[11px] text-muted-foreground mt-1">{formatRelativeTime(notification.time)}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </>
               )}
               {earlierNotifications.length > 0 && (
@@ -189,39 +268,57 @@ export function NotificationPanel() {
                   <div className="px-4 pt-3 pb-1">
                     <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Earlier</span>
                   </div>
-                  <div className="divide-y">
-                    {earlierNotifications.map((notification) => {
-                      const Icon = notification.icon;
-                      const colors = getTypeColor(notification.type);
-                      return (
-                        <button
-                          key={notification.id}
-                          className={cn(
-                            'flex w-full items-start gap-3 border-l-[3px] pl-3 pr-4 py-3 text-left transition-all hover:bg-muted/50',
-                            colors.border,
-                            !notification.read && 'bg-primary/5'
-                          )}
-                        >
-                          <div className={cn('mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg', colors.bg, colors.text)}>
-                            <Icon className="h-4 w-4" />
+                  {earlierNotifications.map((notification) => {
+                    const Icon = getCategoryIcon(notification.type, notification.category);
+                    const styles = getCategoryStyle(notification.type, notification.category);
+                    return (
+                      <div
+                        key={notification.id}
+                        className={cn(
+                          'flex items-start gap-3 px-4 py-3 border-b last:border-b-0 hover:bg-muted/50 transition-colors cursor-pointer',
+                          notification.read && 'opacity-70',
+                          !notification.read && 'bg-primary/5'
+                        )}
+                      >
+                        {/* Left color indicator */}
+                        <div className={cn('w-1 shrink-0 self-stretch rounded-full', styles.indicator)} />
+                        {/* Category icon */}
+                        <div className={cn(
+                          'mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg',
+                          styles.iconBg, styles.iconText
+                        )}>
+                          <Icon className="h-4 w-4" />
+                        </div>
+                        {/* Content */}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <p className={cn(
+                              'text-sm truncate font-medium',
+                              notification.read && 'font-normal'
+                            )}>{notification.title}</p>
+                            {!notification.read && <span className="h-2 w-2 shrink-0 rounded-full bg-primary" />}
                           </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2">
-                              <p className={cn('text-sm truncate', !notification.read && 'font-semibold')}>{notification.title}</p>
-                              {!notification.read && <span className="h-2 w-2 shrink-0 rounded-full bg-primary" />}
-                            </div>
-                            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{notification.message}</p>
-                            <p className="text-[10px] text-muted-foreground mt-1">{notification.time}</p>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
+                          <p className="text-sm text-muted-foreground mt-0.5 line-clamp-2">{notification.message}</p>
+                          <p className="text-[11px] text-muted-foreground mt-1">{formatRelativeTime(notification.time)}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </>
               )}
             </div>
           )}
         </ScrollArea>
+
+        {/* Footer */}
+        {hasNotifications && (
+          <div className="border-t px-4 py-2.5 text-center">
+            <button className="inline-flex items-center gap-1 text-xs text-primary hover:underline transition-colors">
+              View All Notifications
+              <ExternalLink className="h-3 w-3" />
+            </button>
+          </div>
+        )}
       </PopoverContent>
     </Popover>
   );

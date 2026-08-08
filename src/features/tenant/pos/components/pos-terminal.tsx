@@ -521,45 +521,56 @@ export default function POSTerminal() {
                     Cart is empty
                   </div>
                 ) : (
-                  <div className="space-y-2 pr-3">
-                    {cart.map((item) => (
-                      <div key={item.product.id} className="flex items-center gap-2 rounded-lg bg-muted/50 p-2 transition-colors hover:bg-muted">
-                        <div className="min-w-0 flex-1">
-                          <div className="text-sm font-medium leading-tight truncate">{item.product.name}</div>
-                          <div className="text-xs text-muted-foreground">NPR {npr(item.product.price)} each</div>
-                        </div>
-                        <div className="flex items-center gap-1 shrink-0">
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-6 w-6"
-                            onClick={() => updateQuantity(item.product.id, -1)}
-                          >
-                            <Minus className="h-3 w-3" />
-                          </Button>
-                          <span className="w-7 text-center text-sm font-medium">{item.quantity}</span>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-6 w-6"
-                            onClick={() => updateQuantity(item.product.id, 1)}
-                          >
-                            <Plus className="h-3 w-3" />
-                          </Button>
-                        </div>
-                        <div className="w-20 text-right text-sm font-semibold shrink-0">
-                          NPR {npr(item.product.price * item.quantity)}
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 shrink-0 text-muted-foreground hover:text-destructive"
-                          onClick={() => removeFromCart(item.product.id)}
+                  <div className="space-y-0 pr-3">
+                    {cart.map((item, idx) => {
+                      const isLowStock = item.product.stock > 0 && item.product.stock <= item.product.minStock;
+                      return (
+                        <div
+                          key={item.product.id}
+                          className={cn(
+                            'flex items-center gap-2 py-2.5 px-2 rounded-lg bg-muted/50 transition-colors hover:bg-muted border-b last:border-b-0',
+                            idx === 0 && 'rounded-t-lg',
+                            idx === cart.length - 1 && 'rounded-b-lg'
+                          )}
                         >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    ))}
+                          <div className={cn('w-0.5 h-8 rounded-full shrink-0', isLowStock ? 'bg-amber-400 dark:bg-amber-500' : 'bg-emerald-400 dark:bg-emerald-500')} />
+                          <div className="min-w-0 flex-1">
+                            <div className="text-sm font-medium leading-tight truncate">{item.product.name}</div>
+                            <div className="text-xs text-muted-foreground">NPR {npr(item.product.price)} each</div>
+                          </div>
+                          <div className="flex items-center gap-1 shrink-0">
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-6 w-6 rounded-lg border-border/60"
+                              onClick={() => updateQuantity(item.product.id, -1)}
+                            >
+                              <Minus className="h-3 w-3" />
+                            </Button>
+                            <span className="w-7 text-center text-sm font-medium">{item.quantity}</span>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-6 w-6 rounded-lg border-border/60"
+                              onClick={() => updateQuantity(item.product.id, 1)}
+                            >
+                              <Plus className="h-3 w-3" />
+                            </Button>
+                          </div>
+                          <div className="w-20 text-right text-sm font-semibold shrink-0">
+                            NPR {npr(item.product.price * item.quantity)}
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 shrink-0 text-muted-foreground hover:text-destructive"
+                            onClick={() => removeFromCart(item.product.id)}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </ScrollArea>
@@ -568,30 +579,32 @@ export default function POSTerminal() {
               {cart.length > 0 && (
                 <>
                   <Separator />
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Subtotal</span>
-                      <span>NPR {npr(subtotal)}</span>
-                    </div>
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-muted-foreground">Discount</span>
-                      <Input
-                        type="number"
-                        min={0}
-                        value={discount || ''}
-                        onChange={(e) => setDiscount(Math.max(0, Number(e.target.value)))}
-                        placeholder="0"
-                        className="h-8 w-28 text-right"
-                      />
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">VAT (13%)</span>
-                      <span>NPR {nprFull(vat)}</span>
-                    </div>
-                    <Separator />
-                    <div className="flex justify-between text-lg font-bold">
-                      <span>Total</span>
-                      <span>NPR {nprFull(total)}</span>
+                  <div className="bg-gradient-to-b from-muted/50 to-transparent rounded-t-xl -mx-1 px-3 pt-4 pb-3">
+                    <div className="space-y-2.5 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Subtotal</span>
+                        <span>NPR {npr(subtotal)}</span>
+                      </div>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-muted-foreground">Discount</span>
+                        <Input
+                          type="number"
+                          min={0}
+                          value={discount || ''}
+                          onChange={(e) => setDiscount(Math.max(0, Number(e.target.value)))}
+                          placeholder="0"
+                          className="h-8 w-28 text-right"
+                        />
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">VAT (13%)</span>
+                        <span>NPR {nprFull(vat)}</span>
+                      </div>
+                      <Separator />
+                      <div className="flex justify-between items-baseline pt-0.5">
+                        <span className="text-lg font-bold">Total</span>
+                        <span className="text-lg font-bold animate-gentle-pulse">NPR {nprFull(total)}</span>
+                      </div>
                     </div>
                   </div>
 
@@ -601,17 +614,22 @@ export default function POSTerminal() {
                     <div className="grid grid-cols-2 gap-2">
                       {PAYMENT_METHODS.map((method) => {
                         const Icon = method.icon;
+                        const isSelected = paymentMethod === method.id;
+                        const txCounts: Record<string, number> = { cash: 28, card: 12, esewa: 7, khalti: 3 };
+                        const borderColor = method.id === 'cash' ? 'border-b-emerald-500' : method.id === 'card' ? 'border-b-blue-500' : method.id === 'esewa' ? 'border-b-green-500' : 'border-b-purple-500';
                         return (
                           <Button
                             key={method.id}
-                            variant={paymentMethod === method.id ? 'default' : 'outline'}
-                            className={cn('h-10 justify-start gap-2 transition-all',
-                              paymentMethod === method.id && 'shadow-sm'
+                            variant={isSelected ? 'default' : 'outline'}
+                            className={cn(
+                              'h-10 justify-start gap-2 transition-all relative overflow-hidden',
+                              isSelected && cn('shadow-sm border-b-[3px]', borderColor)
                             )}
                             onClick={() => setPaymentMethod(method.id)}
                           >
                             <Icon className="h-4 w-4" />
-                            {method.label}
+                            <span className="flex-1 text-left">{method.label}</span>
+                            <span className="text-[10px] opacity-70">{txCounts[method.id]} today</span>
                           </Button>
                         );
                       })}
@@ -628,7 +646,7 @@ export default function POSTerminal() {
                       <Pause className="h-4 w-4" />
                       Hold
                     </Button>
-                    <Button className="flex-[2] h-12 text-base font-semibold gap-2" onClick={handleCompleteSale}>
+                    <Button className="flex-[2] h-12 text-base font-semibold gap-2 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600" onClick={handleCompleteSale}>
                       <Receipt className="h-5 w-5" />
                       Complete Sale
                     </Button>
