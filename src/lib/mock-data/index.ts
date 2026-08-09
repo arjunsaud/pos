@@ -5,6 +5,7 @@
 import type {
   Tenant,
   SubscriptionPlan,
+  Subscription,
   Product,
   Category,
   InventoryItem,
@@ -18,6 +19,10 @@ import type {
   SuperAdminStats,
   TenantStats,
   Customer,
+  Vendor,
+  Contract,
+  TenantDocument,
+  TenantFeature,
 } from '@/lib/types';
 
 // ---------- Tenants ----------
@@ -51,6 +56,85 @@ export const mockPlans: SubscriptionPlan[] = [
   },
 ];
 
+// ---------- Subscriptions (entity CRUD) ----------
+export const mockSubscriptions: Subscription[] = [
+  { id: 'sub-1', tenantId: 't1', tenantName: 'ABC Store', planId: 'plan-2', planName: 'pro', status: 'active', startDate: '2024-01-15', endDate: '2025-01-15', amount: 2999, currency: 'NPR', autoRenew: true },
+  { id: 'sub-2', tenantId: 't2', tenantName: 'XYZ Mart', planId: 'plan-1', planName: 'basic', status: 'expired', startDate: '2024-03-22', endDate: '2024-09-22', amount: 999, currency: 'NPR', autoRenew: false },
+  { id: 'sub-3', tenantId: 't3', tenantName: 'Kathmandu Grocers', planId: 'plan-3', planName: 'enterprise', status: 'active', startDate: '2023-11-10', endDate: '2025-11-10', amount: 7999, currency: 'NPR', autoRenew: true },
+  { id: 'sub-4', tenantId: 't4', tenantName: 'Pokhara Electronics', planId: 'plan-2', planName: 'pro', status: 'active', startDate: '2024-02-28', endDate: '2025-02-28', amount: 2999, currency: 'NPR', autoRenew: true },
+  { id: 'sub-5', tenantId: 't5', tenantName: 'Bhaktapur Handicraft', planId: 'plan-1', planName: 'basic', status: 'active', startDate: '2024-05-10', endDate: '2025-05-10', amount: 999, currency: 'NPR', autoRenew: false },
+  { id: 'sub-6', tenantId: 't6', tenantName: 'Lalitpur Fashion', planId: 'plan-2', planName: 'pro', status: 'active', startDate: '2024-04-05', endDate: '2025-04-05', amount: 2999, currency: 'NPR', autoRenew: true },
+  { id: 'sub-7', tenantId: 't7', tenantName: 'Chitwan Fresh', planId: 'plan-1', planName: 'basic', status: 'cancelled', startDate: '2024-06-18', endDate: '2024-12-18', amount: 999, currency: 'NPR', autoRenew: false },
+  { id: 'sub-8', tenantId: 't8', tenantName: 'Biratnagar Hardware', planId: 'plan-3', planName: 'enterprise', status: 'active', startDate: '2023-09-20', endDate: '2025-09-20', amount: 7999, currency: 'NPR', autoRenew: true },
+  { id: 'sub-9', tenantId: 't1', tenantName: 'ABC Store', planId: 'plan-1', planName: 'basic', status: 'expired', startDate: '2023-06-15', endDate: '2024-01-15', amount: 999, currency: 'NPR', autoRenew: false },
+  { id: 'sub-10', tenantId: 't3', tenantName: 'Kathmandu Grocers', planId: 'plan-2', planName: 'pro', status: 'expired', startDate: '2022-11-10', endDate: '2023-11-10', amount: 2999, currency: 'NPR', autoRenew: false },
+];
+
+// ---------- Vendors ----------
+export const mockVendors: Vendor[] = [
+  { id: 'v1', name: 'Nepal Dairy Corp', contactPerson: 'Ram Bahadur', email: 'sales@nepaldairy.com.np', phone: '+977-9801111111', pan: '301111111', vatNumber: 'VAT-301111111', address: 'Balaju Industrial Area', city: 'Kathmandu', status: 'active', productCount: 5, createdAt: '2024-01-10' },
+  { id: 'v2', name: 'CG Foods Nepal', contactPerson: 'Sita Kumari', email: 'orders@cgfoods.com.np', phone: '+977-9802222222', pan: '302222222', vatNumber: 'VAT-302222222', address: 'Hetauda Industrial Corridor', city: 'Hetauda', status: 'active', productCount: 8, createdAt: '2024-01-12' },
+  { id: 'v3', name: 'Goldstar Shoe Pvt Ltd', contactPerson: 'Hari Prasad', email: 'info@goldstar.com.np', phone: '+977-9803333333', pan: '303333333', vatNumber: 'VAT-303333333', address: 'Biratnagar', city: 'Biratnagar', status: 'active', productCount: 3, createdAt: '2024-02-01' },
+  { id: 'v4', name: 'Tokla Tea Estate', contactPerson: 'Dawa Sherpa', email: 'export@tokla.com.np', phone: '+977-9804444444', pan: '304444444', vatNumber: 'VAT-304444444', address: 'Ilam', city: 'Ilam', status: 'active', productCount: 2, createdAt: '2024-01-18' },
+  { id: 'v5', name: 'Himalayan Snacks Pvt Ltd', contactPerson: 'Bikash Lama', email: 'supply@himsnacks.com.np', phone: '+977-9805555555', pan: '305555555', vatNumber: 'VAT-305555555', address: 'Thapathali', city: 'Kathmandu', status: 'active', productCount: 4, createdAt: '2024-01-20' },
+  { id: 'v6', name: 'Nepal Agro Industries', contactPerson: 'Kumar Shrestha', email: 'info@nepagro.com.np', phone: '+977-9806666666', pan: '306666666', vatNumber: 'VAT-306666666', address: 'Bhaktapur', city: 'Bhaktapur', status: 'inactive', productCount: 2, createdAt: '2024-03-05' },
+  { id: 'v7', name: 'Surya Lights & Electricals', contactPerson: 'Anita Gurung', email: 'orders@suryalights.com.np', phone: '+977-9807777777', pan: '307777777', vatNumber: 'VAT-307777777', address: 'Putalisadak', city: 'Kathmandu', status: 'active', productCount: 6, createdAt: '2024-02-15' },
+  { id: 'v8', name: 'Chitwan Fresh Farms', contactPerson: 'Dil Kumar', email: 'supply@ctfresh.com.np', phone: '+977-9808888888', pan: '308888888', vatNumber: 'VAT-308888888', address: 'Narayanghat', city: 'Chitwan', status: 'active', productCount: 3, createdAt: '2024-03-10' },
+];
+
+// ---------- Contracts ----------
+export const mockContracts: Contract[] = [
+  { id: 'ct-1', tenantId: 't1', tenantName: 'ABC Store', title: 'Annual POS Service Agreement', type: 'service', status: 'active', startDate: '2024-01-15', endDate: '2025-01-15', value: 35988, currency: 'NPR', description: 'Annual POS system service including maintenance, updates, and 24/7 support for Pro plan.' },
+  { id: 'ct-2', tenantId: 't3', tenantName: 'Kathmandu Grocers', title: 'Enterprise License Contract', type: 'license', status: 'active', startDate: '2023-11-10', endDate: '2025-11-10', value: 191976, currency: 'NPR', description: 'Enterprise license with API access, custom domain, and multi-branch support.' },
+  { id: 'ct-3', tenantId: 't4', tenantName: 'Pokhara Electronics', title: 'Pro Plan Service Agreement', type: 'service', status: 'active', startDate: '2024-02-28', endDate: '2025-02-28', value: 35988, currency: 'NPR', description: 'Pro plan service with inventory management and advanced reporting.' },
+  { id: 'ct-4', tenantId: 't5', tenantName: 'Bhaktapur Handicraft', title: 'Basic Plan Contract', type: 'service', status: 'active', startDate: '2024-05-10', endDate: '2025-05-10', value: 11988, currency: 'NPR', description: 'Basic POS service agreement with email support.' },
+  { id: 'ct-5', tenantId: 't2', tenantName: 'XYZ Mart', title: 'Initial Setup & Onboarding', type: 'custom', status: 'expired', startDate: '2024-03-22', endDate: '2024-06-22', value: 5000, currency: 'NPR', description: 'One-time onboarding and setup assistance.' },
+  { id: 'ct-6', tenantId: 't6', tenantName: 'Lalitpur Fashion', title: 'Pro Plan Service Agreement', type: 'service', status: 'active', startDate: '2024-04-05', endDate: '2025-04-05', value: 35988, currency: 'NPR', description: 'Pro plan service with billing and invoicing features.' },
+  { id: 'ct-7', tenantId: 't8', tenantName: 'Biratnagar Hardware', title: 'Enterprise Custom Integration', type: 'custom', status: 'active', startDate: '2023-09-20', endDate: '2025-09-20', value: 250000, currency: 'NPR', description: 'Custom ERP integration with hardware inventory tracking system.' },
+  { id: 'ct-8', tenantId: 't7', tenantName: 'Chitwan Fresh', title: 'Basic Plan Contract', type: 'service', status: 'terminated', startDate: '2024-06-18', endDate: '2024-12-18', value: 5994, currency: 'NPR', description: 'Basic POS service - terminated early due to non-payment.' },
+];
+
+// ---------- Tenant Documents ----------
+export const mockTenantDocuments: TenantDocument[] = [
+  { id: 'doc-1', tenantId: 't1', tenantName: 'ABC Store', type: 'pan', name: 'PAN Certificate', fileName: 'abc_store_pan.pdf', fileSize: '245 KB', uploadedAt: '2024-01-15', status: 'verified' },
+  { id: 'doc-2', tenantId: 't1', tenantName: 'ABC Store', type: 'vat', name: 'VAT Registration', fileName: 'abc_store_vat.pdf', fileSize: '312 KB', uploadedAt: '2024-01-15', status: 'verified' },
+  { id: 'doc-3', tenantId: 't1', tenantName: 'ABC Store', type: 'business_license', name: 'Business Registration Certificate', fileName: 'abc_store_biz_reg.pdf', fileSize: '528 KB', uploadedAt: '2024-01-15', status: 'verified' },
+  { id: 'doc-4', tenantId: 't3', tenantName: 'Kathmandu Grocers', type: 'pan', name: 'PAN Certificate', fileName: 'ktm_grocers_pan.pdf', fileSize: '198 KB', uploadedAt: '2023-11-10', status: 'verified' },
+  { id: 'doc-5', tenantId: 't3', tenantName: 'Kathmandu Grocers', type: 'vat', name: 'VAT Registration', fileName: 'ktm_grocers_vat.pdf', fileSize: '267 KB', uploadedAt: '2023-11-10', status: 'verified' },
+  { id: 'doc-6', tenantId: 't3', tenantName: 'Kathmandu Grocers', type: 'business_license', name: 'Company Registration', fileName: 'ktm_grocers_company.pdf', fileSize: '1.2 MB', uploadedAt: '2023-11-10', status: 'verified' },
+  { id: 'doc-7', tenantId: 't3', tenantName: 'Kathmandu Grocers', type: 'bank_statement', name: 'Bank Statement Q1 2024', fileName: 'ktm_grocers_bank_q1.pdf', fileSize: '890 KB', uploadedAt: '2024-04-15', status: 'verified' },
+  { id: 'doc-8', tenantId: 't4', tenantName: 'Pokhara Electronics', type: 'pan', name: 'PAN Certificate', fileName: 'pkr_elec_pan.pdf', fileSize: '210 KB', uploadedAt: '2024-02-28', status: 'verified' },
+  { id: 'doc-9', tenantId: 't4', tenantName: 'Pokhara Electronics', type: 'vat', name: 'VAT Registration', fileName: 'pkr_elec_vat.pdf', fileSize: '298 KB', uploadedAt: '2024-02-28', status: 'pending' },
+  { id: 'doc-10', tenantId: 't5', tenantName: 'Bhaktapur Handicraft', type: 'pan', name: 'PAN Certificate', fileName: 'bkt_craft_pan.pdf', fileSize: '220 KB', uploadedAt: '2024-05-10', status: 'verified' },
+  { id: 'doc-11', tenantId: 't5', tenantName: 'Bhaktapur Handicraft', type: 'other', name: 'Handicraft Export License', fileName: 'bkt_craft_export.pdf', fileSize: '456 KB', uploadedAt: '2024-05-12', status: 'pending' },
+  { id: 'doc-12', tenantId: 't8', tenantName: 'Biratnagar Hardware', type: 'pan', name: 'PAN Certificate', fileName: 'brt_hw_pan.pdf', fileSize: '205 KB', uploadedAt: '2023-09-20', status: 'verified' },
+  { id: 'doc-13', tenantId: 't8', tenantName: 'Biratnagar Hardware', type: 'vat', name: 'VAT Registration', fileName: 'brt_hw_vat.pdf', fileSize: '310 KB', uploadedAt: '2023-09-20', status: 'verified' },
+  { id: 'doc-14', tenantId: 't8', tenantName: 'Biratnagar Hardware', type: 'business_license', name: 'Trade License', fileName: 'brt_hw_trade.pdf', fileSize: '780 KB', uploadedAt: '2023-09-20', status: 'rejected' },
+  { id: 'doc-15', tenantId: 't6', tenantName: 'Lalitpur Fashion', type: 'pan', name: 'PAN Certificate', fileName: 'ltp_fashion_pan.pdf', fileSize: '230 KB', uploadedAt: '2024-04-05', status: 'verified' },
+];
+
+// ---------- Tenant Features ----------
+export const mockTenantFeatures: TenantFeature[] = [
+  { id: 'f1', key: 'pos_basic', label: 'POS Terminal', description: 'Point of sale terminal with barcode scanning', category: 'pos', enabled: true },
+  { id: 'f2', key: 'pos_hold_sale', label: 'Hold & Resume Sales', description: 'Park current sale and resume later', category: 'pos', enabled: true },
+  { id: 'f3', key: 'pos_discount', label: 'Manual Discount', description: 'Apply manual discounts on sales', category: 'pos', enabled: true },
+  { id: 'f4', key: 'inv_basic', label: 'Inventory Tracking', description: 'Track stock levels and movements', category: 'inventory', enabled: true },
+  { id: 'f5', key: 'inv_alerts', label: 'Low Stock Alerts', description: 'Get notified when stock falls below minimum', category: 'inventory', enabled: true },
+  { id: 'f6', key: 'inv_batch', label: 'Batch Stock Update', description: 'Update stock for multiple items at once', category: 'inventory', enabled: false },
+  { id: 'f7', key: 'bill_invoicing', label: 'Invoicing', description: 'Create and manage invoices with VAT', category: 'billing', enabled: true },
+  { id: 'f8', key: 'bill_recurring', label: 'Recurring Billing', description: 'Set up automatic recurring invoices', category: 'billing', enabled: false },
+  { id: 'f9', key: 'rpt_basic', label: 'Sales Reports', description: 'Daily, weekly, and monthly sales reports', category: 'reporting', enabled: true },
+  { id: 'f10', key: 'rpt_vat', label: 'VAT Reports', description: 'VAT collection and filing reports', category: 'reporting', enabled: true },
+  { id: 'f11', key: 'rpt_export', label: 'Export Reports', description: 'Export reports to CSV and PDF formats', category: 'reporting', enabled: true },
+  { id: 'f12', key: 'rpt_custom', label: 'Custom Reports', description: 'Create custom report templates', category: 'reporting', enabled: false },
+  { id: 'f13', key: 'int_esewa', label: 'eSewa Payment', description: 'Accept payments via eSewa digital wallet', category: 'integration', enabled: true },
+  { id: 'f14', key: 'int_khalti', label: 'Khalti Payment', description: 'Accept payments via Khalti digital wallet', category: 'integration', enabled: true },
+  { id: 'f15', key: 'int_bank', label: 'Bank Transfer', description: 'Bank transfer payment integration', category: 'integration', enabled: false },
+  { id: 'f16', key: 'adv_multi_branch', label: 'Multi-Branch', description: 'Manage multiple store branches', category: 'advanced', enabled: false },
+  { id: 'f17', key: 'adv_api', label: 'API Access', description: 'RESTful API for external integrations', category: 'advanced', enabled: false },
+  { id: 'f18', key: 'adv_custom_domain', label: 'Custom Domain', description: 'Use your own domain name', category: 'advanced', enabled: false },
+];
+
 // ---------- Categories ----------
 export const mockCategories: Category[] = [
   { id: 'cat-1', name: 'Dairy & Eggs', description: 'Milk, cheese, yogurt, eggs and related products', productCount: 12, createdAt: '2024-01-10' },
@@ -65,22 +149,22 @@ export const mockCategories: Category[] = [
 
 // ---------- Products ----------
 export const mockProducts: Product[] = [
-  { id: 'p1', name: 'DDC Milk (1L)', sku: 'DRY-001', price: 100, costPrice: 85, category: 'Dairy & Eggs', stock: 50, minStock: 10, unit: 'Litre', isActive: true, createdAt: '2024-01-15' },
-  { id: 'p2', name: 'Wai Wai Noodles', sku: 'SNK-001', price: 25, costPrice: 20, category: 'Snacks & Chips', stock: 200, minStock: 50, unit: 'Pcs', isActive: true, createdAt: '2024-01-15' },
-  { id: 'p3', name: 'Basmati Rice (5kg)', sku: 'RCE-001', price: 650, costPrice: 580, category: 'Rice & Grains', stock: 30, minStock: 5, unit: 'Kg', isActive: true, createdAt: '2024-01-16' },
-  { id: 'p4', name: 'Sunflower Oil (1L)', sku: 'COK-001', price: 320, costPrice: 280, category: 'Cooking Essentials', stock: 25, minStock: 8, unit: 'Litre', isActive: true, createdAt: '2024-01-16' },
-  { id: 'p5', name: 'Goldstar Shoes', sku: 'PRC-001', price: 2500, costPrice: 1800, category: 'Personal Care', stock: 12, minStock: 3, unit: 'Pcs', isActive: true, createdAt: '2024-01-18' },
-  { id: 'p6', name: 'Tokla Tea (500g)', sku: 'BEV-001', price: 280, costPrice: 240, category: 'Beverages', stock: 40, minStock: 10, unit: 'Pcs', isActive: true, createdAt: '2024-01-18' },
-  { id: 'p7', name: 'Surf Excel (1kg)', sku: 'CLN-001', price: 250, costPrice: 210, category: 'Cleaning Products', stock: 3, minStock: 5, unit: 'Pcs', isActive: true, createdAt: '2024-02-01' },
-  { id: 'p8', name: 'Frozen Chicken (1kg)', sku: 'FRZ-001', price: 450, costPrice: 380, category: 'Frozen Foods', stock: 2, minStock: 5, unit: 'Kg', isActive: true, createdAt: '2024-02-05' },
-  { id: 'p9', name: 'Coca Cola (500ml)', sku: 'BEV-002', price: 60, costPrice: 48, category: 'Beverages', stock: 150, minStock: 30, unit: 'Pcs', isActive: true, createdAt: '2024-01-20' },
-  { id: 'p10', name: 'Lay\'s Chips (Large)', sku: 'SNK-002', price: 80, costPrice: 65, category: 'Snacks & Chips', stock: 80, minStock: 20, unit: 'Pcs', isActive: true, createdAt: '2024-01-20' },
-  { id: 'p11', name: 'Musk Melon', sku: 'FRU-001', price: 150, costPrice: 120, category: 'Snacks & Chips', stock: 8, minStock: 10, unit: 'Kg', isActive: true, createdAt: '2024-03-01' },
-  { id: 'p12', name: 'Dettol Soap', sku: 'PRC-002', price: 120, costPrice: 95, category: 'Personal Care', stock: 60, minStock: 15, unit: 'Pcs', isActive: true, createdAt: '2024-02-10' },
-  { id: 'p13', name: 'Red Bull (250ml)', sku: 'BEV-003', price: 180, costPrice: 150, category: 'Beverages', stock: 45, minStock: 10, unit: 'Pcs', isActive: true, createdAt: '2024-02-15' },
-  { id: 'p14', name: 'Momo Wrapper (500g)', sku: 'FRZ-002', price: 80, costPrice: 60, category: 'Frozen Foods', stock: 35, minStock: 10, unit: 'Pcs', isActive: true, createdAt: '2024-03-05' },
-  { id: 'p15', name: 'Turmeric Powder (200g)', sku: 'COK-002', price: 90, costPrice: 70, category: 'Cooking Essentials', stock: 55, minStock: 10, unit: 'Pcs', isActive: true, createdAt: '2024-02-20' },
-  { id: 'p16', name: 'Eggs (Tray of 30)', sku: 'DRY-002', price: 450, costPrice: 380, category: 'Dairy & Eggs', stock: 18, minStock: 5, unit: 'Tray', isActive: true, createdAt: '2024-01-22' },
+  { id: 'p1', name: 'DDC Milk (1L)', sku: 'DRY-001', price: 100, costPrice: 85, category: 'Dairy & Eggs', stock: 50, minStock: 10, unit: 'Litre', isActive: true, createdAt: '2024-01-15', vendorId: 'v1', vendorName: 'Nepal Dairy Corp' },
+  { id: 'p2', name: 'Wai Wai Noodles', sku: 'SNK-001', price: 25, costPrice: 20, category: 'Snacks & Chips', stock: 200, minStock: 50, unit: 'Pcs', isActive: true, createdAt: '2024-01-15', vendorId: 'v2', vendorName: 'CG Foods Nepal' },
+  { id: 'p3', name: 'Basmati Rice (5kg)', sku: 'RCE-001', price: 650, costPrice: 580, category: 'Rice & Grains', stock: 30, minStock: 5, unit: 'Kg', isActive: true, createdAt: '2024-01-16', vendorId: 'v6', vendorName: 'Nepal Agro Industries' },
+  { id: 'p4', name: 'Sunflower Oil (1L)', sku: 'COK-001', price: 320, costPrice: 280, category: 'Cooking Essentials', stock: 25, minStock: 8, unit: 'Litre', isActive: true, createdAt: '2024-01-16', vendorId: 'v6', vendorName: 'Nepal Agro Industries' },
+  { id: 'p5', name: 'Goldstar Shoes', sku: 'PRC-001', price: 2500, costPrice: 1800, category: 'Personal Care', stock: 12, minStock: 3, unit: 'Pcs', isActive: true, createdAt: '2024-01-18', vendorId: 'v3', vendorName: 'Goldstar Shoe Pvt Ltd' },
+  { id: 'p6', name: 'Tokla Tea (500g)', sku: 'BEV-001', price: 280, costPrice: 240, category: 'Beverages', stock: 40, minStock: 10, unit: 'Pcs', isActive: true, createdAt: '2024-01-18', vendorId: 'v4', vendorName: 'Tokla Tea Estate' },
+  { id: 'p7', name: 'Surf Excel (1kg)', sku: 'CLN-001', price: 250, costPrice: 210, category: 'Cleaning Products', stock: 3, minStock: 5, unit: 'Pcs', isActive: true, createdAt: '2024-02-01', vendorId: 'v5', vendorName: 'Himalayan Snacks Pvt Ltd' },
+  { id: 'p8', name: 'Frozen Chicken (1kg)', sku: 'FRZ-001', price: 450, costPrice: 380, category: 'Frozen Foods', stock: 2, minStock: 5, unit: 'Kg', isActive: true, createdAt: '2024-02-05', vendorId: 'v8', vendorName: 'Chitwan Fresh Farms' },
+  { id: 'p9', name: 'Coca Cola (500ml)', sku: 'BEV-002', price: 60, costPrice: 48, category: 'Beverages', stock: 150, minStock: 30, unit: 'Pcs', isActive: true, createdAt: '2024-01-20', vendorId: 'v2', vendorName: 'CG Foods Nepal' },
+  { id: 'p10', name: 'Lay\'s Chips (Large)', sku: 'SNK-002', price: 80, costPrice: 65, category: 'Snacks & Chips', stock: 80, minStock: 20, unit: 'Pcs', isActive: true, createdAt: '2024-01-20', vendorId: 'v5', vendorName: 'Himalayan Snacks Pvt Ltd' },
+  { id: 'p11', name: 'Musk Melon', sku: 'FRU-001', price: 150, costPrice: 120, category: 'Snacks & Chips', stock: 8, minStock: 10, unit: 'Kg', isActive: true, createdAt: '2024-03-01', vendorId: 'v8', vendorName: 'Chitwan Fresh Farms' },
+  { id: 'p12', name: 'Dettol Soap', sku: 'PRC-002', price: 120, costPrice: 95, category: 'Personal Care', stock: 60, minStock: 15, unit: 'Pcs', isActive: true, createdAt: '2024-02-10', vendorId: 'v5', vendorName: 'Himalayan Snacks Pvt Ltd' },
+  { id: 'p13', name: 'Red Bull (250ml)', sku: 'BEV-003', price: 180, costPrice: 150, category: 'Beverages', stock: 45, minStock: 10, unit: 'Pcs', isActive: true, createdAt: '2024-02-15', vendorId: 'v2', vendorName: 'CG Foods Nepal' },
+  { id: 'p14', name: 'Momo Wrapper (500g)', sku: 'FRZ-002', price: 80, costPrice: 60, category: 'Frozen Foods', stock: 35, minStock: 10, unit: 'Pcs', isActive: true, createdAt: '2024-03-05', vendorId: 'v8', vendorName: 'Chitwan Fresh Farms' },
+  { id: 'p15', name: 'Turmeric Powder (200g)', sku: 'COK-002', price: 90, costPrice: 70, category: 'Cooking Essentials', stock: 55, minStock: 10, unit: 'Pcs', isActive: true, createdAt: '2024-02-20', vendorId: 'v6', vendorName: 'Nepal Agro Industries' },
+  { id: 'p16', name: 'Eggs (Tray of 30)', sku: 'DRY-002', price: 450, costPrice: 380, category: 'Dairy & Eggs', stock: 18, minStock: 5, unit: 'Tray', isActive: true, createdAt: '2024-01-22', vendorId: 'v1', vendorName: 'Nepal Dairy Corp' },
 ];
 
 // ---------- Inventory ----------

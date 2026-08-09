@@ -48,7 +48,11 @@ export const useAuthStore = create<AuthState>((set) => ({
     };
     useNavStore.getState().setCurrentSection(defaults[role]);
   },
-  logout: () => set({ user: null, isAuthenticated: false }),
+  logout: () => {
+    set({ user: null, isAuthenticated: false });
+    // Clear tenant selection on logout
+    useTenantSelectorStore.getState().clearSelection();
+  },
 }));
 
 // ---------- Navigation State ----------
@@ -81,4 +85,23 @@ export const useNavStore = create<NavState>((set, get) => ({
     };
     set({ currentSection: defaults[role] });
   },
+}));
+
+// ---------- Tenant Selector State (Super Admin) ----------
+interface TenantSelectorState {
+  selectedTenantId: string | null;
+  setSelectedTenantId: (id: string | null) => void;
+  clearSelection: () => void;
+}
+
+export const useTenantSelectorStore = create<TenantSelectorState>((set) => ({
+  selectedTenantId: null,
+  setSelectedTenantId: (id: string | null) => {
+    set({ selectedTenantId: id });
+    // When selecting a tenant, navigate to tenant overview
+    if (id) {
+      useNavStore.getState().setCurrentSection('sa-tenant-overview');
+    }
+  },
+  clearSelection: () => set({ selectedTenantId: null }),
 }));

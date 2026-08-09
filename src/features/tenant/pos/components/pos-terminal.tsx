@@ -285,7 +285,7 @@ export default function POSTerminal() {
   return (
     <div className="space-y-4 pb-20 md:pb-4">
       <PageHeader
-        title="POS Terminal"
+        title="POS"
         description="Process sales and accept payments"
       >
         <div className="flex items-center gap-2">

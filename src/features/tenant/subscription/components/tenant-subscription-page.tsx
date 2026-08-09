@@ -19,7 +19,7 @@ const planColors: Record<string, { bg: string; text: string; border: string; acc
 };
 
 const planKeyFeatures: Record<string, string[]> = {
-  basic: ['POS Terminal', 'Basic Reports', 'Email Support'],
+  basic: ['POS', 'Basic Reports', 'Email Support'],
   pro: ['Everything in Basic', 'Inventory Management', 'Billing & Invoicing', 'Priority Support'],
   enterprise: ['Everything in Pro', 'API Access', 'Custom Domain', 'Multi-Branch', '24/7 Support'],
 };

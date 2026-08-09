@@ -44,7 +44,7 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Pencil, Trash2, AlertTriangle, Download, X, CheckCircle2, XCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { mockProducts, mockCategories } from '@/lib/mock-data';
+import { mockProducts, mockCategories, mockVendors } from '@/lib/mock-data';
 import { toast } from 'sonner';
 import type { Product } from '@/lib/types';
 import { cn } from '@/lib/utils';
@@ -60,6 +60,8 @@ interface ProductForm {
   minStock: string;
   unit: string;
   isActive: boolean;
+  vendorId: string;
+  vendorName: string;
 }
 
 const emptyForm: ProductForm = {
@@ -72,6 +74,8 @@ const emptyForm: ProductForm = {
   minStock: '',
   unit: 'Pcs',
   isActive: true,
+  vendorId: '',
+  vendorName: '',
 };
 
 export default function ProductManagement() {
@@ -117,6 +121,8 @@ export default function ProductManagement() {
       minStock: String(product.minStock),
       unit: product.unit,
       isActive: product.isActive,
+      vendorId: product.vendorId || '',
+      vendorName: product.vendorName || '',
     });
     setDialogOpen(true);
   };
@@ -141,6 +147,8 @@ export default function ProductManagement() {
                 minStock: Number(form.minStock) || 0,
                 unit: form.unit,
                 isActive: form.isActive,
+                vendorId: form.vendorId || undefined,
+                vendorName: form.vendorName || undefined,
               }
             : p
         )
@@ -158,6 +166,8 @@ export default function ProductManagement() {
         minStock: Number(form.minStock) || 0,
         unit: form.unit,
         isActive: form.isActive,
+        vendorId: form.vendorId || undefined,
+        vendorName: form.vendorName || undefined,
         createdAt: new Date().toISOString().slice(0, 10),
       };
       setProducts((prev) => [newProduct, ...prev]);
@@ -361,6 +371,7 @@ export default function ProductManagement() {
                 <TableHead className="text-right">Price</TableHead>
                 <TableHead className="text-right">Cost</TableHead>
                 <TableHead>Category</TableHead>
+                <TableHead className="hidden md:table-cell">Vendor</TableHead>
                 <TableHead className="text-center">Stock</TableHead>
                 <TableHead>Unit</TableHead>
                 <TableHead>Status</TableHead>
@@ -385,6 +396,11 @@ export default function ProductManagement() {
                     <TableCell className="text-right">NPR {npr(product.price)}</TableCell>
                     <TableCell className="text-right">NPR {npr(product.costPrice)}</TableCell>
                     <TableCell>{product.category}</TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      <span className={cn(!product.vendorName && 'text-muted-foreground')}>
+                        {product.vendorName || '—'}
+                      </span>
+                    </TableCell>
                     <TableCell className="text-center">
                       <span
                         className={cn(
@@ -484,6 +500,27 @@ export default function ProductManagement() {
                 <SelectContent>
                   {mockCategories.map((c) => (
                     <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
+              <Label>Vendor</Label>
+              <Select
+                value={form.vendorId}
+                onValueChange={(v) => {
+                  const vendor = mockVendors.find((vd) => vd.id === v);
+                  setForm({ ...form, vendorId: v, vendorName: vendor?.name || '' });
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select vendor (optional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  {mockVendors.map((v) => (
+                    <SelectItem key={v.id} value={v.id}>
+                      {v.name}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>

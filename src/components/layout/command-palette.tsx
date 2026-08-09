@@ -5,11 +5,11 @@ import {
   Dialog, DialogContent, DialogTitle,
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useNavStore, useAuthStore } from '@/features/auth/store';
+import { useNavStore, useAuthStore, useTenantSelectorStore } from '@/features/auth/store';
 import {
   LayoutDashboard, CreditCard, Activity, FileText, Settings,
   ShoppingCart, Receipt, Package, Warehouse, Tags, BarChart3,
-  UserCog, Store, Search, Zap, type LucideIcon,
+  UserCog, Store, Search, Zap, FileCheck2, FolderOpen, SlidersHorizontal, Truck, Eye, type LucideIcon,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -34,6 +34,8 @@ function buildCommands(role: UserRole): CommandItem[] {
       { label: 'Tenants', section: 'tenants', icon: Store, group: 'Pages' },
       { label: 'Staff', section: 'super-admin-staff', icon: UserCog, group: 'Pages' },
       { label: 'Subscriptions', section: 'super-admin-subscriptions', icon: CreditCard, group: 'Pages' },
+      { label: 'Contracts', section: 'sa-contracts', icon: FileCheck2, group: 'Pages' },
+      { label: 'Documents', section: 'sa-documents', icon: FolderOpen, group: 'Pages' },
       { label: 'Activity Logs', section: 'activity-logs', icon: Activity, group: 'Pages' },
       { label: 'Content & Social', section: 'content', icon: FileText, group: 'Pages' },
       { label: 'Settings', section: 'super-admin-settings', icon: Settings, group: 'Pages' },
@@ -41,11 +43,13 @@ function buildCommands(role: UserRole): CommandItem[] {
   } else if (role === 'tenant-admin') {
     pages.push(
       { label: 'Dashboard', section: 'tenant-dashboard', icon: LayoutDashboard, group: 'Pages' },
-      { label: 'Customers', section: 'customers', icon: Store, group: 'Pages' },
+      { label: 'POS', section: 'pos', icon: ShoppingCart, group: 'Pages' },
+      { label: 'Customers', section: 'customers', icon: UserCog, group: 'Pages' },
       { label: 'Billing', section: 'billing', icon: Receipt, group: 'Pages' },
       { label: 'Products', section: 'products', icon: Package, group: 'Pages' },
       { label: 'Inventory', section: 'inventory', icon: Warehouse, group: 'Pages' },
       { label: 'Categories', section: 'categories', icon: Tags, group: 'Pages' },
+      { label: 'Vendors', section: 'vendors', icon: Truck, group: 'Pages' },
       { label: 'Sales', section: 'sales', icon: BarChart3, group: 'Pages' },
       { label: 'Reports', section: 'reports', icon: BarChart3, group: 'Pages' },
       { label: 'Subscription', section: 'tenant-subscription', icon: CreditCard, group: 'Pages' },
@@ -53,18 +57,18 @@ function buildCommands(role: UserRole): CommandItem[] {
       { label: 'Store Profile', section: 'store-profile', icon: Store, group: 'Pages' },
     );
     actions.push(
-      { label: 'New Sale', section: 'pos', icon: ShoppingCart, group: 'Actions', isAction: true, toastMessage: 'Opening POS Terminal...' },
+      { label: 'New Sale', section: 'pos', icon: ShoppingCart, group: 'Actions', isAction: true, toastMessage: 'Opening POS...' },
       { label: 'Create Invoice', section: 'billing', icon: Receipt, group: 'Actions', isAction: true, toastMessage: 'Opening Billing...' },
       { label: 'Add Product', section: 'products', icon: Package, group: 'Actions', isAction: true, toastMessage: 'Opening Products...' },
       { label: 'View Reports', section: 'reports', icon: BarChart3, group: 'Actions', isAction: true, toastMessage: 'Opening Reports...' },
     );
   } else if (role === 'staff') {
     pages.push(
-      { label: 'POS Terminal', section: 'pos', icon: ShoppingCart, group: 'Pages' },
+      { label: 'POS', section: 'pos', icon: ShoppingCart, group: 'Pages' },
       { label: 'Sales History', section: 'sales', icon: BarChart3, group: 'Pages' },
     );
     actions.push(
-      { label: 'New Sale', section: 'pos', icon: ShoppingCart, group: 'Actions', isAction: true, toastMessage: 'Opening POS Terminal...' },
+      { label: 'New Sale', section: 'pos', icon: ShoppingCart, group: 'Actions', isAction: true, toastMessage: 'Opening POS...' },
     );
   }
 
@@ -72,43 +76,73 @@ function buildCommands(role: UserRole): CommandItem[] {
 }
 
 // Section label for a given NavSection
-const sectionLabels: Record<NavSection, string> = {
+const sectionLabels: Record<string, string> = {
   'super-admin-dashboard': 'Dashboard',
   'tenants': 'Tenants',
   'super-admin-staff': 'Staff',
   'super-admin-subscriptions': 'Subscriptions',
+  'sa-contracts': 'Contracts',
+  'sa-documents': 'Documents',
   'activity-logs': 'Activity Logs',
   'content': 'Content & Social',
   'super-admin-settings': 'Settings',
+  'sa-tenant-overview': 'Tenant Overview',
+  'sa-tenant-billing': 'Tenant Billing',
+  'sa-tenant-products': 'Tenant Products',
+  'sa-tenant-inventory': 'Tenant Inventory',
+  'sa-tenant-categories': 'Tenant Categories',
+  'sa-tenant-sales': 'Tenant Sales',
+  'sa-tenant-reports': 'Tenant Reports',
+  'sa-tenant-staff-view': 'Tenant Staff',
+  'sa-tenant-subscription': 'Tenant Subscription',
+  'sa-tenant-features': 'Tenant Features',
+  'sa-tenant-vendors': 'Tenant Vendors',
   'tenant-dashboard': 'Dashboard',
-  'pos': 'POS Terminal',
+  'pos': 'POS',
   'customers': 'Customers',
   'billing': 'Billing',
   'products': 'Products',
   'inventory': 'Inventory',
   'categories': 'Categories',
+  'vendors': 'Vendors',
   'sales': 'Sales',
   'reports': 'Reports',
   'tenant-subscription': 'Subscription',
   'tenant-staff': 'Staff',
   'store-profile': 'Store Profile',
+  'settlement': 'Settlement',
+  'notifications': 'Notifications',
 };
 
-const sectionIcons: Record<NavSection, LucideIcon> = {
+const sectionIcons: Record<string, LucideIcon> = {
   'super-admin-dashboard': LayoutDashboard,
   'tenants': Store,
   'super-admin-staff': UserCog,
   'super-admin-subscriptions': CreditCard,
+  'sa-contracts': FileCheck2,
+  'sa-documents': FolderOpen,
   'activity-logs': Activity,
   'content': FileText,
   'super-admin-settings': Settings,
+  'sa-tenant-overview': Eye,
+  'sa-tenant-billing': Receipt,
+  'sa-tenant-products': Package,
+  'sa-tenant-inventory': Warehouse,
+  'sa-tenant-categories': Tags,
+  'sa-tenant-sales': BarChart3,
+  'sa-tenant-reports': BarChart3,
+  'sa-tenant-staff-view': UserCog,
+  'sa-tenant-subscription': CreditCard,
+  'sa-tenant-features': SlidersHorizontal,
+  'sa-tenant-vendors': Truck,
   'tenant-dashboard': LayoutDashboard,
   'pos': ShoppingCart,
-  'customers': Store,
+  'customers': UserCog,
   'billing': Receipt,
   'products': Package,
   'inventory': Warehouse,
   'categories': Tags,
+  'vendors': Truck,
   'sales': BarChart3,
   'reports': BarChart3,
   'tenant-subscription': CreditCard,
@@ -197,18 +231,15 @@ export function CommandPalette() {
   // Resolve a globalIndex to the actual item/section
   const resolveIndex = useCallback(
     (idx: number): { section: NavSection; toastMessage?: string } | null => {
-      // Pages
       if (idx < filteredPages.length) {
         const item = filteredPages[idx];
         return { section: item.section };
       }
-      // Actions
       const actionIdx = idx - filteredPages.length;
       if (actionIdx < filteredActions.length) {
         const item = filteredActions[actionIdx];
         return { section: item.section, toastMessage: item.toastMessage };
       }
-      // Recent
       const recentIdx = actionIdx - filteredActions.length;
       if (recentIdx < recentItems.length) {
         return { section: recentItems[recentIdx] };
@@ -229,8 +260,6 @@ export function CommandPalette() {
     },
     [setCurrentSection],
   );
-
-  // Reset active index on open or query change (handled in handlers, not effects)
 
   const handleOpenChange = useCallback((v: boolean) => {
     setOpen(v);
@@ -295,7 +324,6 @@ export function CommandPalette() {
 
   return (
     <>
-      {/* Trigger button in sidebar */}
       <button
         onClick={() => setOpen(true)}
         className="flex w-full items-center gap-2 rounded-lg border border-dashed px-3 py-2 text-xs text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground"
@@ -351,7 +379,7 @@ export function CommandPalette() {
                     );
                   }
                   if (entry.type === 'recent-item') {
-                    const RecentIcon = sectionIcons[entry.section];
+                    const RecentIcon = (sectionIcons as Record<string, LucideIcon>)[entry.section] || LayoutDashboard;
                     const isHighlighted = entry.globalIndex === clampedIndex;
                     return (
                       <button
@@ -367,9 +395,9 @@ export function CommandPalette() {
                         )}
                       >
                         <RecentIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
-                        <span className="flex-1 text-left">{sectionLabels[entry.section]}</span>
+                        <span className="flex-1 text-left">{(sectionLabels as Record<string, string>)[entry.section] || entry.section}</span>
                         {isHighlighted && (
-                          <span className="text-[10px] text-muted-foreground opacity-60">↵</span>
+                          <span className="text-[10px] text-muted-foreground opacity-60">↓</span>
                         )}
                       </button>
                     );
@@ -399,7 +427,7 @@ export function CommandPalette() {
                         <span className="text-[10px] font-medium text-muted-foreground">Current</span>
                       )}
                       {isHighlighted && !isCurrentSection && (
-                        <span className="text-[10px] text-muted-foreground opacity-60">↵</span>
+                        <span className="text-[10px] text-muted-foreground opacity-60">↓</span>
                       )}
                     </button>
                   );

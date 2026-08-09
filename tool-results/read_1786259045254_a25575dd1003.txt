@@ -1,0 +1,450 @@
+     1→# POS Nepal - Multi-Tenant POS, Inventory & Billing System
+     2→
+     3→## Current Project Status (as of Round 11 Development Session)
+     4→
+     5→### Assessment
+     6→The project is in a **production-quality UI prototype state** with **21 feature pages** across 3 roles. Round 11 focused on **1 new page (Notifications), 1 dashboard overhaul with activity feed, mobile-responsive POS, global shared component enhancements, and critical bug fixes**. The codebase compiles cleanly with 0 ESLint errors. All QA tests pass via agent-browser.
+     7→
+     8→### Architecture
+     9→- **Framework**: Next.js 16 (App Router) + TypeScript 5
+    10→- **Styling**: Tailwind CSS 4 + shadcn/ui (New York style)
+    11→- **State**: Zustand (auth, navigation, recent sections)
+    12→- **Charts**: Recharts with shadcn/ui ChartContainer (Area, Bar, Pie charts) + CSS-based bar charts
+    13→- **Icons**: Lucide React
+    14→- **Structure**: Feature-based folder structure with layered architecture
+    15→- **Data**: 100% mock/static data (no backend)
+    16→- **Animations**: Framer Motion (page transitions, login, bulk actions), CSS @keyframes (card-shine, gentle-pulse, gradient-border, number-pop, cart-pulse, float)
+    17→
+    18→### What Was Done This Session (Round 11)
+    19→
+    20→#### Bug Fixes (2)
+    21→1. **Top Categories Chart Bars Not Rendering**: Recharts `layout="vertical"` BarChart bars were invisible in the Reports page's Top Categories tab. Root cause: SVG `<path>` elements with CSS variable fill not rendering correctly. Fixed by replacing the Recharts horizontal bar chart with a **CSS-based bar chart** using HTML divs — more reliable, better looking (8 unique colors, rank numbers, percentage labels, hover effects), fully responsive, and accessible.
+    22→2. **Reports Page Empty Date Pickers**: Date inputs showed "0" spinbutton values and empty placeholders on load. Fixed by adding `getDefaultDates()` function that initializes dateFrom/dateTo to "Last 7 Days" range, and setting `datePreset` default to `'7d'`.
+    23→
+    24→#### New Features (2)
+    25→1. **Notifications Page (NEW PAGE — 21st page)**:
+    26→   - Added `'notifications'` to `NavSection` type union
+    27→   - Sidebar menu item under Settings (Bell icon)
+    28→   - Full-page notification center with 18 Nepal-contextual mock notifications
+    29→   - 6 category filter buttons (All, Sale, Payment, Inventory, System, Promotion) with per-category counts
+    30→   - Search input for text filtering + Sort dropdown (Newest/Oldest)
+    31→   - Rich notification cards: left color indicator, category icon, title, description, relative time, unread blue dot, read/unread visual states
+    32→   - Mark individual as read (click) + Mark all as read button with unread count badge
+    33→   - Empty state with BellOff icon
+    34→   - Sticky footer: "Showing X of Y notifications" with unread count
+    35→   - Mobile-responsive (stacked filters on mobile)
+    36→
+    37→2. **Dashboard Recent Activity Feed + Low Stock Alerts**:
+    38→   - Dynamic time-of-day greeting ("Good morning/afternoon/evening, Rajesh!") with store name subtitle
+    39→   - Animated 2px gradient border line below PageHeader (emerald → amber → purple → red, 6s cycle)
+    40→   - Recent Activity Card: 10 Nepal-specific activity items (sales, stock alerts, customer registrations, eSewa/Khalti payments, invoices, price updates)
+    41→   - Each activity: colored icon circle, description, relative time, alternating row backgrounds, hover effect, clickable with toast
+    42→   - Low Stock Alerts Card: 5 products (DDC Milk, Goldstar Shoes, Surya Lights, Tokla Tea, Amul Butter)
+    43→   - Stock progress bars (red if ≤25%, amber otherwise) + individual Restock buttons
+    44→   - View All button in activity header
+    45→
+    46→#### Styling & Enhancements (10+ files)
+    47→1. **StatCard Component**: New `borderColor` prop (3px left border), `trendColor` prop (positive=emerald/+, negative=red/-, neutral=muted), enlarged icon (h-11 w-11), `hover:scale-[1.01]`
+    48→2. **EmptyState Component**: Floating icon animation (`animate-float`), gradient background, larger description text, new `actionNode` prop for custom actions
+    49→3. **PageHeader Component**: New `subtitle` prop (responsive, hidden on very small screens)
+    50→4. **POS Terminal Mobile Responsive**: Desktop cart hidden on mobile, floating emerald gradient cart button with pulse animation, full-height Sheet drawer for cart, 2-col product grid mobile/3-col tablet, barcode input full-width on mobile, horizontally scrollable category pills with hidden scrollbar
+    51→5. **Global CSS**: `animate-float` keyframe, `animate-gradient-border` keyframe, `animate-number-pop` keyframe, `animate-cart-pulse` keyframe, `no-scrollbar` utility, `scrollbar-thin` utility (6px rounded oklch thumb)
+    52→6. **Tenant Dashboard**: StatCards migrated to `borderColor` + `trendColor` props, number pop animation
+    53→7. **Super Admin Dashboard**: Total Revenue StatCard migrated to `borderColor` prop
+    54→
+    55→#### Verification Results
+    56→- ✅ ESLint: 0 errors, 0 warnings (verified multiple times)
+    57→- ✅ Dev server: All compiles clean
+    58→- ✅ Agent-browser QA:
+    59→  - All 3 role logins navigate correctly
+    60→  - Dashboard greeting, activity feed, and low stock alerts render properly
+    61→  - Notifications page: 18 notifications, category filters, search, sort all working
+    62→  - Reports Top Categories: CSS bars render with 8 unique colors, percentages, rank numbers
+    63→  - Reports date picker: defaults to "Last 7 Days" with proper date values
+    64→  - POS mobile: 2-column grid, visible barcode input, mobile-friendly layout
+    65→  - No console errors during normal navigation
+    66→
+    67→### Cumulative Feature Count
+    68→- **21 feature pages** across 3 roles (Super Admin × 7, Tenant Admin × 14, Staff × 2)
+    69→  - *New: Notifications (Tenant Settings → Notifications)*
+    70→- **7 shared components** (StatCard, PageHeader, EmptyState, ErrorBoundary, NotificationPanel, CommandPalette, Skeletons)
+    71→- **12 shared utility functions** in helpers.ts
+    72→- **13 shared layout features** (mobile drawer, notification panel with categories + relative time, command palette with groups + recent, login animations, branding preview, period toggles, error boundary, system theme, keyboard shortcuts, enhanced receipt, card shine animation)
+    73→- **Pages with column sorting**: Sales, Customers, Inventory, Tenants (4 pages)
+    74→- **Pages with CSV export**: Sales, Reports (3 tabs), Inventory, Customers, Products, Activity Logs, Settlement (8 export points)
+    75→- **Pages with date presets**: Reports, Sales (2 pages)
+    76→- **Pages with table footers**: Sales, Billing, Inventory, Settlement (4 pages)
+    77→- **Pages with Quick Actions**: Tenant Dashboard, Super Admin Dashboard (2 pages)
+    78→- **Pages with stock progress bars**: Inventory, Tenant Dashboard Low Stock Alerts (2 pages)
+    79→- **Pages with chart tabs**: Reports (5 tabs: Sales, Payment, Inventory, VAT, Top Categories) (1 page)
+    80→- **Pages with dual views**: Activity Logs (Table + Timeline) (1 page)
+    81→- **Pages with keyboard shortcuts**: POS Terminal (1 page)
+    82→- **Pages with bulk actions**: Products (1 page)
+    83→- **Pages with avatar color coding**: Customers, Tenant Staff, Super Admin Staff, Settlement (4 pages)
+    84→- **Pages with detailed dialog views**: Customers (tabbed with chart + history), Sales (invoice layout) (2 pages)
+    85→- **Pages with bar charts**: Super Admin Dashboard (2 charts), Reports (CSS-based Top Categories) (2 pages)
+    86→- **Pages with greeting**: Tenant Dashboard (1 page)
+    87→- **Pages with activity feed**: Tenant Dashboard (1 page)
+    88→- **Pages with low stock alerts**: Tenant Dashboard (1 page)
+    89→
+    90→### Unresolved Issues or Risks
+    91→
+    92→#### Known
+    93→- Recharts vertical BarChart (`layout="vertical"`) bars don't render in headless Chrome/Playwright (works in real browsers). Mitigated by using CSS-based bars for Top Categories.
+    94→- Turbopack logs repeated "Module not found" warnings for store-profile and settlement modules at SSR time — files exist, runtime works fine, appears to be a Turbopack caching artifact.
+    95→- Create Invoice additions are local to billing page only (not reflected in dashboard stats)
+    96→
+    97→#### Low Priority
+    98→- No PDF export for invoices/reports yet
+    99→- No drag-and-drop reordering for categories/products
+   100→- No data table column resizing
+   101→- Business hours in Store Profile is static
+   102→- POS floating cart button only appears after first item is added (by design)
+   103→
+   104→### Priority Recommendations for Next Phase
+   105→1. Comprehensive mobile responsive audit for remaining pages (Customers, Billing, Sales, Products, Inventory) (highest priority)
+   106→2. Export PDF for invoices and reports
+   107→3. Make Create Invoice flow update dashboard stats in real-time
+   108→4. Drag-and-drop reordering for categories or products
+   109→5. Data table column resizing
+   110→6. Tenant onboarding flow (first-time setup wizard)
+   111→7. Real-time stock level indicators on POS product grid
+   112→8. Super Admin dashboard revenue-by-plan chart investigation (Recharts BarChart rendering in headless)
+   113→9. Dedicated keyboard navigation for POS (barcode auto-focus after sale)
+   114→10. Add more Super Admin features (system health monitoring, tenant analytics)
+   115→
+   116→### What Was Done This Session (Round 10)
+   117→
+   118→#### Bug Fixes (1)
+   119→1. **Customer Detail Dialog RangeError**: `generateMockOrders()` used `charCodeAt(2)` and `charCodeAt(4)` on short customer IDs (e.g., `'c1'`), returning `NaN` and causing `date.toISOString()` to throw `RangeError`. Fixed by replacing with a proper `simpleHash()` string hash function. Also fixed division by zero potential with `Math.max(customer.totalPurchases, 1)`.
+   120→
+   121→#### New Features (3)
+   122→1. **Daily Settlement / Reconciliation Page** (NEW PAGE — 20th page):
+   123→   - Added `'settlement'` to `NavSection` type union
+   124→   - Sidebar menu item under Point of Sale (Calculator icon)
+   125→   - 4 summary stat cards with trend indicators
+   126→   - Payment method breakdown grid with percentage bars (Cash 53%, Card 24%, eSewa 13%, Khalti 10%)
+   127→   - Reconciliation table (Expected/Actual/Difference/Status with Matched/Warning badges)
+   128→   - Staff performance table with colored avatar circles
+   129→   - Shift notes textarea with save functionality
+   130→   - Close Register (destructive) and Print Report (outline) action buttons
+   131→
+   132→2. **Customer Detail Dialog Enhancement**:
+   133→   - Tabbed layout (Overview + Purchase History) using shadcn/ui Tabs
+   134→   - Overview: contact grid, spending trend sparkline (60px AreaChart with gradient fill), dates
+   135→   - Purchase History: compact table with 5 mock orders, payment method color dots, status badges
+   136→   - Gradient header section with colored stat cards (emerald/purple/amber)
+   137→   - Action buttons: Send Email, New Sale, Edit, Close
+   138→
+   139→3. **Sales Detail Dialog — Invoice Layout**:
+   140→   - Professional invoice header with INVOICE title (font-mono), status + payment badges
+   141→   - Customer & Sale Info Grid (Bill To + Invoice Details)
+   142→   - Proper items table with #, Item, Qty, Unit Price, Total (alternating rows)
+   143→   - Right-aligned totals section with Subtotal, Discount, VAT 13%, bold Total
+   144→   - Print Receipt button (calls `window.print()`) + footer
+   145→
+   146→#### Styling Enhancements (12 files)
+   147→1. **StatCard Component**: Animated gradient shine effect (`@keyframes card-shine`), subtle top border gradient (before pseudo-element), larger trend badges, `+`/`-` prefix on trend values
+   148→2. **Super Admin Dashboard**: New "Revenue by Plan" BarChart card (per-bar coloring: Basic=amber, Pro=emerald, Enterprise=blue)
+   149→3. **Billing Page**: Visual summary strip above invoices table (Total Invoices, Total Value, Pending)
+   150→4. **Reports Page**: Data summary strip in Sales tab (Total, Orders, Avg values)
+   151→5. **Notification Panel**: Category-specific colored icons (5 categories), left color indicators, relative time formatting, unread/read visual states, "Mark all as read" with toast, "View All" footer link, enhanced empty state with BellOff icon
+   152→6. **POS Terminal Cart**: 2px left color accent per item (stock status), gradient summary wrapper, pulsing total amount, payment method colored bottom borders with transaction count badges, gradient Complete Sale button
+   153→7. **Tenant Subscription Page**: Shimmer overlay on current plan card, colored plan initial circles, color-coded usage progress bars (green/amber/red thresholds), streamlined plan comparison with key features
+   154→8. **globals.css**: Added `animate-card-shine` and `animate-gentle-pulse` CSS utilities
+   155→
+   156→#### Verification Results
+   157→- ✅ ESLint: 0 errors, 0 warnings (verified multiple times during session)
+   158→- ✅ Dev server: All compiles clean
+   159→- ✅ Agent-browser QA:
+   160→  - All 3 role logins navigate correctly
+   161→  - Settlement page renders with full reconciliation table, staff performance, shift notes
+   162→  - Customer detail dialog opens with tabs, spending chart, purchase history table
+   163→  - Sales detail dialog shows professional invoice layout with items table and totals
+   164→  - Notification panel opens with category filters and rich items
+   165→  - No console errors during normal navigation
+   166→
+   167→### Cumulative Feature Count
+   168→- **20 feature pages** across 3 roles (Super Admin × 7, Tenant Admin × 13, Staff × 2)
+   169→  - *New: Daily Settlement (Tenant POS → Settlement)*
+   170→- **7 shared components** (StatCard, PageHeader, EmptyState, ErrorBoundary, NotificationPanel, CommandPalette, Skeletons)
+   171→- **12 shared utility functions** in helpers.ts
+   172→- **13 shared layout features** (mobile drawer, notification panel with categories + relative time, command palette with groups + recent, login animations, branding preview, period toggles, error boundary, system theme, keyboard shortcuts, enhanced receipt, card shine animation)
+   173→- **Pages with column sorting**: Sales, Customers, Inventory, Tenants (4 pages)
+   174→- **Pages with CSV export**: Sales, Reports (3 tabs), Inventory, Customers, Products, Activity Logs, Settlement (8 export points)
+   175→- **Pages with date presets**: Reports, Sales (2 pages)
+   176→- **Pages with table footers**: Sales, Billing, Inventory, Settlement (4 pages)
+   177→- **Pages with Quick Actions**: Tenant Dashboard, Super Admin Dashboard (2 pages)
+   178→- **Pages with stock progress bars**: Inventory (1 page)
+   179→- **Pages with chart tabs**: Reports (5 tabs: Sales, Payment, Inventory, VAT, Top Categories) (1 page)
+   180→- **Pages with dual views**: Activity Logs (Table + Timeline) (1 page)
+   181→- **Pages with keyboard shortcuts**: POS Terminal (1 page)
+   182→- **Pages with bulk actions**: Products (1 page)
+   183→- **Pages with avatar color coding**: Customers, Tenant Staff, Super Admin Staff, Settlement (4 pages)
+   184→- **Pages with detailed dialog views**: Customers (tabbed with chart + history), Sales (invoice layout) (2 pages)
+   185→- **Pages with bar charts**: Super Admin Dashboard (2 charts), Reports (1 page)
+   186→
+   187→### Unresolved Issues or Risks
+   188→
+   189→#### Low Priority
+   190→- Create Invoice additions are local to billing page only (not reflected in dashboard stats)
+   191→- No PDF export for invoices/reports yet
+   192→- No drag-and-drop reordering for categories/products
+   193→- No data table column resizing
+   194→- Business hours in Store Profile is static
+   195→- Notification panel "View All" link doesn't navigate to a dedicated notifications page
+   196→
+   197→### Priority Recommendations for Next Phase
+   198→1. Comprehensive mobile responsive audit for all 20 pages (highest priority)
+   199→2. Export PDF for invoices and reports
+   200→3. Make Create Invoice flow update dashboard stats in real-time
+   201→4. Drag-and-drop reordering for categories or products
+   202→5. Data table column resizing
+   203→6. Tenant onboarding flow (first-time setup wizard)
+   204→7. Barcode scanner simulation improvement in POS
+   205→8. Add dedicated Notifications page with full history
+   206→9. Real-time stock level indicators on POS product grid
+   207→
+   208→---
+   209→Task ID: 10-4a
+   210→Agent: general-purpose
+   211→Task: Customer Detail Dialog enhancement
+   212→
+   213→Work Log:
+   214→- Added Tabs, AreaChart/ResponsiveContainer (recharts), ShoppingBag imports
+   215→- Added getPaymentMethodColor helper, generateSpendingTrend, generateMockOrders helpers
+   216→- Replaced basic customer detail dialog with tabbed version (Overview + Purchase History)
+   217→- Overview: gradient header, colored stat cards, contact grid, spending sparkline
+   218→- Purchase History: compact table with 5 mock orders per customer
+   219→- Added action buttons (Send Email, New Sale, Edit, Close)
+   220→
+   221→Stage Summary:
+   222→- Customer detail dialog now has tabs with spending chart and purchase history table
+   223→
+   224→---
+   225→Task ID: 10-4b
+   226→Agent: general-purpose
+   227→Task: Sale Detail Dialog invoice-style layout enhancement
+   228→
+   229→Work Log:
+   230→- Replaced basic dialog with professional invoice layout
+   231→- Added invoice header, customer/sale info grid, items table, totals section
+   232→- Added Print Receipt button (window.print()) and footer
+   233→
+   234→Stage Summary:
+   235→- Sales detail shows professional invoice with items table and styled totals
+   236→
+   237→---
+   238→Task ID: 10-5a
+   239→Agent: general-purpose
+   240→Task: Daily Settlement / Reconciliation page (20th page)
+   241→
+   242→Work Log:
+   243→- Added 'settlement' NavSection, sidebar item, page route
+   244→- Created settlement page with 8 sections: header, date picker, stat cards, payment breakdown, reconciliation table, staff performance, shift notes, action buttons
+   245→
+   246→Stage Summary:
+   247→- 20th page: Daily Settlement with full reconciliation workflow
+   248→
+   249→---
+   250→Task ID: 10-5b
+   251→Agent: general-purpose
+   252→Task: Notification Panel enhancement
+   253→
+   254→Work Log:
+   255→- Added category-specific icons and color indicators
+   256→- Added relative time formatting
+   257→- Enhanced unread/read visual states
+   258→- Added Mark all as read and View All footer
+   259→- Enhanced empty state
+   260→
+   261→Stage Summary:
+   262→- Notification panel now has rich category-based styling with relative timestamps
+   263→
+   264→---
+   265→Task ID: 10-6a
+   266→Agent: general-purpose
+   267→Task: Global card/table styling improvements
+   268→
+   269→Work Log:
+   270→- Enhanced StatCard with shine animation, gradient top border, larger trend badges
+   271→- Added Revenue by Plan BarChart to Super Admin Dashboard
+   272→- Added visual summary strips to Billing and Reports pages
+   273→
+   274→Stage Summary:
+   275→- StatCard has professional animations, Super Admin has new chart, Billing/Reports have summary strips
+   276→
+   277→---
+   278→Task ID: 10-6b
+   279→Agent: general-purpose
+   280→Task: POS Terminal + Tenant Subscription visual refinement
+   281→
+   282→Work Log:
+   283→- Added animate-gentle-pulse CSS utility
+   284→- POS cart: stock color accents, gradient summary, pulsing total, colored payment indicators
+   285→- Tenant Subscription: shimmer overlay, colored plan initials, usage progress bars, streamlined plan comparison
+   286→
+   287→Stage Summary:
+   288→- POS cart has professional visual hierarchy; Subscription page completely redesigned with progress bars
+   289→
+   290→---
+   291→Task ID: 10-fix
+   292→Agent: main
+   293→Task: Fix Customer Detail Dialog RangeError bug
+   294→
+   295→Work Log:
+   296→- Identified root cause: generateMockOrders used charCodeAt(2/4) on short IDs ('c1', 'c2') returning NaN
+   297→- Replaced with simpleHash() function for deterministic number generation
+   298→- Added Math.max(customer.totalPurchases, 1) to prevent division by zero
+   299→- Verified fix via agent-browser: customer detail dialog opens correctly with both tabs working
+   300→
+   301→Stage Summary:
+   302→- Customer detail dialog no longer crashes on short customer IDs
+   303→- Fixed with proper string hash function and safe division
+   304→
+   305→---
+   306→Task ID: 11-a
+   307→Agent: general-purpose
+   308→Task: Create dedicated Notifications Page (page 21)
+   309→
+   310→Work Log:
+   311→- Read existing notification-panel.tsx to understand data model (NotificationCategory, NotificationType, Notification interface, category styles/icons)
+   312→- Added 'notifications' to NavSection type union in /src/lib/types/index.ts
+   313→- Created /src/features/tenant/notifications/components/notifications-page.tsx with full-page notification center
+   314→- Features: PageHeader, 6 category filter buttons (All, Sale, Payment, Inventory, System, Promotion) with counts, search input, Mark all as read button with BellOff icon, sort select (Newest/Oldest)
+   315→- 18 mock notifications with Nepal context (DDC Milk, Wai Wai, Goldstar Shoes, ABC Store, eSewa, Khalti, NPR currency, PAN numbers, Dashain/Tihar promotions)
+   316→- Rich notification cards with left color indicator, category icon, title, description, relative time, unread dot, read/unread visual states, hover effects
+   317→- Category badge on each notification card
+   318→- Empty state with BellOff icon and contextual message
+   319→- Sticky footer showing 'Showing X of Y notifications' with unread count
+   320→- Mobile-responsive layout (stacked filter bar on mobile, row on desktop)
+   321→- Added Bell icon import and 'Notifications' menu item to Settings group in tenant admin sidebar
+   322→- Registered NotificationsPage in sectionComponents map in /src/app/page.tsx
+   323→- Ran bun run lint: 0 errors, 0 warnings
+   324→
+   325→Stage Summary:
+   326→- 21st page: Notifications Page — full-page notification center replacing the small dropdown panel
+   327→- 18 mock notifications across 5 categories with Nepal-specific content
+   328→- Category filters, search, sort, mark all as read, individual mark as read
+   329→- Sticky footer with notification count summary
+   330→
+   331→---
+   332→Task ID: 11-b
+   333→Agent: general-purpose
+   334→Task: Enhance Tenant Dashboard with Recent Activity feed and styling improvements
+   335→
+   336→Work Log:
+   337→- Read existing tenant-dashboard.tsx, helpers.ts, page-header.tsx, globals.css to understand codebase
+   338→- Added `animate-gradient-border` (6s shifting color line) and `animate-number-pop` (scale pulse) CSS utilities to globals.css
+   339→- Created GreetingBanner component: dynamic time-of-day greeting (morning/afternoon/evening) with store name subtitle
+   340→- Created AnimatedGradientBorder wrapper: replaces PageHeader's default separator with a 2px animated gradient line (emerald → amber → purple → red → emerald)
+   341→- Created RecentActivityCard: 10 mock activity items with colored icon circles (ShoppingCart, AlertTriangle, Users, CreditCard, Receipt, Package, Tag), alternating row backgrounds, hover effects, clickable rows with toast, View All button with ExternalLink icon
+   342→- Created LowStockAlertsCard: 5 Nepal-specific low stock items (DDC Milk, Goldstar Shoes, Surya Lights, Tokla Tea, Amul Butter), Progress bars (red if ≤25%, amber otherwise), Restock buttons per item
+   343→- Added Progress component import and usage for stock level bars
+   344→- Added `animate-number-pop` class to all 4 StatCards for subtle entry animation
+   345→- Replaced PageHeader separator with AnimatedGradientBorder wrapper
+   346→- Placed Recent Activity (2/3 width) + Low Stock Alerts (1/3 width) in responsive grid below Quick Actions
+   347→- Used sonner toast for all interactive elements
+   348→- Fixed apostrophe escaping in JSX (Today&apos;s, Here&apos;s)
+   349→- Verified: `bun run lint` — 0 errors, 0 warnings
+   350→
+   351→Stage Summary:
+   352→- Tenant Dashboard now has: time-of-day greeting banner, animated gradient header border, 10-item Recent Activity feed with colored icons, 5-item Low Stock Alerts with progress bars and restock buttons, stat card number animation
+   353→- All new sections are mobile-responsive and use shadcn/ui components
+   354→
+   355→---
+   356→Task ID: 11-c
+   357→Agent: general-purpose
+   358→Task: Improve mobile responsive design for POS Terminal page
+   359→
+   360→Work Log:
+   361→- Read pos-terminal.tsx (817 lines) and Sheet component to understand full structure
+   362→- Added `animate-cart-pulse` (scale+shadow bounce) and `no-scrollbar` CSS utilities to globals.css
+   363→- Added Sheet component imports (Sheet, SheetContent, SheetHeader, SheetTitle)
+   364→- Added `cartSheetOpen` and `isCartPulsing` state variables
+   365→- Modified `addToCart` to trigger 600ms pulse animation on floating button
+   366→- Modified `handleCompleteSale` to close mobile cart Sheet on completion
+   367→- Changed search+barcode layout: stacked (full-width) on mobile, side-by-side on sm+ (was hidden below sm)
+   368→- Replaced ScrollArea category pills with plain `overflow-x-auto no-scrollbar` div for mobile horizontal scroll
+   369→- Changed product grid from `grid-cols-2 sm:grid-cols-2 md:grid-cols-3` to `grid-cols-2 sm:grid-cols-3`
+   370→- Added `hidden md:block` to desktop cart panel (visible md+ only)
+   371→- Made Held Sales button in PageHeader visible on all screen sizes (was `hidden sm:flex`)
+   372→- Added `pb-20 md:pb-4` bottom padding to prevent floating button overlap
+   373→- Created fixed-position floating cart button (visible mobile only): gradient emerald, shows "View Cart (X)" + NPR total, pulse animation on add
+   374→- Created full-height mobile cart Sheet (right drawer, `w-full sm:max-w-md`):
+   375→  - SheetHeader: Cart title, item count badge, clear button, full-width customer selector dropdown
+   376→  - Scrollable cart items area (flex-1 overflow-y-auto) with stock color accents, qty controls, remove
+   377→  - Empty state with ShoppingCart icon when no items
+   378→  - Held Sales resume button when cart empty + held sales exist
+   379→  - Sticky bottom section (border-t, shrink-0): Subtotal, Discount input, VAT 13%, pulsing Total
+   380→  - Payment method 2x2 grid with colored bottom borders and transaction counts
+   381→  - Hold + Complete Sale action buttons
+   382→- Verified: `bun run lint` — 0 errors, 0 warnings
+   383→
+   384→Stage Summary:
+   385→- POS Terminal is now fully mobile-responsive: product grid on top, floating cart button with pulse animation opens full-height Sheet drawer
+   386→- Barcode scanner input visible and full-width on all screen sizes
+   387→- Category pills horizontally scrollable with hidden scrollbar on mobile
+   388→- Product grid: 2 cols mobile, 3 cols tablet+, side-by-side cart on lg+
+   389→- Desktop layout unchanged (md+ inline cart, lg+ side-by-side)
+   390→
+   391→---
+   392→Task ID: 11-d
+   393→Agent: general-purpose
+   394→Task: Global styling polish across multiple shared components and dashboards
+   395→
+   396→Work Log:
+   397→- Enhanced StatCard: added `borderColor` prop (3px left border), `trendColor` prop (positive/negative/neutral with emerald-600/red-600/muted styling and +/- prefix), icon container enlarged (h-11 w-11), added hover:scale-[1.01]
+   398→- Enhanced EmptyState: added `animate-float` to icon container, subtle gradient background (from-muted/30 via-muted/10), larger description text (text-sm leading-relaxed), added `actionNode` prop for ReactNode actions
+   399→- Enhanced PageHeader: added `subtitle` prop rendered below title in muted-foreground, hidden on very small screens (hidden text-xs sm:inline)
+   400→- Added globals.css: `animate-float` keyframe (translateY 0→-6px→0, 3s infinite), `scrollbar-thin` utility (6px width, rounded oklch thumb with transparent track, hover state)
+   401→- Updated tenant-dashboard.tsx: migrated 4 StatCards to use new `borderColor` prop (removed border-l-4 from className), added `trendColor` based on growth value positivity
+   402→- Updated super-admin-dashboard.tsx: migrated Total Revenue StatCard `borderColor` from className to prop
+   403→- Verified: `bun run lint` — 0 errors, 0 warnings
+   404→
+   405→Stage Summary:
+   406→- StatCard now has declarative left border color, semantic trend coloring, and scale hover
+   407→- EmptyState has floating icon animation, gradient background, and actionNode slot
+   408→- PageHeader supports optional subtitle (responsive)
+   409→- Global CSS adds float animation and thin scrollbar utility
+   410→
+   411→---
+   412→Task ID: 12-a
+   413→Agent: general-purpose
+   414→Task: Subscription CRUD + Contracts + Documents pages
+   415→
+   416→Work Log:
+   417→- Read worklog.md, types/index.ts, mock-data/index.ts, helpers.ts, existing subscription-management.tsx, contracts-page.tsx, documents-page.tsx, stat-card.tsx, page-header.tsx for full context
+   418→- Rewrote subscription-management.tsx with full CRUD: summary stat cards (Total, Active, Revenue, Expiring Soon), plan pricing cards (Basic NPR 999, Pro NPR 2,999, Enterprise NPR 7,999), subscriptions table with columns (Tenant, Plan badge, Status badge, Start/End dates, Amount in NPR via nprFull, Auto-Renew, Edit/Delete actions)
+   419→- Added status filter buttons (All/Active/Expired/Cancelled/Trial), search by tenant name
+   420→- Plan badges: basic=secondary, pro=default, enterprise=outline
+   421→- SubscriptionStatus badges: active=emerald, expired=amber, cancelled=red, trial=blue (all border-0 custom classes)
+   422→- Add Subscription dialog: select tenant, select plan with NPR price, date pickers, auto-renew switch
+   423→- Edit Subscription dialog: pre-filled form
+   424→- Delete Subscription: AlertDialog confirmation with red destructive button
+   425→- All state managed locally via useState for add/edit/delete operations
+   426→- Wrote contracts-page.tsx from scratch: summary stat cards (Total, Active, Total Value, Expiring Soon), contracts table with columns (Title, Tenant, Type badge, Status badge, Start/End dates, Value in NPR, Actions)
+   427→- Contract type badges: service=blue, license=purple, custom=amber
+   428→- ContractStatus badges: active=emerald, expired=amber, draft=gray, terminated=red
+   429→- Status filter buttons (All/Active/Expired/Draft/Terminated) + type filter buttons (All/Service/License/Custom)
+   430→- Add/Edit Contract dialogs: tenant, title, type, status, dates, value, description (textarea)
+   431→- Delete confirmation with AlertDialog
+   432→- Wrote documents-page.tsx from scratch: summary stat cards (Total, Verified, Pending, Rejected), documents table with columns (Document Name, Tenant, Type badge, File Name, File Size, Uploaded Date, Status badge, Actions)
+   433→- DocumentType badges: pan=blue, vat=purple, business_license=emerald, bank_statement=amber, other=gray
+   434→- DocumentStatus badges: verified=emerald, pending=amber, rejected=red
+   435→- Filters: type buttons (All/PAN/VAT/Business License/Bank Statement/Other), status buttons (All/Verified/Pending/Rejected), tenant dropdown select
+   436→- Add/Edit Document dialogs: tenant, type, name, file name (mock), status
+   437→- Delete confirmation with AlertDialog
+   438→- All tables use overflow-x-auto for responsive horizontal scrolling
+   439→- All table rows have hover:bg-muted/50 transition
+   440→- All cards use transition-shadow hover:shadow-md
+   441→- All monetary values use nprFull() formatting
+   442→- ESLint: 0 errors, 0 warnings
+   443→
+   444→Stage Summary:
+   445→- Subscription Management page rewritten with full CRUD, plan cards, stat cards, status/type filters, and search
+   446→- Contracts page built from scratch with full CRUD, stat cards, dual filter rows (status + type)
+   447→- Documents page built from scratch with full CRUD, stat cards, triple filter (type buttons + status buttons + tenant dropdown)
+   448→- All 3 pages follow consistent patterns: stat cards, filterable tables, add/edit/delete dialogs, responsive design
+   449→- All pages compile with 0 lint errors
+   450→

@@ -23,13 +23,29 @@ export interface User {
 
 // ---------- Navigation ----------
 export type NavSection =
+  // Super Admin - Global
   | 'super-admin-dashboard'
   | 'tenants'
   | 'super-admin-staff'
   | 'super-admin-subscriptions'
+  | 'sa-contracts'
+  | 'sa-documents'
   | 'activity-logs'
   | 'content'
   | 'super-admin-settings'
+  // Super Admin - Tenant View (when a tenant is selected)
+  | 'sa-tenant-overview'
+  | 'sa-tenant-billing'
+  | 'sa-tenant-products'
+  | 'sa-tenant-inventory'
+  | 'sa-tenant-categories'
+  | 'sa-tenant-sales'
+  | 'sa-tenant-reports'
+  | 'sa-tenant-staff-view'
+  | 'sa-tenant-subscription'
+  | 'sa-tenant-features'
+  | 'sa-tenant-vendors'
+  // Tenant Admin
   | 'tenant-dashboard'
   | 'pos'
   | 'customers'
@@ -37,6 +53,7 @@ export type NavSection =
   | 'products'
   | 'inventory'
   | 'categories'
+  | 'vendors'
   | 'sales'
   | 'reports'
   | 'tenant-subscription'
@@ -83,6 +100,81 @@ export interface SubscriptionPlan {
   maxStaff: number;
 }
 
+// ---------- Subscription (entity for CRUD) ----------
+export type SubscriptionStatus = 'active' | 'expired' | 'cancelled' | 'trial';
+
+export interface Subscription {
+  id: string;
+  tenantId: string;
+  tenantName: string;
+  planId: string;
+  planName: PlanType;
+  status: SubscriptionStatus;
+  startDate: string;
+  endDate: string;
+  amount: number;
+  currency: string;
+  autoRenew: boolean;
+}
+
+// ---------- Vendor ----------
+export interface Vendor {
+  id: string;
+  name: string;
+  contactPerson: string;
+  email: string;
+  phone: string;
+  pan: string;
+  vatNumber: string;
+  address: string;
+  city: string;
+  status: 'active' | 'inactive';
+  productCount: number;
+  createdAt: string;
+}
+
+// ---------- Contract ----------
+export type ContractStatus = 'active' | 'expired' | 'draft' | 'terminated';
+
+export interface Contract {
+  id: string;
+  tenantId: string;
+  tenantName: string;
+  title: string;
+  type: 'service' | 'license' | 'custom';
+  status: ContractStatus;
+  startDate: string;
+  endDate: string;
+  value: number;
+  currency: string;
+  description: string;
+}
+
+// ---------- Tenant Document ----------
+export type DocumentType = 'pan' | 'vat' | 'business_license' | 'bank_statement' | 'other';
+
+export interface TenantDocument {
+  id: string;
+  tenantId: string;
+  tenantName: string;
+  type: DocumentType;
+  name: string;
+  fileName: string;
+  fileSize: string;
+  uploadedAt: string;
+  status: 'verified' | 'pending' | 'rejected';
+}
+
+// ---------- Tenant Feature ----------
+export interface TenantFeature {
+  id: string;
+  key: string;
+  label: string;
+  description: string;
+  category: 'pos' | 'inventory' | 'billing' | 'reporting' | 'integration' | 'advanced';
+  enabled: boolean;
+}
+
 // ---------- Product ----------
 export interface Product {
   id: string;
@@ -97,6 +189,8 @@ export interface Product {
   isActive: boolean;
   createdAt: string;
   image?: string;
+  vendorId?: string;
+  vendorName?: string;
 }
 
 // ---------- Category ----------
