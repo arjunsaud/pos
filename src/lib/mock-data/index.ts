@@ -33,42 +33,35 @@ import type {
 
 // ---------- Tenants ----------
 export const mockTenants: Tenant[] = [
-  { id: 't1', name: 'ABC Store', email: 'admin@abcstore.com', phone: '+977-9801234567', plan: 'Plan 2', status: 'active', createdAt: '2024-01-15', domain: 'abcstore.posnepal.com', ownerName: 'Rajesh Sharma', productCount: 245, monthlyRevenue: 125000 },
-  { id: 't2', name: 'XYZ Mart', email: 'info@xyzmart.com', phone: '+977-9812345678', plan: 'Plan 1', status: 'inactive', createdAt: '2024-03-22', domain: 'xyzmart.posnepal.com', ownerName: 'Sita Devi', productCount: 89, monthlyRevenue: 45000 },
-  { id: 't3', name: 'Kathmandu Grocers', email: 'hello@ktmgrcoers.com', phone: '+977-9823456789', plan: 'Plan 4', status: 'active', createdAt: '2023-11-10', domain: 'ktmgrcoers.posnepal.com', ownerName: 'Bikash Thapa', productCount: 1200, monthlyRevenue: 890000 },
-  { id: 't4', name: 'Pokhara Electronics', email: 'contact@pkr-electronics.com', phone: '+977-9834567890', plan: 'Plan 3', status: 'active', createdAt: '2024-02-28', domain: 'pkrelectronics.posnepal.com', ownerName: 'Anita Gurung', productCount: 340, monthlyRevenue: 567000 },
-  { id: 't5', name: 'Bhaktapur Handicraft', email: 'info@bktcraft.com', phone: '+977-9845678901', plan: 'Plan 1', status: 'active', createdAt: '2024-05-10', domain: 'bktcraft.posnepal.com', ownerName: 'Hari Prasad', productCount: 156, monthlyRevenue: 78000 },
-  { id: 't6', name: 'Lalitpur Fashion', email: 'style@ltpfashion.com', phone: '+977-9856789012', plan: 'Plan 3', status: 'active', createdAt: '2024-04-05', domain: 'ltpfashion.posnepal.com', ownerName: 'Priya Maharjan', productCount: 412, monthlyRevenue: 234000 },
-  { id: 't7', name: 'Chitwan Fresh', email: 'fresh@chitwanfresh.com', phone: '+977-9867890123', plan: 'Plan 1', status: 'inactive', createdAt: '2024-06-18', domain: 'chitwanfresh.posnepal.com', ownerName: 'Dil Kumar', productCount: 67, monthlyRevenue: 32000 },
-  { id: 't8', name: 'Biratnagar Hardware', email: 'sales@brthardware.com', phone: '+977-9878901234', plan: 'Plan 4', status: 'active', createdAt: '2023-09-20', domain: 'brthardware.posnepal.com', ownerName: 'Kumar Rai', productCount: 890, monthlyRevenue: 1456000 },
+  { id: 't1', name: 'ABC Store', email: 'admin@abcstore.com', phone: '+977-9801234567', plan: 'Medium', status: 'active', createdAt: '2024-01-15', domain: 'abcstore.posnepal.com', ownerName: 'Rajesh Sharma', productCount: 245, monthlyRevenue: 125000 },
+  { id: 't2', name: 'XYZ Mart', email: 'info@xyzmart.com', phone: '+977-9812345678', plan: 'Basic', status: 'inactive', createdAt: '2024-03-22', domain: 'xyzmart.posnepal.com', ownerName: 'Sita Devi', productCount: 89, monthlyRevenue: 45000 },
+  { id: 't3', name: 'Kathmandu Grocers', email: 'hello@ktmgrcoers.com', phone: '+977-9823456789', plan: 'High', status: 'active', createdAt: '2023-11-10', domain: 'ktmgrcoers.posnepal.com', ownerName: 'Bikash Thapa', productCount: 1200, monthlyRevenue: 890000 },
+  { id: 't4', name: 'Pokhara Electronics', email: 'contact@pkr-electronics.com', phone: '+977-9834567890', plan: 'High', status: 'active', createdAt: '2024-02-28', domain: 'pkrelectronics.posnepal.com', ownerName: 'Anita Gurung', productCount: 340, monthlyRevenue: 567000 },
+  { id: 't5', name: 'Bhaktapur Handicraft', email: 'info@bktcraft.com', phone: '+977-9845678901', plan: 'Basic', status: 'active', createdAt: '2024-05-10', domain: 'bktcraft.posnepal.com', ownerName: 'Hari Prasad', productCount: 156, monthlyRevenue: 78000 },
+  { id: 't6', name: 'Lalitpur Fashion', email: 'style@ltpfashion.com', phone: '+977-9856789012', plan: 'Medium', status: 'active', createdAt: '2024-04-05', domain: 'ltpfashion.posnepal.com', ownerName: 'Priya Maharjan', productCount: 412, monthlyRevenue: 234000 },
+  { id: 't7', name: 'Chitwan Fresh', email: 'fresh@chitwanfresh.com', phone: '+977-9867890123', plan: 'Basic', status: 'inactive', createdAt: '2024-06-18', domain: 'chitwanfresh.posnepal.com', ownerName: 'Dil Kumar', productCount: 67, monthlyRevenue: 32000 },
+  { id: 't8', name: 'Biratnagar Hardware', email: 'sales@brthardware.com', phone: '+977-9878901234', plan: 'High', status: 'active', createdAt: '2023-09-20', domain: 'brthardware.posnepal.com', ownerName: 'Kumar Rai', productCount: 890, monthlyRevenue: 1456000 },
 ];
 
 // ---------- Subscription Packages ----------
 export const mockPackages: SubscriptionPackage[] = [
   {
-    id: 'pkg-1', name: 'Plan 1', price: 999, interval: 'monthly', status: 'active',
-    maxProducts: 200, maxStaff: 5, analytics: 'basic', support: 'basic',
-    paymentGateway: true, billing: false, receipt: false, export: false,
-    advanceInventory: false, pos: false, multipleOutlets: false,
+    id: 'pkg-1', name: 'Basic', price: 999, interval: 'monthly', status: 'active',
+    maxProducts: 50, maxStaff: 1, analytics: 'basic', support: 'basic',
+    paymentGateway: false, billing: true, receipt: true, export: false,
+    advanceInventory: true, pos: true, multipleOutlets: false,
     createdAt: '2023-01-01', updatedAt: '2025-01-01',
   },
   {
-    id: 'pkg-2', name: 'Plan 2', price: 2999, interval: 'monthly', status: 'active',
-    maxProducts: 1000, maxStaff: 10, analytics: 'standard', support: 'quick',
-    paymentGateway: true, billing: false, receipt: false, export: false,
-    advanceInventory: false, pos: false, multipleOutlets: false,
+    id: 'pkg-2', name: 'Medium', price: 4999, interval: 'monthly', status: 'active',
+    maxProducts: 200, maxStaff: 5, analytics: 'standard', support: 'quick',
+    paymentGateway: true, billing: true, receipt: true, export: true,
+    advanceInventory: true, pos: true, multipleOutlets: false,
     popular: true, createdAt: '2023-01-01', updatedAt: '2025-01-01',
   },
   {
-    id: 'pkg-3', name: 'Plan 3', price: 5999, interval: 'monthly', status: 'active',
-    maxProducts: 2000, maxStaff: 20, analytics: 'advanced', support: 'priority',
-    paymentGateway: true, billing: true, receipt: true, export: true,
-    advanceInventory: false, pos: false, multipleOutlets: false,
-    createdAt: '2023-01-01', updatedAt: '2025-01-01',
-  },
-  {
-    id: 'pkg-4', name: 'Plan 4', price: 12999, interval: 'monthly', status: 'active',
-    maxProducts: 5000, maxStaff: 50, analytics: 'advanced', support: 'dedicated',
+    id: 'pkg-3', name: 'High', price: 9999, interval: 'monthly', status: 'active',
+    maxProducts: 500, maxStaff: 10, analytics: 'advanced', support: 'dedicated',
     paymentGateway: true, billing: true, receipt: true, export: true,
     advanceInventory: true, pos: true, multipleOutlets: true,
     createdAt: '2023-01-01', updatedAt: '2025-01-01',
@@ -77,14 +70,14 @@ export const mockPackages: SubscriptionPackage[] = [
 
 // ---------- Subscriptions (tenant assignments) ----------
 export const mockSubscriptions: Subscription[] = [
-  { id: 'sub-1', tenantId: 't1', tenantName: 'ABC Store', packageId: 'pkg-2', packageName: 'Plan 2', status: 'active', startDate: '2024-01-15', endDate: '2025-01-15', amount: 2999, currency: 'NPR', autoRenew: true },
-  { id: 'sub-2', tenantId: 't2', tenantName: 'XYZ Mart', packageId: 'pkg-1', packageName: 'Plan 1', status: 'expired', startDate: '2024-03-22', endDate: '2024-09-22', amount: 999, currency: 'NPR', autoRenew: false },
-  { id: 'sub-3', tenantId: 't3', tenantName: 'Kathmandu Grocers', packageId: 'pkg-4', packageName: 'Plan 4', status: 'active', startDate: '2023-11-10', endDate: '2025-11-10', amount: 12999, currency: 'NPR', autoRenew: true },
-  { id: 'sub-4', tenantId: 't4', tenantName: 'Pokhara Electronics', packageId: 'pkg-3', packageName: 'Plan 3', status: 'active', startDate: '2024-02-28', endDate: '2025-02-28', amount: 5999, currency: 'NPR', autoRenew: true },
-  { id: 'sub-5', tenantId: 't5', tenantName: 'Bhaktapur Handicraft', packageId: 'pkg-1', packageName: 'Plan 1', status: 'active', startDate: '2024-05-10', endDate: '2025-05-10', amount: 999, currency: 'NPR', autoRenew: false },
-  { id: 'sub-6', tenantId: 't6', tenantName: 'Lalitpur Fashion', packageId: 'pkg-3', packageName: 'Plan 3', status: 'active', startDate: '2024-04-05', endDate: '2025-04-05', amount: 5999, currency: 'NPR', autoRenew: true },
-  { id: 'sub-7', tenantId: 't7', tenantName: 'Chitwan Fresh', packageId: 'pkg-1', packageName: 'Plan 1', status: 'cancelled', startDate: '2024-06-18', endDate: '2024-12-18', amount: 999, currency: 'NPR', autoRenew: false },
-  { id: 'sub-8', tenantId: 't8', tenantName: 'Biratnagar Hardware', packageId: 'pkg-4', packageName: 'Plan 4', status: 'active', startDate: '2023-09-20', endDate: '2025-09-20', amount: 12999, currency: 'NPR', autoRenew: true },
+  { id: 'sub-1', tenantId: 't1', tenantName: 'ABC Store', packageId: 'pkg-2', packageName: 'Medium', status: 'active', startDate: '2024-01-15', endDate: '2025-01-15', amount: 4999, currency: 'NPR', autoRenew: true },
+  { id: 'sub-2', tenantId: 't2', tenantName: 'XYZ Mart', packageId: 'pkg-1', packageName: 'Basic', status: 'expired', startDate: '2024-03-22', endDate: '2024-09-22', amount: 999, currency: 'NPR', autoRenew: false },
+  { id: 'sub-3', tenantId: 't3', tenantName: 'Kathmandu Grocers', packageId: 'pkg-3', packageName: 'High', status: 'active', startDate: '2023-11-10', endDate: '2025-11-10', amount: 9999, currency: 'NPR', autoRenew: true },
+  { id: 'sub-4', tenantId: 't4', tenantName: 'Pokhara Electronics', packageId: 'pkg-3', packageName: 'High', status: 'active', startDate: '2024-02-28', endDate: '2025-02-28', amount: 9999, currency: 'NPR', autoRenew: true },
+  { id: 'sub-5', tenantId: 't5', tenantName: 'Bhaktapur Handicraft', packageId: 'pkg-1', packageName: 'Basic', status: 'active', startDate: '2024-05-10', endDate: '2025-05-10', amount: 999, currency: 'NPR', autoRenew: false },
+  { id: 'sub-6', tenantId: 't6', tenantName: 'Lalitpur Fashion', packageId: 'pkg-2', packageName: 'Medium', status: 'active', startDate: '2024-04-05', endDate: '2025-04-05', amount: 4999, currency: 'NPR', autoRenew: true },
+  { id: 'sub-7', tenantId: 't7', tenantName: 'Chitwan Fresh', packageId: 'pkg-1', packageName: 'Basic', status: 'cancelled', startDate: '2024-06-18', endDate: '2024-12-18', amount: 999, currency: 'NPR', autoRenew: false },
+  { id: 'sub-8', tenantId: 't8', tenantName: 'Biratnagar Hardware', packageId: 'pkg-3', packageName: 'High', status: 'active', startDate: '2023-09-20', endDate: '2025-09-20', amount: 9999, currency: 'NPR', autoRenew: true },
 ];
 
 // ---------- Outlets ----------

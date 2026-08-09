@@ -71,3 +71,28 @@ Stage Summary:
 - SA Payment: 4 payment methods with QR mock, 5 receipts with approve/reject flow
 - Support Tickets: Full bidirectional flow (tenant creates, SA responds)
 - Lint passes clean, no runtime errors
+
+---
+Task ID: 4
+Agent: Main
+Task: Update pricing plans, Sign In/Get Started toggle, T&C/Privacy in Settings, UI polish
+
+Work Log:
+- **Mock Data**: Updated packages from Plan 1-4 to Basic (NPR 999, 50 items, 1 staff), Medium (NPR 4,999, 200 items, 5 staff, popular), High (NPR 9,999, 500 items, 10 staff). Removed Plan 4. Updated all tenant plan references and subscription data.
+- **Landing Page**: Default billing toggle now starts on "Annually". Added Custom plan card (dashed border, "Contact Us" via WhatsApp). Removed Referral from nav links (section still exists). Footer cleaned up: removed duplicate Privacy Policy from Support, added proper icons to Contact section. T&C and Privacy Policy dialogs now read content from `useLegalContentStore`. Added markdown-like renderer for legal content.
+- **Login Page**: Merged Sign In and Get Started (Register) into a single page with animated tab toggle (spring animation). Added "Back to Home" button (appears only when accessed from landing page). Registration form includes free trial banner, all required fields.
+- **SA Settings**: Added Terms & Conditions tab (markdown textarea editor, Reset to Default, Preview dialog, Save/Discard). Added Privacy Policy tab (same features). Both read/write to `useLegalContentStore` which shares content with the landing page dialogs.
+- **Sidebar**: Removed standalone Legal section (T&C and Privacy Policy) from SA sidebar menu. These are now accessible only through Settings tabs.
+- **Types**: Removed `sa-terms-conditions` and `sa-privacy-policy` from NavSection union type.
+- **page.tsx**: Removed SATermsConditions and SAPrivacyPolicy imports/mappings. Added `onBack` prop to LoginPage.
+- **Helpers**: Updated `getPlanBadgeClasses` to handle Basic/Medium/High plan names (case-insensitive).
+- **Tenant Management**: Updated plan colors, form defaults, select items, plan order from Plan 1-4 to Basic/Medium/High.
+- **Tenant Subscription**: Updated currentPlanName from 'Plan 2' to 'Medium', fixed avatar initial rendering.
+
+Stage Summary:
+- All changes browser-verified via agent-browser
+- Landing page: 3 paid plans + Custom card, default annually, no Referral in nav, T&C/Privacy footer links work
+- Login page: Sign In / Get Started toggle with animated indicator, Back to Home button works
+- SA Settings: 5 tabs (Branding, Domain, Payment Methods, Terms & Conditions, Privacy Policy)
+- Legal content flows from SA Settings editor → store → landing page dialogs
+- Lint passes clean, all references to old plan names updated

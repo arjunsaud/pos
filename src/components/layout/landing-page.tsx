@@ -26,18 +26,12 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { useTheme } from 'next-themes';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { nprFull } from '@/lib/helpers';
 import { mockPackages } from '@/lib/mock-data';
+import { useLegalContentStore } from '@/features/auth/store';
 import {
   Monitor,
   ShoppingCart,
@@ -59,7 +53,6 @@ import {
   Star,
   ChevronRight,
   TrendingUp,
-  Lock,
   Headphones,
   UserPlus,
   Store,
@@ -71,6 +64,9 @@ import {
   Sparkles,
   AlertTriangle,
   FileText,
+  Phone,
+  Mail,
+  MapPin,
 } from 'lucide-react';
 
 /* ------------------------------------------------------------------ */
@@ -90,13 +86,13 @@ const features = [
 
 const steps = [
   { icon: UserPlus, title: 'Sign Up & Choose Plan', desc: 'Create your account in seconds and select the plan that fits your business.' },
-  { icon: Store, title: 'Set Up Your Store', desc: 'Configure your store details, branding, and preferences.' },
-  { icon: Package, title: 'Add Products & Staff', desc: 'Import your product catalog and invite your team members.' },
-  { icon: ShoppingCart, title: 'Start Selling', desc: 'Go live and start processing sales from day one.' },
+  { icon: Store, title: 'Set Up Your Store', desc: 'Add your products, configure outlets, and customize your POS settings.' },
+  { icon: ShoppingCart, title: 'Start Selling', desc: 'Ring up sales, manage inventory, and generate invoices with built-in VAT.' },
+  { icon: BarChart3, title: 'Grow & Scale', desc: 'Track analytics, manage multiple outlets, and scale your operations.' },
 ];
 
 const testimonials = [
-  { quote: 'POS Nepal transformed how we manage our store. The billing and VAT features saved us hours every month. Highly recommended for any retail business in Nepal.', name: 'Rajesh Sharma', role: 'Owner, ABC Store', stars: 5 },
+  { quote: 'POS Nepal completely transformed how we manage our store. The VAT integration alone saves us hours every month. Best investment we made.', name: 'Rajesh Sharma', role: 'Owner, ABC Store - Kathmandu', stars: 5 },
   { quote: 'The inventory tracking is incredibly accurate. We went from weekly stocktakes to real-time visibility. Our shrinkage dropped by 40% in the first quarter.', name: 'Bikash Thapa', role: 'Manager, Kathmandu Grocers', stars: 5 },
   { quote: 'As an electronics retailer, we needed a system that could handle thousands of SKUs. POS Nepal handles it effortlessly with blazing-fast performance.', name: 'Anita Gurung', role: 'Director, Pokhara Electronics', stars: 5 },
 ];
@@ -114,7 +110,7 @@ const featureToggles: { key: keyof (typeof mockPackages)[number]; label: string 
   { key: 'billing', label: 'Billing' },
   { key: 'receipt', label: 'Receipt' },
   { key: 'export', label: 'Export' },
-  { key: 'advanceInventory', label: 'Advance Inventory' },
+  { key: 'advanceInventory', label: 'Advanced Inventory' },
   { key: 'pos', label: 'POS' },
   { key: 'multipleOutlets', label: 'Multiple Outlets' },
 ];
@@ -128,6 +124,46 @@ const navLinks = [
 ];
 
 /* ------------------------------------------------------------------ */
+/*  Helper: Render markdown-like content from store                     */
+/* ------------------------------------------------------------------ */
+function RenderMarkdown({ content }: { content: string }) {
+  const lines = content.split('\n');
+  const elements: React.ReactNode[] = [];
+  let key = 0;
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) {
+      elements.push(<div key={key++} className="h-2" />);
+      continue;
+    }
+    if (trimmed.startsWith('### ')) {
+      elements.push(<h3 key={key++} className="text-base font-semibold mt-4">{trimmed.slice(4)}</h3>);
+    } else if (trimmed.startsWith('## ')) {
+      elements.push(<h2 key={key++} className="text-lg font-semibold mt-4">{trimmed.slice(3)}</h2>);
+    } else if (trimmed.startsWith('# ')) {
+      elements.push(<h1 key={key++} className="text-xl font-bold mt-2">{trimmed.slice(2)}</h1>);
+    } else if (trimmed.startsWith('- ')) {
+      const boldMatch = trimmed.match(/^- (\*\*(.+?)\*\*:)?(.*)$/);
+      const label = boldMatch?.[2];
+      const rest = boldMatch?.[3] || trimmed.slice(2);
+      elements.push(
+        <li key={key++} className="text-sm text-muted-foreground ml-4 list-disc">
+          {label && <strong className="text-foreground font-medium">{label}:</strong>}
+          <span dangerouslySetInnerHTML={{ __html: rest.replace(/\*\*(.+?)\*\*/g, '<strong class="font-medium text-foreground">$1</strong>') }} />
+        </li>
+      );
+    } else {
+      elements.push(
+        <p key={key++} className="text-sm text-muted-foreground leading-relaxed" dangerouslySetInnerHTML={{ __html: trimmed.replace(/\*\*(.+?)\*\*/g, '<strong class="font-medium text-foreground">$1</strong>') }} />
+      );
+    }
+  }
+
+  return <div className="space-y-1">{elements}</div>;
+}
+
+/* ------------------------------------------------------------------ */
 /*  Component                                                          */
 /* ------------------------------------------------------------------ */
 
@@ -136,7 +172,7 @@ export default function LandingPage({ onSignIn }: { onSignIn: () => void }) {
   const [mobileMenu, setMobileMenu] = useState(false);
   const [promoCode, setPromoCode] = useState('');
   const [appliedPromo, setAppliedPromo] = useState('');
-  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('yearly');
 
   // Registration state
   const [showRegister, setShowRegister] = useState(false);
@@ -153,6 +189,9 @@ export default function LandingPage({ onSignIn }: { onSignIn: () => void }) {
   // Legal pages
   const [showTerms, setShowTerms] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
+
+  // Legal content from store
+  const { termsContent, privacyContent } = useLegalContentStore();
 
   const getPrice = (monthlyPrice: number) => {
     if (billingCycle === 'yearly') {
@@ -418,6 +457,48 @@ export default function LandingPage({ onSignIn }: { onSignIn: () => void }) {
                   </motion.div>
                 );
               })}
+
+              {/* Custom Plan Card */}
+              <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.3, duration: 0.4 }}>
+                <Card className="relative h-full flex flex-col transition-shadow hover:shadow-lg border-dashed border-2">
+                  <CardHeader className="text-center pb-2">
+                    <CardTitle className="text-xl">Custom</CardTitle>
+                    <div className="mt-4">
+                      <span className="text-4xl font-extrabold">Let&apos;s Talk</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-2">Tailored to your business needs</p>
+                  </CardHeader>
+                  <CardContent className="flex-1 flex flex-col pt-0">
+                    <ul className="space-y-1.5 text-sm mb-4 pb-4 border-b">
+                      <li className="flex justify-between"><span className="text-muted-foreground">Products</span><span className="font-medium">Unlimited</span></li>
+                      <li className="flex justify-between"><span className="text-muted-foreground">Staff Accounts</span><span className="font-medium">Unlimited</span></li>
+                      <li className="flex justify-between"><span className="text-muted-foreground">Analytics</span><span className="font-medium capitalize">Custom</span></li>
+                      <li className="flex justify-between"><span className="text-muted-foreground">Support</span><span className="font-medium capitalize">Dedicated</span></li>
+                    </ul>
+                    <ul className="space-y-2 flex-1 mb-6">
+                      {featureToggles.map((ft) => (
+                        <li key={ft.key} className="flex items-center gap-2 text-sm">
+                          <Check className="h-4 w-4 text-emerald-500 shrink-0" />
+                          <span>{ft.label}</span>
+                        </li>
+                      ))}
+                      <li className="flex items-center gap-2 text-sm">
+                        <Check className="h-4 w-4 text-emerald-500 shrink-0" />
+                        <span>Custom Integrations</span>
+                      </li>
+                      <li className="flex items-center gap-2 text-sm">
+                        <Check className="h-4 w-4 text-emerald-500 shrink-0" />
+                        <span>SLA Guarantee</span>
+                      </li>
+                    </ul>
+                    <Button className="w-full" variant="outline" asChild>
+                      <a href="https://wa.me/9779800000000?text=Hi%20POS%20Nepal%2C%20I%27m%20interested%20in%20a%20custom%20plan." target="_blank" rel="noopener noreferrer">
+                        Contact Us <ArrowRight className="ml-1 h-4 w-4" />
+                      </a>
+                    </Button>
+                  </CardContent>
+                </Card>
+              </motion.div>
             </div>
 
             {/* Free Plan Banner */}
@@ -566,22 +647,21 @@ export default function LandingPage({ onSignIn }: { onSignIn: () => void }) {
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li className="flex items-center gap-1.5"><Headphones className="h-3.5 w-3.5" /> 24/7 Support</li>
                 <li className="flex items-center gap-1.5"><TrendingUp className="h-3.5 w-3.5" /> Help Center</li>
-                <li className="flex items-center gap-1.5"><Lock className="h-3.5 w-3.5" /> Privacy Policy</li>
               </ul>
             </div>
             <div>
               <h4 className="font-semibold mb-3">Contact</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>Kathmandu, Nepal</li>
-                <li>info@posnepal.com</li>
-                <li>+977-9800000000</li>
+                <li className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5 shrink-0" /> Kathmandu, Nepal</li>
+                <li className="flex items-center gap-1.5"><Mail className="h-3.5 w-3.5 shrink-0" /> info@posnepal.com</li>
+                <li className="flex items-center gap-1.5"><Phone className="h-3.5 w-3.5 shrink-0" /> +977-9800000000</li>
               </ul>
             </div>
             <div>
               <h4 className="font-semibold mb-3">Legal</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li><button onClick={() => setShowTerms(true)} className="hover:text-foreground transition-colors flex items-center gap-1.5"><FileText className="h-3.5 w-3.5" /> Terms & Conditions</button></li>
-                <li><button onClick={() => setShowPrivacy(true)} className="hover:text-foreground transition-colors flex items-center gap-1.5"><FileText className="h-3.5 w-3.5" /> Privacy Policy</button></li>
+                <li><button onClick={() => setShowPrivacy(true)} className="hover:text-foreground transition-colors flex items-center gap-1.5"><Shield className="h-3.5 w-3.5" /> Privacy Policy</button></li>
               </ul>
             </div>
           </div>
@@ -663,7 +743,10 @@ export default function LandingPage({ onSignIn }: { onSignIn: () => void }) {
                 Create Account & Start Free Trial
               </Button>
               <p className="text-center text-xs text-muted-foreground">
-                By signing up, you agree to our Terms of Service and Privacy Policy.
+                By signing up, you agree to our{' '}
+                <button onClick={() => { setShowRegister(false); setTimeout(() => setShowTerms(true), 200); }} className="underline hover:text-foreground">Terms of Service</button>
+                {' '}and{' '}
+                <button onClick={() => { setShowRegister(false); setTimeout(() => setShowPrivacy(true), 200); }} className="underline hover:text-foreground">Privacy Policy</button>.
               </p>
             </div>
           </div>
@@ -698,7 +781,7 @@ export default function LandingPage({ onSignIn }: { onSignIn: () => void }) {
             {/* Quick Plans */}
             <div className="space-y-2">
               <h4 className="text-sm font-medium">Choose a plan to continue:</h4>
-              {mockPackages.slice(0, 3).map((plan) => (
+              {mockPackages.map((plan) => (
                 <div key={plan.id} className="flex items-center justify-between rounded-lg border p-3 hover:bg-muted/50 transition-colors cursor-pointer">
                   <div className="flex items-center gap-3">
                     <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
@@ -706,7 +789,7 @@ export default function LandingPage({ onSignIn }: { onSignIn: () => void }) {
                     </div>
                     <div>
                       <p className="text-sm font-medium">{plan.name}</p>
-                      <p className="text-xs text-muted-foreground">Up to {plan.maxProducts.toLocaleString()} products · {plan.maxStaff} staff</p>
+                      <p className="text-xs text-muted-foreground">Up to {plan.maxProducts.toLocaleString()} products &middot; {plan.maxStaff} staff</p>
                     </div>
                   </div>
                   <div className="text-right">
@@ -736,31 +819,8 @@ export default function LandingPage({ onSignIn }: { onSignIn: () => void }) {
             <DialogTitle className="flex items-center gap-2"><FileText className="h-5 w-5" /> Terms & Conditions</DialogTitle>
             <DialogDescription>Last updated: June 15, 2025</DialogDescription>
           </DialogHeader>
-          <div className="prose prose-sm dark:prose-invert max-w-none mt-2">
-            <h2 className="text-lg font-semibold">1. Acceptance of Terms</h2>
-            <p className="text-sm text-muted-foreground">By accessing and using POS Nepal (&quot;the Service&quot;), you agree to be bound by these Terms and Conditions. If you do not agree to these terms, please do not use the Service.</p>
-            <h2 className="text-lg font-semibold mt-4">2. Description of Service</h2>
-            <p className="text-sm text-muted-foreground">POS Nepal is a multi-tenant Point of Sale, Inventory Management, and Billing System designed for businesses in Nepal.</p>
-            <h2 className="text-lg font-semibold mt-4">3. User Accounts</h2>
-            <ul className="text-sm text-muted-foreground list-disc pl-5 space-y-1">
-              <li>You must provide accurate and complete information when creating an account</li>
-              <li>You are responsible for maintaining the confidentiality of your account</li>
-              <li>You must notify us immediately of any unauthorized use</li>
-            </ul>
-            <h2 className="text-lg font-semibold mt-4">4. Subscription and Payment</h2>
-            <ul className="text-sm text-muted-foreground list-disc pl-5 space-y-1">
-              <li>Subscription fees are billed in NPR (Nepali Rupees)</li>
-              <li>Payment can be made via eSewa, Khalti, bank transfer, or QR code</li>
-              <li>Receipts must be uploaded within 24 hours of payment</li>
-            </ul>
-            <h2 className="text-lg font-semibold mt-4">5. Free Trial</h2>
-            <p className="text-sm text-muted-foreground">New accounts receive a 7-day free trial. No credit card is required for the trial.</p>
-            <h2 className="text-lg font-semibold mt-4">6. Data and Privacy</h2>
-            <p className="text-sm text-muted-foreground">We collect and process data in accordance with our Privacy Policy. By using the Service, you consent to the collection and use of your information.</p>
-            <h2 className="text-lg font-semibold mt-4">7. Limitation of Liability</h2>
-            <p className="text-sm text-muted-foreground">POS Nepal shall not be liable for any indirect, incidental, special, or consequential damages resulting from the use or inability to use the Service.</p>
-            <h2 className="text-lg font-semibold mt-4">8. Contact</h2>
-            <p className="text-sm text-muted-foreground">For questions about these Terms, contact us at legal@posnepal.com</p>
+          <div className="mt-2">
+            <RenderMarkdown content={termsContent} />
           </div>
         </DialogContent>
       </Dialog>
@@ -774,33 +834,8 @@ export default function LandingPage({ onSignIn }: { onSignIn: () => void }) {
             <DialogTitle className="flex items-center gap-2"><Shield className="h-5 w-5" /> Privacy Policy</DialogTitle>
             <DialogDescription>Last updated: June 15, 2025</DialogDescription>
           </DialogHeader>
-          <div className="prose prose-sm dark:prose-invert max-w-none mt-2">
-            <h2 className="text-lg font-semibold">1. Information We Collect</h2>
-            <ul className="text-sm text-muted-foreground list-disc pl-5 space-y-1">
-              <li><strong>Account Information:</strong> Name, email, phone number, business name, PAN number</li>
-              <li><strong>Transaction Data:</strong> Sales records, inventory data, billing information</li>
-              <li><strong>Usage Data:</strong> Login times, feature usage, device information</li>
-              <li><strong>Payment Data:</strong> Payment method preferences, transaction receipts</li>
-            </ul>
-            <h2 className="text-lg font-semibold mt-4">2. How We Use Your Information</h2>
-            <ul className="text-sm text-muted-foreground list-disc pl-5 space-y-1">
-              <li>To provide and maintain the POS service</li>
-              <li>To process payments and manage subscriptions</li>
-              <li>To improve our service and develop new features</li>
-              <li>To comply with legal obligations in Nepal</li>
-            </ul>
-            <h2 className="text-lg font-semibold mt-4">3. Data Storage and Security</h2>
-            <p className="text-sm text-muted-foreground">All data is encrypted at rest and in transit. We use industry-standard security measures. Access to personal data is restricted to authorized personnel only.</p>
-            <h2 className="text-lg font-semibold mt-4">4. Data Sharing</h2>
-            <p className="text-sm text-muted-foreground">We do not sell, trade, or rent your personal information to third parties. We may share data with payment processors (eSewa, Khalti), legal authorities when required by Nepali law, and trusted service providers.</p>
-            <h2 className="text-lg font-semibold mt-4">5. Your Rights</h2>
-            <ul className="text-sm text-muted-foreground list-disc pl-5 space-y-1">
-              <li>Access and download your data at any time</li>
-              <li>Request correction of inaccurate information</li>
-              <li>Request deletion of your account and data</li>
-            </ul>
-            <h2 className="text-lg font-semibold mt-4">6. Contact Us</h2>
-            <p className="text-sm text-muted-foreground">For privacy-related inquiries, contact us at privacy@posnepal.com</p>
+          <div className="mt-2">
+            <RenderMarkdown content={privacyContent} />
           </div>
         </DialogContent>
       </Dialog>

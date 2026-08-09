@@ -38,11 +38,17 @@ import {
   Check,
   X,
   ImagePlus,
+  FileText,
+  Shield,
+  Save,
+  RotateCcw,
+  Eye,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import type { AdminPaymentMethod, AdminPaymentType } from '@/lib/types';
 import { mockAdminPaymentMethods } from '@/lib/mock-data';
+import { useLegalContentStore, defaultTermsContent, defaultPrivacyContent } from '@/features/auth/store';
 
 const paymentTypeIcons: Record<AdminPaymentType, typeof Wallet> = {
   esewa: Wallet,
@@ -75,6 +81,13 @@ export default function SuperAdminSettings() {
   const [showMethodDialog, setShowMethodDialog] = useState(false);
   const [editingMethod, setEditingMethod] = useState<AdminPaymentMethod | null>(null);
   const [methodForm, setMethodForm] = useState({ name: '', type: 'esewa' as AdminPaymentType, description: '', accountDetails: '', enabled: true });
+
+  // Legal content state
+  const { termsContent, privacyContent, setTermsContent, setPrivacyContent } = useLegalContentStore();
+  const [editTerms, setEditTerms] = useState(termsContent);
+  const [editPrivacy, setEditPrivacy] = useState(privacyContent);
+  const [showTermsPreview, setShowTermsPreview] = useState(false);
+  const [showPrivacyPreview, setShowPrivacyPreview] = useState(false);
 
   const saveBranding = () => toast.success('Branding settings saved (mock)');
   const saveDomain = () => toast.success('Domain settings saved (mock)');
@@ -120,15 +133,37 @@ export default function SuperAdminSettings() {
     setMethods(prev => prev.map(m => m.id === id ? { ...m, enabled: !m.enabled } : m));
   };
 
+  const saveTerms = () => {
+    setTermsContent(editTerms);
+    toast.success('Terms & Conditions saved');
+  };
+
+  const resetTerms = () => {
+    setEditTerms(defaultTermsContent);
+    toast.info('Terms & Conditions reset to default');
+  };
+
+  const savePrivacy = () => {
+    setPrivacyContent(editPrivacy);
+    toast.success('Privacy Policy saved');
+  };
+
+  const resetPrivacy = () => {
+    setEditPrivacy(defaultPrivacyContent);
+    toast.info('Privacy Policy reset to default');
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader title="Platform Settings" description="Configure platform-wide settings" />
 
       <Tabs defaultValue="branding">
-        <TabsList>
+        <TabsList className="flex-wrap h-auto gap-1">
           <TabsTrigger value="branding">Branding</TabsTrigger>
           <TabsTrigger value="domain">Domain</TabsTrigger>
           <TabsTrigger value="payment">Payment Methods</TabsTrigger>
+          <TabsTrigger value="terms">Terms & Conditions</TabsTrigger>
+          <TabsTrigger value="privacy">Privacy Policy</TabsTrigger>
         </TabsList>
 
         {/* Branding Tab */}
@@ -286,7 +321,6 @@ export default function SuperAdminSettings() {
                         </Button>
                       </div>
                       <div className="flex justify-center">
-                        {/* Mock QR Code Grid */}
                         <div className="h-24 w-24 rounded-lg border-2 border-dashed border-muted-foreground/25 bg-muted/30 flex items-center justify-center">
                           <QrCode className="h-10 w-10 text-muted-foreground/40" />
                         </div>
@@ -306,6 +340,86 @@ export default function SuperAdminSettings() {
                 </Card>
               );
             })}
+          </div>
+        </TabsContent>
+
+        {/* Terms & Conditions Tab */}
+        <TabsContent value="terms" className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold">Terms & Conditions</h3>
+              <p className="text-sm text-muted-foreground">Edit the terms shown to users on the landing page</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={resetTerms}>
+                <RotateCcw className="h-3.5 w-3.5 mr-1.5" />Reset to Default
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setShowTermsPreview(true)}>
+                <Eye className="h-3.5 w-3.5 mr-1.5" />Preview
+              </Button>
+            </div>
+          </div>
+          <Card>
+            <CardContent className="p-4">
+              <div className="rounded-lg border bg-muted/20 p-3 mb-3">
+                <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                  <FileText className="h-3.5 w-3.5" />
+                  Supports markdown-style formatting: <code className="rounded bg-muted px-1 py-0.5 text-[10px] font-mono">#</code> for headings, <code className="rounded bg-muted px-1 py-0.5 text-[10px] font-mono">-</code> for lists, <code className="rounded bg-muted px-1 py-0.5 text-[10px] font-mono">**bold**</code> for bold text
+                </p>
+              </div>
+              <Textarea
+                value={editTerms}
+                onChange={(e) => setEditTerms(e.target.value)}
+                className="min-h-[400px] font-mono text-sm"
+                placeholder="Enter your Terms & Conditions..."
+              />
+            </CardContent>
+          </Card>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setEditTerms(termsContent)}>Discard Changes</Button>
+            <Button onClick={saveTerms} disabled={editTerms === termsContent}>
+              <Save className="h-4 w-4 mr-2" />Save Terms & Conditions
+            </Button>
+          </div>
+        </TabsContent>
+
+        {/* Privacy Policy Tab */}
+        <TabsContent value="privacy" className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold">Privacy Policy</h3>
+              <p className="text-sm text-muted-foreground">Edit the privacy policy shown to users on the landing page</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={resetPrivacy}>
+                <RotateCcw className="h-3.5 w-3.5 mr-1.5" />Reset to Default
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setShowPrivacyPreview(true)}>
+                <Eye className="h-3.5 w-3.5 mr-1.5" />Preview
+              </Button>
+            </div>
+          </div>
+          <Card>
+            <CardContent className="p-4">
+              <div className="rounded-lg border bg-muted/20 p-3 mb-3">
+                <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                  <Shield className="h-3.5 w-3.5" />
+                  Supports markdown-style formatting: <code className="rounded bg-muted px-1 py-0.5 text-[10px] font-mono">#</code> for headings, <code className="rounded bg-muted px-1 py-0.5 text-[10px] font-mono">-</code> for lists, <code className="rounded bg-muted px-1 py-0.5 text-[10px] font-mono">**bold**</code> for bold text
+                </p>
+              </div>
+              <Textarea
+                value={editPrivacy}
+                onChange={(e) => setEditPrivacy(e.target.value)}
+                className="min-h-[400px] font-mono text-sm"
+                placeholder="Enter your Privacy Policy..."
+              />
+            </CardContent>
+          </Card>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setEditPrivacy(privacyContent)}>Discard Changes</Button>
+            <Button onClick={savePrivacy} disabled={editPrivacy === privacyContent}>
+              <Save className="h-4 w-4 mr-2" />Save Privacy Policy
+            </Button>
           </div>
         </TabsContent>
       </Tabs>
@@ -362,6 +476,46 @@ export default function SuperAdminSettings() {
               <Button variant="outline" className="flex-1" onClick={() => setShowMethodDialog(false)}>Cancel</Button>
               <Button className="flex-1" onClick={saveMethod}>{editingMethod ? 'Update' : 'Add'} Method</Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Terms Preview Dialog */}
+      <Dialog open={showTermsPreview} onOpenChange={setShowTermsPreview}>
+        <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><FileText className="h-5 w-5" /> Terms & Conditions Preview</DialogTitle>
+            <DialogDescription>This is how the content appears to users on the landing page</DialogDescription>
+          </DialogHeader>
+          <div className="mt-2 space-y-1">
+            {editTerms.split('\n').map((line, i) => {
+              const trimmed = line.trim();
+              if (!trimmed) return <div key={i} className="h-2" />;
+              if (trimmed.startsWith('## ')) return <h2 key={i} className="text-lg font-semibold mt-4">{trimmed.slice(3)}</h2>;
+              if (trimmed.startsWith('# ')) return <h1 key={i} className="text-xl font-bold mt-2">{trimmed.slice(2)}</h1>;
+              if (trimmed.startsWith('- ')) return <li key={i} className="text-sm text-muted-foreground ml-4 list-disc" dangerouslySetInnerHTML={{ __html: trimmed.slice(2).replace(/\*\*(.+?)\*\*/g, '<strong class="font-medium text-foreground">$1</strong>') }} />;
+              return <p key={i} className="text-sm text-muted-foreground" dangerouslySetInnerHTML={{ __html: trimmed.replace(/\*\*(.+?)\*\*/g, '<strong class="font-medium text-foreground">$1</strong>') }} />;
+            })}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Privacy Preview Dialog */}
+      <Dialog open={showPrivacyPreview} onOpenChange={setShowPrivacyPreview}>
+        <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Shield className="h-5 w-5" /> Privacy Policy Preview</DialogTitle>
+            <DialogDescription>This is how the content appears to users on the landing page</DialogDescription>
+          </DialogHeader>
+          <div className="mt-2 space-y-1">
+            {editPrivacy.split('\n').map((line, i) => {
+              const trimmed = line.trim();
+              if (!trimmed) return <div key={i} className="h-2" />;
+              if (trimmed.startsWith('## ')) return <h2 key={i} className="text-lg font-semibold mt-4">{trimmed.slice(3)}</h2>;
+              if (trimmed.startsWith('# ')) return <h1 key={i} className="text-xl font-bold mt-2">{trimmed.slice(2)}</h1>;
+              if (trimmed.startsWith('- ')) return <li key={i} className="text-sm text-muted-foreground ml-4 list-disc" dangerouslySetInnerHTML={{ __html: trimmed.slice(2).replace(/\*\*(.+?)\*\*/g, '<strong class="font-medium text-foreground">$1</strong>') }} />;
+              return <p key={i} className="text-sm text-muted-foreground" dangerouslySetInnerHTML={{ __html: trimmed.replace(/\*\*(.+?)\*\*/g, '<strong class="font-medium text-foreground">$1</strong>') }} />;
+            })}
           </div>
         </DialogContent>
       </Dialog>

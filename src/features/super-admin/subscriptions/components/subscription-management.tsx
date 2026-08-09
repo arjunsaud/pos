@@ -512,7 +512,7 @@ function PackageFormDialog({
               <Label htmlFor="pkg-name">Name <span className="text-red-500">*</span></Label>
               <Input
                 id="pkg-name"
-                placeholder="e.g. Plan 1"
+                placeholder="e.g. Basic, Medium, High"
                 value={form.name}
                 onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
               />

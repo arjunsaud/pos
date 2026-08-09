@@ -59,12 +59,12 @@ export function getStatusBadgeClasses(status: string): string {
 }
 
 export function getPlanBadgeClasses(plan: string): string {
-  switch (plan) {
+  switch (plan.toLowerCase()) {
     case 'basic':
       return 'bg-secondary text-secondary-foreground';
-    case 'pro':
+    case 'medium':
       return 'bg-primary text-primary-foreground';
-    case 'enterprise':
+    case 'high':
       return 'border border-primary/30 text-primary bg-primary/5';
     default:
       return 'bg-secondary text-secondary-foreground';

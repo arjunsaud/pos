@@ -26,7 +26,7 @@ function getUsageLabel(pct: number) {
 }
 
 export default function TenantSubscriptionPage() {
-  const currentPlanName = 'Plan 2';
+  const currentPlanName = 'Medium';
   const currentPlan = mockPackages.find((p) => p.name === currentPlanName)!;
   const now = new Date();
   now.setMonth(now.getMonth() + 1);
@@ -55,7 +55,7 @@ export default function TenantSubscriptionPage() {
             <div className='space-y-3'>
               <div className='flex items-center gap-3'>
                 <div className='flex h-10 w-10 items-center justify-center rounded-full font-bold text-white bg-primary'>
-                  {currentPlanName.replace('Plan ', '')}
+                  {currentPlanName.charAt(0)}
                 </div>
                 <div>
                   <div className='flex items-center gap-2'>

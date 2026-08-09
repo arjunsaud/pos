@@ -59,10 +59,9 @@ import type { Tenant, TenantStatus } from '@/lib/types';
 import { npr, nprFull, getStatusBadgeClasses, getPlanBadgeClasses, formatRelativeTime, formatDate } from '@/lib/helpers';
 
 const planColors: Record<string, { border: string; bg: string; text: string }> = {
-  'Plan 1': { border: 'border-slate-200 dark:border-slate-700', bg: 'bg-slate-50 dark:bg-slate-900/30', text: 'text-slate-600 dark:text-slate-400' },
-  'Plan 2': { border: 'border-primary/30 dark:border-primary/20', bg: 'bg-primary/5 dark:bg-primary/10', text: 'text-primary dark:text-primary' },
-  'Plan 3': { border: 'border-purple-200 dark:border-purple-800/50', bg: 'bg-purple-50 dark:bg-purple-900/20', text: 'text-purple-700 dark:text-purple-400' },
-  'Plan 4': { border: 'border-amber-200 dark:border-amber-800/50', bg: 'bg-amber-50 dark:bg-amber-900/20', text: 'text-amber-700 dark:text-amber-400' },
+  'Basic': { border: 'border-slate-200 dark:border-slate-700', bg: 'bg-slate-50 dark:bg-slate-900/30', text: 'text-slate-600 dark:text-slate-400' },
+  'Medium': { border: 'border-primary/30 dark:border-primary/20', bg: 'bg-primary/5 dark:bg-primary/10', text: 'text-primary dark:text-primary' },
+  'High': { border: 'border-amber-200 dark:border-amber-800/50', bg: 'bg-amber-50 dark:bg-amber-900/20', text: 'text-amber-700 dark:text-amber-400' },
 };
 
 // Mock activity per tenant for detail dialog
@@ -102,7 +101,7 @@ export default function TenantManagement() {
   const [formEmail, setFormEmail] = useState('');
   const [formPhone, setFormPhone] = useState('');
   const [formDomain, setFormDomain] = useState('');
-  const [formPlan, setFormPlan] = useState('Plan 1');
+  const [formPlan, setFormPlan] = useState('Basic');
 
   // Local tenant list for toggle/delete
   const [tenants, setTenants] = useState<Tenant[]>(mockTenants);
@@ -114,7 +113,7 @@ export default function TenantManagement() {
         statusFilter === 'all' || t.status === statusFilter;
       return matchesSearch && matchesStatus;
     });
-    const planOrder: Record<string, number> = { 'Plan 1': 0, 'Plan 2': 1, 'Plan 3': 2, 'Plan 4': 3 };
+    const planOrder: Record<string, number> = { 'Basic': 0, 'Medium': 1, 'High': 2 };
     result.sort((a, b) => {
       let cmp = 0;
       if (sortField === 'name') cmp = a.name.localeCompare(b.name);
@@ -159,7 +158,7 @@ export default function TenantManagement() {
     setFormEmail('');
     setFormPhone('');
     setFormDomain('');
-    setFormPlan('Plan 1');
+    setFormPlan('Basic');
   };
 
   const handleToggleStatus = (tenant: Tenant) => {
@@ -243,10 +242,9 @@ export default function TenantManagement() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Plan 1">Plan 1</SelectItem>
-                    <SelectItem value="Plan 2">Plan 2</SelectItem>
-                    <SelectItem value="Plan 3">Plan 3</SelectItem>
-                    <SelectItem value="Plan 4">Plan 4</SelectItem>
+                    <SelectItem value="Basic">Basic</SelectItem>
+                    <SelectItem value="Medium">Medium</SelectItem>
+                    <SelectItem value="High">High</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -504,7 +502,7 @@ export default function TenantManagement() {
                       </div>
                     </div>
                   </div>
-                  {selectedTenant.plan === 'Plan 4' && (
+                  {selectedTenant.plan === 'High' && (
                     <Crown className="h-5 w-5 text-amber-500" />
                   )}
                 </div>

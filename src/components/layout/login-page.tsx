@@ -2,7 +2,7 @@
 
 import { useAuthStore } from '@/features/auth/store';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Shield, Store, UserCheck, ArrowRight, Zap, Globe, Lock, Check, MoonStar } from 'lucide-react';
+import { Shield, Store, UserCheck, ArrowRight, Zap, Globe, Lock, Check, MoonStar, ArrowLeft, UserPlus, Crown } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
 import type { UserRole } from '@/lib/types';
@@ -10,7 +10,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const roles: { role: UserRole; title: string; description: string; icon: React.ElementType; color: string; bgColor: string; borderColor: string; hoverBorder: string; iconBg: string; gradientFrom: string; gradientTo: string }[] = [
   {
@@ -60,11 +60,29 @@ const features: { icon: React.ElementType; label: string; borderColor: string }[
   { icon: Lock, label: 'Secure', borderColor: 'border-amber-300 dark:border-amber-700' },
 ];
 
-export function LoginPage() {
+interface LoginPageProps {
+  onBack?: () => void;
+}
+
+export function LoginPage({ onBack }: LoginPageProps) {
   const { login } = useAuthStore();
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === 'dark';
+  const [mode, setMode] = useState<'signin' | 'register'>('signin');
+
+  // Registration state
+  const [regStore, setRegStore] = useState('');
+  const [regName, setRegName] = useState('');
+  const [regEmail, setRegEmail] = useState('');
+  const [regPhone, setRegPhone] = useState('');
+  const [regPassword, setRegPassword] = useState('');
+
+  const handleRegister = () => {
+    if (!regName || !regEmail || !regStore || !regPassword) return;
+    // In mock, just log in as tenant-admin
+    login('tenant-admin');
+  };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-muted/50 via-background to-muted/30 p-4 relative overflow-hidden">
@@ -75,6 +93,20 @@ export function LoginPage() {
       </div>
 
       <div className="w-full max-w-3xl space-y-8 relative z-10">
+        {/* Back Button */}
+        {onBack && (
+          <motion.div
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Button variant="ghost" className="text-muted-foreground hover:text-foreground -ml-2" onClick={onBack}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Home
+            </Button>
+          </motion.div>
+        )}
+
         {/* Header */}
         <motion.div
           className="text-center space-y-4"
@@ -118,7 +150,7 @@ export function LoginPage() {
           </div>
         </motion.div>
 
-        {/* Login Card */}
+        {/* Main Card */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -130,101 +162,224 @@ export function LoginPage() {
           )}>
             {/* Subtle background pattern */}
             <div className="pointer-events-none absolute inset-0 opacity-[0.025] dark:opacity-[0.04]" style={{backgroundImage: 'radial-gradient(circle, currentColor 1px, transparent 1px)', backgroundSize: '24px 24px'}} />
-            <CardHeader className="text-center pb-4 relative">
-              <CardTitle className="text-xl">Sign In</CardTitle>
-              <CardDescription className="flex items-center justify-center gap-1.5">
-                Select your role to explore the system
-                <span className="relative flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-                </span>
-                <span className="text-emerald-600 dark:text-emerald-400 font-medium">Demo Mode</span>
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" placeholder="admin@posnepal.com" defaultValue="admin@posnepal.com" className="dark:border-border/60" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input id="password" type="password" placeholder="••••••••" defaultValue="password" className="dark:border-border/60" />
-              </div>
-
-              <div className="space-y-3">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Select Role (Demo)</p>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  {roles.map(({ role, title, description, icon: Icon, color, bgColor, borderColor, hoverBorder, iconBg, gradientFrom, gradientTo }, i) => (
-                    <motion.button
-                      key={role}
-                      onClick={() => setSelectedRole(role)}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3, delay: 0.3 + i * 0.08 }}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      className={cn(
-                        'relative flex flex-col items-center gap-2.5 rounded-xl border-2 p-5 pt-6 text-center transition-all duration-200 hover:shadow-lg',
-                        selectedRole === role
-                          ? `${borderColor} ${bgColor} shadow-lg ring-1 ring-primary/20`
-                          : cn('border-border hover:border-primary/30', hoverBorder)
-                      )}
-                    >
-                      {/* Gradient top border */}
-                      <div className={cn('absolute top-0 left-3 right-3 h-[3px] rounded-b-full bg-gradient-to-r', gradientFrom, gradientTo, selectedRole === role ? 'opacity-100' : 'opacity-60')} />
-                      {/* Animated checkmark - left side */}
-                      <div className="absolute left-2 top-2">
-                        {selectedRole === role ? (
-                          <motion.div
-                            className={cn('flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-r', gradientFrom, gradientTo, 'text-white shadow-sm')}
-                            initial={{ scale: 0, rotate: -90 }}
-                            animate={{ scale: 1, rotate: 0 }}
-                            transition={{ type: 'spring', stiffness: 500, damping: 25 }}
-                          >
-                            <Check className="h-3 w-3" strokeWidth={3} />
-                          </motion.div>
-                        ) : (
-                          <div className="h-5 w-5 rounded-full border-2 border-muted-foreground/20" />
-                        )}
-                      </div>
-                      <div className={cn('flex h-12 w-12 items-center justify-center rounded-xl', iconBg)}>
-                        <Icon className={cn('h-6 w-6', color)} />
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold">{title}</p>
-                        <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">{description}</p>
-                      </div>
-                    </motion.button>
-                  ))}
-                </div>
-              </div>
-
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.6 }}
-              >
-                <Button
-                  className={cn(
-                    'w-full h-11 text-sm font-semibold gap-2 transition-all duration-200',
-                    'bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary hover:shadow-lg hover:shadow-primary/20',
-                    !selectedRole && 'opacity-50 cursor-not-allowed'
-                  )}
-                  size="lg"
-                  disabled={!selectedRole}
-                  onClick={() => selectedRole && login(selectedRole)}
-                >
-                  Sign In as {selectedRole ? roles.find(r => r.role === selectedRole)?.title : '...'}
-                  {selectedRole && <ArrowRight className="h-4 w-4" />}
-                </Button>
-                {selectedRole && (
-                  <p className="text-center text-[11px] text-muted-foreground">Press Enter to sign in</p>
+            
+            {/* Toggle: Sign In / Get Started */}
+            <div className="relative z-10 flex border-b">
+              <button
+                className={cn(
+                  'flex-1 py-4 text-sm font-semibold transition-all duration-200 relative',
+                  mode === 'signin' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground/80'
                 )}
-              </motion.div>
+                onClick={() => setMode('signin')}
+              >
+                Sign In
+                {mode === 'signin' && (
+                  <motion.div
+                    layoutId="auth-tab-indicator"
+                    className="absolute bottom-0 left-2 right-2 h-0.5 bg-primary rounded-full"
+                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                  />
+                )}
+              </button>
+              <button
+                className={cn(
+                  'flex-1 py-4 text-sm font-semibold transition-all duration-200 relative',
+                  mode === 'register' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground/80'
+                )}
+                onClick={() => setMode('register')}
+              >
+                <UserPlus className="h-3.5 w-3.5 inline mr-1.5 -mt-0.5" />
+                Get Started
+                {mode === 'register' && (
+                  <motion.div
+                    layoutId="auth-tab-indicator"
+                    className="absolute bottom-0 left-2 right-2 h-0.5 bg-primary rounded-full"
+                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                  />
+                )}
+              </button>
+            </div>
 
-              <p className="text-center text-[11px] text-muted-foreground relative">
-                This is a UI prototype with mock data. No real authentication.
-              </p>
+            <CardContent className="p-6 sm:p-8">
+              <AnimatePresence mode="wait">
+                {/* ==================== SIGN IN VIEW ==================== */}
+                {mode === 'signin' && (
+                  <motion.div
+                    key="signin"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    transition={{ duration: 0.25 }}
+                    className="space-y-6"
+                  >
+                    <div className="text-center">
+                      <CardTitle className="text-xl">Welcome Back</CardTitle>
+                      <CardDescription className="flex items-center justify-center gap-1.5 mt-1">
+                        Select your role to explore the system
+                        <span className="relative flex h-2 w-2">
+                          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                          <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                        </span>
+                        <span className="text-emerald-600 dark:text-emerald-400 font-medium">Demo Mode</span>
+                      </CardDescription>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email</Label>
+                      <Input id="email" type="email" placeholder="admin@posnepal.com" defaultValue="admin@posnepal.com" className="dark:border-border/60" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="password">Password</Label>
+                      <Input id="password" type="password" placeholder="••••••••" defaultValue="password" className="dark:border-border/60" />
+                    </div>
+
+                    <div className="space-y-3">
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Select Role (Demo)</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        {roles.map(({ role, title, description, icon: Icon, color, bgColor, borderColor, hoverBorder, iconBg, gradientFrom, gradientTo }, i) => (
+                          <motion.button
+                            key={role}
+                            onClick={() => setSelectedRole(role)}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.3, delay: i * 0.08 }}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            className={cn(
+                              'relative flex flex-col items-center gap-2.5 rounded-xl border-2 p-5 pt-6 text-center transition-all duration-200 hover:shadow-lg',
+                              selectedRole === role
+                                ? `${borderColor} ${bgColor} shadow-lg ring-1 ring-primary/20`
+                                : cn('border-border hover:border-primary/30', hoverBorder)
+                            )}
+                          >
+                            {/* Gradient top border */}
+                            <div className={cn('absolute top-0 left-3 right-3 h-[3px] rounded-b-full bg-gradient-to-r', gradientFrom, gradientTo, selectedRole === role ? 'opacity-100' : 'opacity-60')} />
+                            {/* Animated checkmark */}
+                            <div className="absolute left-2 top-2">
+                              {selectedRole === role ? (
+                                <motion.div
+                                  className={cn('flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-r', gradientFrom, gradientTo, 'text-white shadow-sm')}
+                                  initial={{ scale: 0, rotate: -90 }}
+                                  animate={{ scale: 1, rotate: 0 }}
+                                  transition={{ type: 'spring', stiffness: 500, damping: 25 }}
+                                >
+                                  <Check className="h-3 w-3" strokeWidth={3} />
+                                </motion.div>
+                              ) : (
+                                <div className="h-5 w-5 rounded-full border-2 border-muted-foreground/20" />
+                              )}
+                            </div>
+                            <div className={cn('flex h-12 w-12 items-center justify-center rounded-xl', iconBg)}>
+                              <Icon className={cn('h-6 w-6', color)} />
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold">{title}</p>
+                              <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">{description}</p>
+                            </div>
+                          </motion.button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.4 }}
+                    >
+                      <Button
+                        className={cn(
+                          'w-full h-11 text-sm font-semibold gap-2 transition-all duration-200',
+                          'bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary hover:shadow-lg hover:shadow-primary/20',
+                          !selectedRole && 'opacity-50 cursor-not-allowed'
+                        )}
+                        size="lg"
+                        disabled={!selectedRole}
+                        onClick={() => selectedRole && login(selectedRole)}
+                      >
+                        Sign In as {selectedRole ? roles.find(r => r.role === selectedRole)?.title : '...'}
+                        {selectedRole && <ArrowRight className="h-4 w-4" />}
+                      </Button>
+                    </motion.div>
+                  </motion.div>
+                )}
+
+                {/* ==================== REGISTER VIEW ==================== */}
+                {mode === 'register' && (
+                  <motion.div
+                    key="register"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.25 }}
+                    className="space-y-4"
+                  >
+                    <div className="text-center">
+                      <CardTitle className="text-xl flex items-center justify-center gap-2">
+                        <UserPlus className="h-5 w-5" />
+                        Create Your Account
+                      </CardTitle>
+                      <CardDescription className="mt-1">Start your 7-day free trial. No credit card required.</CardDescription>
+                    </div>
+
+                    {/* Free trial banner */}
+                    <div className="rounded-lg border border-emerald-200 dark:border-emerald-800/50 bg-emerald-50 dark:bg-emerald-900/20 p-3">
+                      <div className="flex items-start gap-2">
+                        <Crown className="h-4 w-4 text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0" />
+                        <div className="text-xs text-emerald-700 dark:text-emerald-300">
+                          <p className="font-medium">Free Plan — 7-Day Trial</p>
+                          <p className="mt-0.5 opacity-80">Get started with basic POS features. Upgrade anytime.</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid gap-2">
+                      <Label htmlFor="reg-store">Store / Business Name *</Label>
+                      <Input id="reg-store" placeholder="e.g. ABC Store" value={regStore} onChange={e => setRegStore(e.target.value)} />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="reg-name">Full Name *</Label>
+                      <Input id="reg-name" placeholder="Your full name" value={regName} onChange={e => setRegName(e.target.value)} />
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="grid gap-2">
+                        <Label htmlFor="reg-email">Email *</Label>
+                        <Input id="reg-email" type="email" placeholder="you@email.com" value={regEmail} onChange={e => setRegEmail(e.target.value)} />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="reg-phone">Phone</Label>
+                        <Input id="reg-phone" placeholder="+977-98..." value={regPhone} onChange={e => setRegPhone(e.target.value)} />
+                      </div>
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="reg-password">Password *</Label>
+                      <Input id="reg-password" type="password" placeholder="Min 8 characters" value={regPassword} onChange={e => setRegPassword(e.target.value)} />
+                    </div>
+
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.3 }}
+                    >
+                      <Button
+                        className={cn(
+                          'w-full h-11 text-sm font-semibold gap-2 transition-all duration-200',
+                          'bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary hover:shadow-lg hover:shadow-primary/20',
+                          (!regName || !regEmail || !regStore || !regPassword) && 'opacity-50 cursor-not-allowed'
+                        )}
+                        size="lg"
+                        disabled={!regName || !regEmail || !regStore || !regPassword}
+                        onClick={handleRegister}
+                      >
+                        Create Account & Start Free Trial
+                        <ArrowRight className="h-4 w-4" />
+                      </Button>
+                      <p className="text-center text-[11px] text-muted-foreground mt-3">
+                        This is a UI prototype with mock data. No real authentication.
+                      </p>
+                    </motion.div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </CardContent>
           </Card>
         </motion.div>
