@@ -23,6 +23,8 @@ import SAReferrals from '@/features/super-admin/referrals/components/sa-referral
 import SAProfile from '@/features/super-admin/profile/components/sa-profile';
 import SAPayment from '@/features/super-admin/payment/components/sa-payment';
 import SASupportTickets from '@/features/super-admin/support-tickets/components/sa-support-tickets';
+import SATermsConditions from '@/features/super-admin/terms-conditions/components/sa-terms-conditions';
+import SAPrivacyPolicy from '@/features/super-admin/privacy-policy/components/sa-privacy-policy';
 
 // Super Admin - Tenant View pages
 import SaTenantOverview from '@/features/super-admin/tenant-view/components/sa-tenant-overview';
@@ -70,6 +72,8 @@ const sectionComponents: Record<NavSection, React.ComponentType> = {
   'sa-profile': SAProfile,
   'sa-payment': SAPayment,
   'sa-support-tickets': SASupportTickets,
+  'sa-terms-conditions': SATermsConditions,
+  'sa-privacy-policy': SAPrivacyPolicy,
   // Super Admin - Tenant View
   'sa-tenant-overview': SaTenantOverview,
   'sa-tenant-billing': SaTenantBilling,

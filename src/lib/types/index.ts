@@ -48,6 +48,8 @@ export type NavSection =
   | 'sa-tenant-vendors'
   | 'sa-payment'
   | 'sa-support-tickets'
+  | 'sa-terms-conditions'
+  | 'sa-privacy-policy'
   // Tenant Admin
   | 'tenant-dashboard'
   | 'tenant-support'

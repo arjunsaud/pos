@@ -39,6 +39,8 @@ import {
   MapPin,
   Wallet,
   Headphones,
+  FileText,
+  ShieldCheck as ShieldCheckIcon,
   type LucideIcon,
 } from 'lucide-react';
 import { CommandPalette } from '@/components/layout/command-palette';
@@ -81,6 +83,13 @@ const superAdminGlobalMenu: SidebarGroup[] = [
     items: [
       { label: 'Payment', section: 'sa-payment', icon: Wallet },
       { label: 'Support Tickets', section: 'sa-support-tickets', icon: Headphones },
+    ],
+  },
+  {
+    title: 'Legal',
+    items: [
+      { label: 'Terms & Conditions', section: 'sa-terms-conditions', icon: FileText },
+      { label: 'Privacy Policy', section: 'sa-privacy-policy', icon: ShieldCheckIcon },
     ],
   },
   {

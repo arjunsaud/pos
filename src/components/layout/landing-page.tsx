@@ -70,6 +70,7 @@ import {
   Crown,
   Sparkles,
   AlertTriangle,
+  FileText,
 } from 'lucide-react';
 
 /* ------------------------------------------------------------------ */
@@ -124,7 +125,6 @@ const navLinks = [
   { label: 'Pricing', href: '#pricing' },
   { label: 'Testimonials', href: '#testimonials' },
   { label: 'FAQ', href: '#faq' },
-  { label: 'Referral', href: '#referral' },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -149,6 +149,10 @@ export default function LandingPage({ onSignIn }: { onSignIn: () => void }) {
 
   // Trial expired popup
   const [showTrialPopup, setShowTrialPopup] = useState(false);
+
+  // Legal pages
+  const [showTerms, setShowTerms] = useState(false);
+  const [showPrivacy, setShowPrivacy] = useState(false);
 
   const getPrice = (monthlyPrice: number) => {
     if (billingCycle === 'yearly') {
@@ -540,7 +544,7 @@ export default function LandingPage({ onSignIn }: { onSignIn: () => void }) {
       {/* ============================================================ */}
       <footer className="border-t bg-muted/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-5">
             <div>
               <div className="flex items-center gap-2.5 mb-4">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground"><Monitor className="h-4 w-4" /></div>
@@ -571,6 +575,13 @@ export default function LandingPage({ onSignIn }: { onSignIn: () => void }) {
                 <li>Kathmandu, Nepal</li>
                 <li>info@posnepal.com</li>
                 <li>+977-9800000000</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-3">Legal</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li><button onClick={() => setShowTerms(true)} className="hover:text-foreground transition-colors flex items-center gap-1.5"><FileText className="h-3.5 w-3.5" /> Terms & Conditions</button></li>
+                <li><button onClick={() => setShowPrivacy(true)} className="hover:text-foreground transition-colors flex items-center gap-1.5"><FileText className="h-3.5 w-3.5" /> Privacy Policy</button></li>
               </ul>
             </div>
           </div>
@@ -712,6 +723,84 @@ export default function LandingPage({ onSignIn }: { onSignIn: () => void }) {
                 View All Plans <ArrowRight className="ml-1 h-4 w-4" />
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ============================================================ */}
+      {/*  TERMS & CONDITIONS DIALOG                                     */}
+      {/* ============================================================ */}
+      <Dialog open={showTerms} onOpenChange={setShowTerms}>
+        <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><FileText className="h-5 w-5" /> Terms & Conditions</DialogTitle>
+            <DialogDescription>Last updated: June 15, 2025</DialogDescription>
+          </DialogHeader>
+          <div className="prose prose-sm dark:prose-invert max-w-none mt-2">
+            <h2 className="text-lg font-semibold">1. Acceptance of Terms</h2>
+            <p className="text-sm text-muted-foreground">By accessing and using POS Nepal (&quot;the Service&quot;), you agree to be bound by these Terms and Conditions. If you do not agree to these terms, please do not use the Service.</p>
+            <h2 className="text-lg font-semibold mt-4">2. Description of Service</h2>
+            <p className="text-sm text-muted-foreground">POS Nepal is a multi-tenant Point of Sale, Inventory Management, and Billing System designed for businesses in Nepal.</p>
+            <h2 className="text-lg font-semibold mt-4">3. User Accounts</h2>
+            <ul className="text-sm text-muted-foreground list-disc pl-5 space-y-1">
+              <li>You must provide accurate and complete information when creating an account</li>
+              <li>You are responsible for maintaining the confidentiality of your account</li>
+              <li>You must notify us immediately of any unauthorized use</li>
+            </ul>
+            <h2 className="text-lg font-semibold mt-4">4. Subscription and Payment</h2>
+            <ul className="text-sm text-muted-foreground list-disc pl-5 space-y-1">
+              <li>Subscription fees are billed in NPR (Nepali Rupees)</li>
+              <li>Payment can be made via eSewa, Khalti, bank transfer, or QR code</li>
+              <li>Receipts must be uploaded within 24 hours of payment</li>
+            </ul>
+            <h2 className="text-lg font-semibold mt-4">5. Free Trial</h2>
+            <p className="text-sm text-muted-foreground">New accounts receive a 7-day free trial. No credit card is required for the trial.</p>
+            <h2 className="text-lg font-semibold mt-4">6. Data and Privacy</h2>
+            <p className="text-sm text-muted-foreground">We collect and process data in accordance with our Privacy Policy. By using the Service, you consent to the collection and use of your information.</p>
+            <h2 className="text-lg font-semibold mt-4">7. Limitation of Liability</h2>
+            <p className="text-sm text-muted-foreground">POS Nepal shall not be liable for any indirect, incidental, special, or consequential damages resulting from the use or inability to use the Service.</p>
+            <h2 className="text-lg font-semibold mt-4">8. Contact</h2>
+            <p className="text-sm text-muted-foreground">For questions about these Terms, contact us at legal@posnepal.com</p>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ============================================================ */}
+      {/*  PRIVACY POLICY DIALOG                                          */}
+      {/* ============================================================ */}
+      <Dialog open={showPrivacy} onOpenChange={setShowPrivacy}>
+        <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Shield className="h-5 w-5" /> Privacy Policy</DialogTitle>
+            <DialogDescription>Last updated: June 15, 2025</DialogDescription>
+          </DialogHeader>
+          <div className="prose prose-sm dark:prose-invert max-w-none mt-2">
+            <h2 className="text-lg font-semibold">1. Information We Collect</h2>
+            <ul className="text-sm text-muted-foreground list-disc pl-5 space-y-1">
+              <li><strong>Account Information:</strong> Name, email, phone number, business name, PAN number</li>
+              <li><strong>Transaction Data:</strong> Sales records, inventory data, billing information</li>
+              <li><strong>Usage Data:</strong> Login times, feature usage, device information</li>
+              <li><strong>Payment Data:</strong> Payment method preferences, transaction receipts</li>
+            </ul>
+            <h2 className="text-lg font-semibold mt-4">2. How We Use Your Information</h2>
+            <ul className="text-sm text-muted-foreground list-disc pl-5 space-y-1">
+              <li>To provide and maintain the POS service</li>
+              <li>To process payments and manage subscriptions</li>
+              <li>To improve our service and develop new features</li>
+              <li>To comply with legal obligations in Nepal</li>
+            </ul>
+            <h2 className="text-lg font-semibold mt-4">3. Data Storage and Security</h2>
+            <p className="text-sm text-muted-foreground">All data is encrypted at rest and in transit. We use industry-standard security measures. Access to personal data is restricted to authorized personnel only.</p>
+            <h2 className="text-lg font-semibold mt-4">4. Data Sharing</h2>
+            <p className="text-sm text-muted-foreground">We do not sell, trade, or rent your personal information to third parties. We may share data with payment processors (eSewa, Khalti), legal authorities when required by Nepali law, and trusted service providers.</p>
+            <h2 className="text-lg font-semibold mt-4">5. Your Rights</h2>
+            <ul className="text-sm text-muted-foreground list-disc pl-5 space-y-1">
+              <li>Access and download your data at any time</li>
+              <li>Request correction of inaccurate information</li>
+              <li>Request deletion of your account and data</li>
+            </ul>
+            <h2 className="text-lg font-semibold mt-4">6. Contact Us</h2>
+            <p className="text-sm text-muted-foreground">For privacy-related inquiries, contact us at privacy@posnepal.com</p>
           </div>
         </DialogContent>
       </Dialog>

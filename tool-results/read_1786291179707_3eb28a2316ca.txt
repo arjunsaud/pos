@@ -1,0 +1,557 @@
+   165→  };
+   166→
+   167→  const handleRegister = () => {
+   168→    if (!regName || !regEmail || !regStore || !regPassword) return;
+   169→    setShowRegister(false);
+   170→    onSignIn();
+   171→  };
+   172→
+   173→  return (
+   174→    <div className="min-h-screen flex flex-col bg-background text-foreground">
+   175→      {/* ============================================================ */}
+   176→      {/*  NAVBAR                                                      */}
+   177→      {/* ============================================================ */}
+   178→      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+   179→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+   180→          <div className="flex items-center gap-2.5">
+   181→            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+   182→              <Monitor className="h-5 w-5" />
+   183→            </div>
+   184→            <span className="text-lg font-bold">POS Nepal</span>
+   185→          </div>
+   186→
+   187→          <nav className="hidden lg:flex items-center gap-6 text-sm font-medium text-muted-foreground">
+   188→            {navLinks.map((link) => (
+   189→              <a key={link.href} href={link.href} className="hover:text-foreground transition-colors">{link.label}</a>
+   190→            ))}
+   191→          </nav>
+   192→
+   193→          <div className="flex items-center gap-2">
+   194→            <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}>
+   195→              <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+   196→              <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+   197→            </Button>
+   198→            <Button variant="outline" className="hidden sm:flex" onClick={onSignIn}>Sign In</Button>
+   199→            <Button className="hidden sm:flex" onClick={() => setShowRegister(true)}>Get Started</Button>
+   200→            <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setMobileMenu(!mobileMenu)}>
+   201→              {mobileMenu ? <XIcon className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+   202→            </Button>
+   203→          </div>
+   204→        </div>
+   205→
+   206→        {mobileMenu && (
+   207→          <div className="lg:hidden border-t px-4 py-4 space-y-3">
+   208→            {navLinks.map((link) => (
+   209→              <a key={link.href} href={link.href} className="block text-sm font-medium" onClick={() => setMobileMenu(false)}>{link.label}</a>
+   210→            ))}
+   211→            <Separator />
+   212→            <div className="flex gap-2">
+   213→              <Button variant="outline" className="flex-1" onClick={() => { setMobileMenu(false); onSignIn(); }}>Sign In</Button>
+   214→              <Button className="flex-1" onClick={() => { setMobileMenu(false); setShowRegister(true); }}>Get Started</Button>
+   215→            </div>
+   216→          </div>
+   217→        )}
+   218→      </header>
+   219→
+   220→      <main className="flex-1">
+   221→        {/* ============================================================ */}
+   222→        {/*  HERO                                                        */}
+   223→        {/* ============================================================ */}
+   224→        <section className="relative overflow-hidden">
+   225→          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5" />
+   226→          <div className="absolute -top-40 -right-40 h-[500px] w-[500px] rounded-full bg-primary/10 blur-3xl" />
+   227→          <div className="absolute -bottom-40 -left-40 h-[400px] w-[400px] rounded-full bg-primary/5 blur-3xl" />
+   228→
+   229→          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-32 text-center">
+   230→            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+   231→              <Badge variant="secondary" className="mb-6 px-4 py-1.5 text-sm">
+   232→                <Zap className="h-3.5 w-3.5 mr-1.5" /> Trusted by 500+ businesses across Nepal
+   233→              </Badge>
+   234→              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight max-w-4xl mx-auto leading-tight">
+   235→                Streamline Your Business with{' '}<span className="text-primary">POS Nepal</span>
+   236→              </h1>
+   237→              <p className="mt-6 text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+   238→                Multi-tenant Point of Sale, Inventory Management & Billing System designed specifically for Nepali businesses. Built-in VAT, PAN support, and more.
+   239→              </p>
+   240→              <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+   241→                <Button size="lg" className="text-base px-8 h-12" onClick={() => setShowRegister(true)}>
+   242→                  Get Started Free <ArrowRight className="ml-2 h-4 w-4" />
+   243→                </Button>
+   244→                <Button size="lg" variant="outline" className="text-base px-8 h-12" onClick={() => setShowTrialPopup(true)}>
+   245→                  <Clock className="mr-2 h-4 w-4" /> View Demo
+   246→                </Button>
+   247→              </div>
+   248→              <div className="mt-12 flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground">
+   249→                <span className="flex items-center gap-1.5"><Check className="h-4 w-4 text-emerald-500" /> 7-day free trial</span>
+   250→                <span className="flex items-center gap-1.5"><Check className="h-4 w-4 text-emerald-500" /> No credit card required</span>
+   251→                <span className="flex items-center gap-1.5"><Check className="h-4 w-4 text-emerald-500" /> Cancel anytime</span>
+   252→              </div>
+   253→            </motion.div>
+   254→          </div>
+   255→        </section>
+   256→
+   257→        {/* ============================================================ */}
+   258→        {/*  FEATURES                                                    */}
+   259→        {/* ============================================================ */}
+   260→        <section id="features" className="py-20 bg-muted/30">
+   261→          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   262→            <motion.div className="text-center mb-14" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.4 }}>
+   263→              <h2 className="text-3xl sm:text-4xl font-bold">Everything You Need</h2>
+   264→              <p className="mt-3 text-lg text-muted-foreground max-w-2xl mx-auto">Powerful features to manage your retail business efficiently</p>
+   265→            </motion.div>
+   266→            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+   267→              {features.map((f, i) => (
+   268→                <motion.div key={f.title} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1, duration: 0.4 }}>
+   269→                  <Card className="h-full transition-shadow hover:shadow-lg">
+   270→                    <CardContent className="p-6">
+   271→                      <div className={cn('h-12 w-12 rounded-xl flex items-center justify-center mb-4', f.bg)}>
+   272→                        <f.icon className={cn('h-6 w-6', f.color)} />
+   273→                      </div>
+   274→                      <h3 className="text-lg font-semibold mb-2">{f.title}</h3>
+   275→                      <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
+   276→                    </CardContent>
+   277→                  </Card>
+   278→                </motion.div>
+   279→              ))}
+   280→            </div>
+   281→          </div>
+   282→        </section>
+   283→
+   284→        {/* ============================================================ */}
+   285→        {/*  HOW IT WORKS                                                */}
+   286→        {/* ============================================================ */}
+   287→        <section id="how-it-works" className="py-20">
+   288→          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   289→            <motion.div className="text-center mb-14" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.4 }}>
+   290→              <h2 className="text-3xl sm:text-4xl font-bold">How It Works</h2>
+   291→              <p className="mt-3 text-lg text-muted-foreground max-w-2xl mx-auto">Get up and running in four simple steps</p>
+   292→            </motion.div>
+   293→            <div className="relative">
+   294→              <div className="hidden md:block absolute top-12 left-[calc(12.5%+1.5rem)] right-[calc(12.5%+1.5rem)] h-0.5 bg-border" />
+   295→              <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+   296→                {steps.map((step, i) => (
+   297→                  <motion.div key={step.title} className="flex flex-col items-center text-center" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.15, duration: 0.4 }}>
+   298→                    <div className="relative z-10 flex h-24 w-24 items-center justify-center rounded-full bg-background border-2 border-primary shadow-sm">
+   299→                      <step.icon className="h-10 w-10 text-primary" />
+   300→                    </div>
+   301→                    <span className="mt-4 inline-flex items-center justify-center h-6 w-6 rounded-full bg-primary text-primary-foreground text-xs font-bold">{i + 1}</span>
+   302→                    <h3 className="mt-3 text-base font-semibold">{step.title}</h3>
+   303→                    <p className="mt-2 text-sm text-muted-foreground max-w-[220px]">{step.desc}</p>
+   304→                  </motion.div>
+   305→                ))}
+   306→              </div>
+   307→            </div>
+   308→          </div>
+   309→        </section>
+   310→
+   311→        {/* ============================================================ */}
+   312→        {/*  PRICING                                                     */}
+   313→        {/* ============================================================ */}
+   314→        <section id="pricing" className="py-20 bg-muted/30">
+   315→          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   316→            <motion.div className="text-center mb-14" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.4 }}>
+   317→              <h2 className="text-3xl sm:text-4xl font-bold">Simple, Transparent Pricing</h2>
+   318→              <p className="mt-3 text-lg text-muted-foreground">Choose the plan that fits your business</p>
+   319→
+   320→              {/* Billing Toggle */}
+   321→              <div className="mt-8 flex items-center justify-center gap-3">
+   322→                <span className={cn('text-sm font-medium', billingCycle === 'monthly' ? 'text-foreground' : 'text-muted-foreground')}>Monthly</span>
+   323→                <button
+   324→                  onClick={() => setBillingCycle(billingCycle === 'monthly' ? 'yearly' : 'monthly')}
+   325→                  className={cn(
+   326→                    'relative h-7 w-12 rounded-full transition-colors duration-200',
+   327→                    billingCycle === 'yearly' ? 'bg-primary' : 'bg-muted'
+   328→                  )}
+   329→                >
+   330→                  <motion.div
+   331→                    className="absolute top-0.5 h-6 w-6 rounded-full bg-white shadow-sm"
+   332→                    animate={{ left: billingCycle === 'yearly' ? '22px' : '2px' }}
+   333→                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+   334→                  />
+   335→                </button>
+   336→                <span className={cn('text-sm font-medium', billingCycle === 'yearly' ? 'text-foreground' : 'text-muted-foreground')}>Annually</span>
+   337→                {billingCycle === 'yearly' && (
+   338→                  <Badge className="bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 border-rose-200 dark:border-rose-800/50 text-xs px-2 py-0.5">
+   339→                    <Sparkles className="h-3 w-3 mr-1" /> Save {ANNUAL_DISCOUNT}%
+   340→                  </Badge>
+   341→                )}
+   342→              </div>
+   343→
+   344→              {billingCycle === 'yearly' && (
+   345→                <motion.p
+   346→                  initial={{ opacity: 0, y: -5 }}
+   347→                  animate={{ opacity: 1, y: 0 }}
+   348→                  className="mt-3 text-sm text-rose-600 dark:text-rose-400 font-medium"
+   349→                >
+   350→                  🎉 Limited Time Offer: Get {ANNUAL_DISCOUNT}% off on annual plans!
+   351→                </motion.p>
+   352→              )}
+   353→            </motion.div>
+   354→
+   355→            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+   356→              {mockPackages.map((plan, i) => {
+   357→                const price = getPrice(plan.price);
+   358→                const isYearly = billingCycle === 'yearly';
+   359→                return (
+   360→                  <motion.div key={plan.id} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1, duration: 0.4 }}>
+   361→                    <Card className={cn('relative h-full flex flex-col transition-shadow hover:shadow-lg', plan.popular && 'border-primary shadow-md ring-1 ring-primary/20')}>
+   362→                      {plan.popular && (
+   363→                        <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+   364→                          <Badge className="px-3 py-1"><Star className="h-3 w-3 mr-1" /> Most Popular</Badge>
+   365→                        </div>
+   366→                      )}
+   367→
+   368→                      <CardHeader className="text-center pb-2">
+   369→                        <CardTitle className="text-xl">{plan.name}</CardTitle>
+   370→                        <div className="mt-4">
+   371→                          {isYearly && (
+   372→                            <div className="flex items-center justify-center gap-2 mb-1">
+   373→                              <span className="text-sm text-muted-foreground line-through">NPR {nprFull(plan.price * 12)}</span>
+   374→                              <Badge className="bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 border-rose-200 dark:border-rose-800/50 text-[10px] px-1.5 py-0">-{ANNUAL_DISCOUNT}%</Badge>
+   375→                            </div>
+   376→                          )}
+   377→                          <span className="text-sm text-muted-foreground">NPR </span>
+   378→                          <span className="text-4xl font-extrabold">{nprFull(isYearly ? price.monthly : plan.price)}</span>
+   379→                          <span className="text-muted-foreground">/{isYearly ? 'mo' : 'month'}</span>
+   380→                          {isYearly && (
+   381→                            <p className="text-xs text-muted-foreground mt-1">Billed NPR {nprFull(price.yearly)}/year</p>
+   382→                          )}
+   383→                        </div>
+   384→                      </CardHeader>
+   385→
+   386→                      <CardContent className="flex-1 flex flex-col pt-0">
+   387→                        <ul className="space-y-1.5 text-sm mb-4 pb-4 border-b">
+   388→                          <li className="flex justify-between"><span className="text-muted-foreground">Max Products</span><span className="font-medium">{plan.maxProducts.toLocaleString()}</span></li>
+   389→                          <li className="flex justify-between"><span className="text-muted-foreground">Staff Accounts</span><span className="font-medium">{plan.maxStaff}</span></li>
+   390→                          <li className="flex justify-between"><span className="text-muted-foreground">Analytics</span><span className="font-medium capitalize">{plan.analytics}</span></li>
+   391→                          <li className="flex justify-between"><span className="text-muted-foreground">Support</span><span className="font-medium capitalize">{plan.support}</span></li>
+   392→                        </ul>
+   393→
+   394→                        <ul className="space-y-2 flex-1 mb-6">
+   395→                          {featureToggles.map((ft) => {
+   396→                            const enabled = plan[ft.key] as boolean;
+   397→                            return (
+   398→                              <li key={ft.key} className="flex items-center gap-2 text-sm">
+   399→                                {enabled
+   400→                                  ? <Check className="h-4 w-4 text-emerald-500 shrink-0" />
+   401→                                  : <X className="h-4 w-4 text-muted-foreground/40 shrink-0" />
+   402→                                }
+   403→                                <span className={cn(!enabled && 'text-muted-foreground/60')}>{ft.label}</span>
+   404→                              </li>
+   405→                            );
+   406→                          })}
+   407→                        </ul>
+   408→
+   409→                        <Button className="w-full" variant={plan.popular ? 'default' : 'outline'} onClick={() => setShowRegister(true)}>
+   410→                          Get Started <ChevronRight className="ml-1 h-4 w-4" />
+   411→                        </Button>
+   412→                      </CardContent>
+   413→                    </Card>
+   414→                  </motion.div>
+   415→                );
+   416→              })}
+   417→            </div>
+   418→
+   419→            {/* Free Plan Banner */}
+   420→            <div className="mt-10">
+   421→              <Card className="border-dashed border-2 border-primary/30 bg-primary/5">
+   422→                <CardContent className="p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+   423→                  <div className="flex items-center gap-4">
+   424→                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+   425→                      <Crown className="h-6 w-6 text-primary" />
+   426→                    </div>
+   427→                    <div>
+   428→                      <h3 className="font-semibold">Free Plan — 7-Day Trial</h3>
+   429→                      <p className="text-sm text-muted-foreground">Start with basic POS features free for 7 days. No credit card needed. Upgrade anytime.</p>
+   430→                    </div>
+   431→                  </div>
+   432→                  <Button onClick={() => setShowRegister(true)}>
+   433→                    Start Free Trial <ArrowRight className="ml-2 h-4 w-4" />
+   434→                  </Button>
+   435→                </CardContent>
+   436→              </Card>
+   437→            </div>
+   438→
+   439→            {/* Promo Code */}
+   440→            <div className="mt-6 max-w-md mx-auto">
+   441→              <div className="flex gap-2">
+   442→                <Input placeholder="Enter promo code..." value={promoCode} onChange={(e) => { setPromoCode(e.target.value); setAppliedPromo(''); }} className="h-10 font-mono" onKeyDown={(e) => e.key === 'Enter' && handleApplyPromo()} />
+   443→                <Button variant="outline" onClick={handleApplyPromo}>Apply</Button>
+   444→              </div>
+   445→              {appliedPromo && (
+   446→                <motion.p initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} className="mt-2 text-sm text-emerald-600 dark:text-emerald-400 font-medium">
+   447→                  <Gift className="h-3.5 w-3.5 inline mr-1" /> Code &quot;{appliedPromo}&quot; applied! Discount will be reflected at checkout.
+   448→                </motion.p>
+   449→              )}
+   450→            </div>
+   451→          </div>
+   452→        </section>
+   453→
+   454→        {/* ============================================================ */}
+   455→        {/*  TESTIMONIALS                                                */}
+   456→        {/* ============================================================ */}
+   457→        <section id="testimonials" className="py-20">
+   458→          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   459→            <motion.div className="text-center mb-14" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.4 }}>
+   460→              <h2 className="text-3xl sm:text-4xl font-bold">Loved by Businesses Across Nepal</h2>
+   461→              <p className="mt-3 text-lg text-muted-foreground max-w-2xl mx-auto">See what our customers have to say about POS Nepal</p>
+   462→            </motion.div>
+   463→            <div className="grid gap-6 md:grid-cols-3">
+   464→              {testimonials.map((t, i) => (
+   465→                <motion.div key={t.name} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1, duration: 0.4 }}>
+   466→                  <Card className="h-full">
+   467→                    <CardContent className="p-6 flex flex-col">
+   468→                      <div className="flex gap-0.5 mb-4">
+   469→                        {Array.from({ length: t.stars }).map((_, si) => (
+   470→                          <Star key={si} className="h-4 w-4 fill-amber-400 text-amber-400" />
+   471→                        ))}
+   472→                      </div>
+   473→                      <blockquote className="flex-1 text-sm leading-relaxed text-muted-foreground">
+   474→                        <Quote className="h-4 w-4 text-primary/30 mb-2 block" />
+   475→                        &ldquo;{t.quote}&rdquo;
+   476→                      </blockquote>
+   477→                      <Separator className="my-4" />
+   478→                      <div>
+   479→                        <p className="text-sm font-semibold">{t.name}</p>
+   480→                        <p className="text-xs text-muted-foreground">{t.role}</p>
+   481→                      </div>
+   482→                    </CardContent>
+   483→                  </Card>
+   484→                </motion.div>
+   485→              ))}
+   486→            </div>
+   487→          </div>
+   488→        </section>
+   489→
+   490→        {/* ============================================================ */}
+   491→        {/*  FAQ                                                         */}
+   492→        {/* ============================================================ */}
+   493→        <section id="faq" className="py-20 bg-muted/30">
+   494→          <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+   495→            <motion.div className="text-center mb-14" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.4 }}>
+   496→              <h2 className="text-3xl sm:text-4xl font-bold">Frequently Asked Questions</h2>
+   497→              <p className="mt-3 text-lg text-muted-foreground">Got questions? We&apos;ve got answers.</p>
+   498→            </motion.div>
+   499→            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.4 }}>
+   500→              <Accordion type="single" collapsible className="w-full">
+   501→                {faqs.map((faq, i) => (
+   502→                  <AccordionItem key={i} value={`faq-${i}`}>
+   503→                    <AccordionTrigger className="text-left">{faq.q}</AccordionTrigger>
+   504→                    <AccordionContent className="text-muted-foreground">{faq.a}</AccordionContent>
+   505→                  </AccordionItem>
+   506→                ))}
+   507→              </Accordion>
+   508→            </motion.div>
+   509→          </div>
+   510→        </section>
+   511→
+   512→        {/* ============================================================ */}
+   513→        {/*  REFERRAL CTA                                                */}
+   514→        {/* ============================================================ */}
+   515→        <section id="referral" className="py-20">
+   516→          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+   517→            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.4 }}>
+   518→              <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 mb-6">
+   519→                <Gift className="h-8 w-8 text-primary" />
+   520→              </div>
+   521→              <h2 className="text-3xl sm:text-4xl font-bold">Refer a Friend, Earn Rewards</h2>
+   522→              <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
+   523→                Share your unique referral link with other businesses. When they sign up, you both get a discount on your subscription.
+   524→              </p>
+   525→              <div className="mt-10 grid sm:grid-cols-3 gap-6">
+   526→                <Card><CardContent className="p-6 text-center"><p className="text-3xl font-extrabold text-primary">20%</p><p className="text-sm text-muted-foreground mt-1">Discount per referral</p></CardContent></Card>
+   527→                <Card><CardContent className="p-6 text-center"><p className="text-3xl font-extrabold text-primary">Unlimited</p><p className="text-sm text-muted-foreground mt-1">Referrals allowed</p></CardContent></Card>
+   528→                <Card><CardContent className="p-6 text-center"><p className="text-3xl font-extrabold text-primary">Instant</p><p className="text-sm text-muted-foreground mt-1">Reward application</p></CardContent></Card>
+   529→              </div>
+   530→              <Button size="lg" className="mt-10 text-base px-8 h-12" onClick={() => setShowRegister(true)}>
+   531→                Start Referring <ArrowRight className="ml-2 h-4 w-4" />
+   532→              </Button>
+   533→            </motion.div>
+   534→          </div>
+   535→        </section>
+   536→      </main>
+   537→
+   538→      {/* ============================================================ */}
+   539→      {/*  FOOTER                                                      */}
+   540→      {/* ============================================================ */}
+   541→      <footer className="border-t bg-muted/30">
+   542→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+   543→          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+   544→            <div>
+   545→              <div className="flex items-center gap-2.5 mb-4">
+   546→                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground"><Monitor className="h-4 w-4" /></div>
+   547→                <span className="font-bold">POS Nepal</span>
+   548→              </div>
+   549→              <p className="text-sm text-muted-foreground leading-relaxed">Multi-tenant POS, Inventory & Billing System built for Nepali businesses.</p>
+   550→            </div>
+   551→            <div>
+   552→              <h4 className="font-semibold mb-3">Product</h4>
+   553→              <ul className="space-y-2 text-sm text-muted-foreground">
+   554→                <li><a href="#features" className="hover:text-foreground transition-colors">Features</a></li>
+   555→                <li><a href="#pricing" className="hover:text-foreground transition-colors">Pricing</a></li>
+   556→                <li><a href="#how-it-works" className="hover:text-foreground transition-colors">How It Works</a></li>
+   557→                <li><a href="#referral" className="hover:text-foreground transition-colors">Referral Program</a></li>
+   558→              </ul>
+   559→            </div>
+   560→            <div>
+   561→              <h4 className="font-semibold mb-3">Support</h4>
+   562→              <ul className="space-y-2 text-sm text-muted-foreground">
+   563→                <li className="flex items-center gap-1.5"><Headphones className="h-3.5 w-3.5" /> 24/7 Support</li>
+   564→                <li className="flex items-center gap-1.5"><TrendingUp className="h-3.5 w-3.5" /> Help Center</li>
+   565→                <li className="flex items-center gap-1.5"><Lock className="h-3.5 w-3.5" /> Privacy Policy</li>
+   566→              </ul>
+   567→            </div>
+   568→            <div>
+   569→              <h4 className="font-semibold mb-3">Contact</h4>
+   570→              <ul className="space-y-2 text-sm text-muted-foreground">
+   571→                <li>Kathmandu, Nepal</li>
+   572→                <li>info@posnepal.com</li>
+   573→                <li>+977-9800000000</li>
+   574→              </ul>
+   575→            </div>
+   576→          </div>
+   577→          <Separator className="my-8" />
+   578→          <p className="text-center text-sm text-muted-foreground">&copy; 2025 POS Nepal &middot; All rights reserved</p>
+   579→        </div>
+   580→      </footer>
+   581→
+   582→      {/* ============================================================ */}
+   583→      {/*  WHATSAPP FLOATING BUTTON                                     */}
+   584→      {/* ============================================================ */}
+   585→      <a
+   586→        href="https://wa.me/9779800000000?text=Hi%20POS%20Nepal%2C%20I%27m%20interested%20in%20your%20POS%20system."
+   587→        target="_blank"
+   588→        rel="noopener noreferrer"
+   589→        className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-lg hover:bg-[#20BD5A] hover:shadow-xl transition-all duration-200 hover:scale-110 group"
+   590→        aria-label="Chat on WhatsApp"
+   591→      >
+   592→        <MessageCircle className="h-6 w-6" />
+   593→        <span className="absolute right-full mr-3 whitespace-nowrap rounded-lg bg-foreground text-background px-3 py-1.5 text-sm font-medium shadow-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+   594→          Chat with us!
+   595→        </span>
+   596→      </a>
+   597→
+   598→      {/* ============================================================ */}
+   599→      {/*  REGISTRATION DIALOG                                          */}
+   600→      {/* ============================================================ */}
+   601→      <Dialog open={showRegister} onOpenChange={setShowRegister}>
+   602→        <DialogContent className="sm:max-w-md">
+   603→          <DialogHeader>
+   604→            <DialogTitle className="flex items-center gap-2">
+   605→              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+   606→                <UserPlus className="h-4 w-4" />
+   607→              </div>
+   608→              Create Your Account
+   609→            </DialogTitle>
+   610→            <DialogDescription>Start your 7-day free trial. No credit card required.</DialogDescription>
+   611→          </DialogHeader>
+   612→          <div className="space-y-4 pt-2">
+   613→            <div className="rounded-lg border border-emerald-200 dark:border-emerald-800/50 bg-emerald-50 dark:bg-emerald-900/20 p-3">
+   614→              <div className="flex items-start gap-2">
+   615→                <Crown className="h-4 w-4 text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0" />
+   616→                <div className="text-xs text-emerald-700 dark:text-emerald-300">
+   617→                  <p className="font-medium">Free Plan — 7-Day Trial</p>
+   618→                  <p className="mt-0.5 opacity-80">Get started with basic POS features. Upgrade anytime to unlock more.</p>
+   619→                </div>
+   620→              </div>
+   621→            </div>
+   622→
+   623→            <div className="grid gap-2">
+   624→              <Label htmlFor="reg-store">Store / Business Name *</Label>
+   625→              <Input id="reg-store" placeholder="e.g. ABC Store" value={regStore} onChange={e => setRegStore(e.target.value)} />
+   626→            </div>
+   627→            <div className="grid gap-2">
+   628→              <Label htmlFor="reg-name">Full Name *</Label>
+   629→              <Input id="reg-name" placeholder="Your full name" value={regName} onChange={e => setRegName(e.target.value)} />
+   630→            </div>
+   631→            <div className="grid grid-cols-2 gap-3">
+   632→              <div className="grid gap-2">
+   633→                <Label htmlFor="reg-email">Email *</Label>
+   634→                <Input id="reg-email" type="email" placeholder="you@email.com" value={regEmail} onChange={e => setRegEmail(e.target.value)} />
+   635→              </div>
+   636→              <div className="grid gap-2">
+   637→                <Label htmlFor="reg-phone">Phone</Label>
+   638→                <Input id="reg-phone" placeholder="+977-98..." value={regPhone} onChange={e => setRegPhone(e.target.value)} />
+   639→              </div>
+   640→            </div>
+   641→            <div className="grid gap-2">
+   642→              <Label htmlFor="reg-password">Password *</Label>
+   643→              <Input id="reg-password" type="password" placeholder="Min 8 characters" value={regPassword} onChange={e => setRegPassword(e.target.value)} />
+   644→            </div>
+   645→            <div className="grid gap-2">
+   646→              <Label htmlFor="reg-referral">Referral Code (optional)</Label>
+   647→              <Input id="reg-referral" placeholder="Enter referral code" value={regReferral} onChange={e => setRegReferral(e.target.value)} className="font-mono" />
+   648→            </div>
+   649→
+   650→            <div className="flex flex-col gap-2 pt-2">
+   651→              <Button className="w-full" disabled={!regName || !regEmail || !regStore || !regPassword} onClick={handleRegister}>
+   652→                Create Account & Start Free Trial
+   653→              </Button>
+   654→              <p className="text-center text-xs text-muted-foreground">
+   655→                By signing up, you agree to our Terms of Service and Privacy Policy.
+   656→              </p>
+   657→            </div>
+   658→          </div>
+   659→        </DialogContent>
+   660→      </Dialog>
+   661→
+   662→      {/* ============================================================ */}
+   663→      {/*  TRIAL EXPIRED POPUP                                          */}
+   664→      {/* ============================================================ */}
+   665→      <Dialog open={showTrialPopup} onOpenChange={setShowTrialPopup}>
+   666→        <DialogContent className="sm:max-w-lg">
+   667→          <DialogHeader>
+   668→            <DialogTitle className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+   669→              <AlertTriangle className="h-5 w-5" />
+   670→              Trial Period Ending Soon
+   671→            </DialogTitle>
+   672→            <DialogDescription>Your 7-day free trial is about to expire. Upgrade now to keep your data and continue using POS Nepal.</DialogDescription>
+   673→          </DialogHeader>
+   674→          <div className="space-y-4 pt-2">
+   675→            {/* Trial Progress */}
+   676→            <div className="rounded-lg border border-amber-200 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-900/20 p-4">
+   677→              <div className="flex items-center justify-between mb-2">
+   678→                <span className="text-sm font-medium">Free Trial</span>
+   679→                <span className="text-sm text-amber-600 dark:text-amber-400 font-medium">5 of 7 days used</span>
+   680→              </div>
+   681→              <div className="h-2 w-full rounded-full bg-amber-200 dark:bg-amber-900/50 overflow-hidden">
+   682→                <div className="h-full w-[71%] rounded-full bg-amber-500" />
+   683→              </div>
+   684→              <p className="text-xs text-muted-foreground mt-2">Upgrade before your trial ends to avoid any interruption.</p>
+   685→            </div>
+   686→
+   687→            {/* Quick Plans */}
+   688→            <div className="space-y-2">
+   689→              <h4 className="text-sm font-medium">Choose a plan to continue:</h4>
+   690→              {mockPackages.slice(0, 3).map((plan) => (
+   691→                <div key={plan.id} className="flex items-center justify-between rounded-lg border p-3 hover:bg-muted/50 transition-colors cursor-pointer">
+   692→                  <div className="flex items-center gap-3">
+   693→                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+   694→                      <Store className="h-4 w-4 text-primary" />
+   695→                    </div>
+   696→                    <div>
+   697→                      <p className="text-sm font-medium">{plan.name}</p>
+   698→                      <p className="text-xs text-muted-foreground">Up to {plan.maxProducts.toLocaleString()} products · {plan.maxStaff} staff</p>
+   699→                    </div>
+   700→                  </div>
+   701→                  <div className="text-right">
+   702→                    <p className="text-sm font-bold">NPR {nprFull(plan.price)}<span className="text-xs font-normal text-muted-foreground">/mo</span></p>
+   703→                    <Button size="sm" className="h-6 text-[10px] px-2 mt-1" onClick={() => { setShowTrialPopup(false); setShowRegister(true); }}>Choose</Button>
+   704→                  </div>
+   705→                </div>
+   706→              ))}
+   707→            </div>
+   708→
+   709→            <div className="flex gap-2 pt-2">
+   710→              <Button variant="outline" className="flex-1" onClick={() => setShowTrialPopup(false)}>Remind Me Later</Button>
+   711→              <Button className="flex-1" onClick={() => { setShowTrialPopup(false); document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' }); }}>
+   712→                View All Plans <ArrowRight className="ml-1 h-4 w-4" />
+   713→              </Button>
+   714→            </div>
+   715→          </div>
+   716→        </DialogContent>
+   717→      </Dialog>
+   718→    </div>
+   719→  );
+   720→}
+   721→
