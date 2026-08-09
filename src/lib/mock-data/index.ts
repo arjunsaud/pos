@@ -26,6 +26,9 @@ import type {
   UserProfile,
   Outlet,
   Customer,
+  SupportTicket,
+  AdminPaymentMethod,
+  PaymentReceipt,
 } from '@/lib/types';
 
 // ---------- Tenants ----------
@@ -341,3 +344,31 @@ export const mockSuperAdminProfile: UserProfile = {
 export const mockTenantAdminProfile: UserProfile = {
   id: 'ta-main', name: 'Rajesh Sharma', email: 'admin@abcstore.com', phone: '+977-9801234567', role: 'tenant-admin', bio: 'Owner and manager of ABC Store, a leading retail shop in Kathmandu.', address: 'Putalisadak, Kathmandu', city: 'Kathmandu', pan: '301234567', referralCode: 'ABCSTORE', referralCount: 2, referralEarnings: 3200, joinedAt: '2024-01-15',
 };
+
+// ---------- Support Tickets ----------
+export const mockSupportTickets: SupportTicket[] = [
+  { id: 'tk-1', tenantId: 't1', tenantName: 'ABC Store', subject: 'POS terminal freezes during checkout', description: 'The POS terminal becomes unresponsive when scanning barcodes. This happens intermittently, about 3-4 times per day. We have to refresh the page each time.', category: 'bug', priority: 'high', status: 'in_progress', createdAt: '2025-06-10T09:30:00', updatedAt: '2025-06-11T14:00:00', respondedAt: '2025-06-11T14:00:00', response: 'We have identified the issue with barcode scanner buffer overflow. A fix is being deployed. Please try clearing browser cache.' },
+  { id: 'tk-2', tenantId: 't3', tenantName: 'Kathmandu Grocers', subject: 'Request for bulk import feature', description: 'We have over 2000 products and adding them one by one is very time-consuming. Can we get a CSV/Excel import feature for products?', category: 'feature_request', priority: 'medium', status: 'open', createdAt: '2025-06-12T11:00:00', updatedAt: '2025-06-12T11:00:00' },
+  { id: 'tk-3', tenantId: 't4', tenantName: 'Pokhara Electronics', subject: 'Incorrect VAT calculation on invoice', description: 'When applying a discount on a sale, the VAT is calculated on the original amount instead of the discounted amount. This causes issues with our VAT filing.', category: 'bug', priority: 'critical', status: 'resolved', createdAt: '2025-06-08T08:15:00', updatedAt: '2025-06-09T16:30:00', respondedAt: '2025-06-09T16:30:00', response: 'Fixed! VAT is now correctly calculated on the discounted amount. This was deployed in v2.5.1.' },
+  { id: 'tk-5', tenantId: 't1', tenantName: 'ABC Store', subject: 'Subscription renewal failed', description: 'I tried to renew my subscription for Plan 2 but the payment page shows an error. I uploaded the eSewa screenshot but status is still pending.', category: 'billing', priority: 'high', status: 'open', createdAt: '2025-06-14T10:00:00', updatedAt: '2025-06-14T10:00:00' },
+  { id: 'tk-6', tenantId: 't6', tenantName: 'Lalitpur Fashion', subject: 'Need help setting up multi-outlet', description: 'We recently opened a second outlet in Patan. Need guidance on how to configure inventory sharing between outlets.', category: 'technical', priority: 'medium', status: 'open', createdAt: '2025-06-13T15:30:00', updatedAt: '2025-06-13T15:30:00' },
+  { id: 'tk-7', tenantId: 't5', tenantName: 'Bhaktapur Handicraft', subject: 'Report export not working', description: 'When I try to export the monthly sales report to PDF, it generates a blank file. CSV export works fine.', category: 'bug', priority: 'medium', status: 'closed', createdAt: '2025-06-05T09:00:00', updatedAt: '2025-06-07T11:00:00', respondedAt: '2025-06-06T10:00:00', response: 'This was a browser-specific issue with Safari. Please update to the latest version or try Chrome/Firefox.' },
+  { id: 'tk-8', tenantId: 't8', tenantName: 'Biratnagar Hardware', subject: 'Staff permission issue', description: 'My cashier can see the billing reports which should only be visible to managers. Please fix the permission settings.', category: 'technical', priority: 'high', status: 'in_progress', createdAt: '2025-06-11T13:00:00', updatedAt: '2025-06-12T09:00:00', respondedAt: '2025-06-12T09:00:00', response: 'We are reviewing the permission matrix. Will update shortly.' },
+];
+
+// ---------- Admin Payment Methods ----------
+export const mockAdminPaymentMethods: AdminPaymentMethod[] = [
+  { id: 'pm-1', type: 'esewa', name: 'eSewa', description: 'Pay via eSewa digital wallet', enabled: true, accountDetails: 'eSewa ID: 9841234567 / Merchant: POS Nepal Pvt. Ltd.' },
+  { id: 'pm-2', type: 'khalti', name: 'Khalti', description: 'Pay via Khalti digital wallet', enabled: true, accountDetails: 'Khalti ID: 9841234568 / Merchant: POS Nepal Pvt. Ltd.' },
+  { id: 'pm-3', type: 'bank', name: 'Bank Transfer', description: 'Direct bank transfer to our account', enabled: true, accountDetails: 'Bank: Nabil Bank | A/C: 0102012345678 | Name: POS Nepal Pvt. Ltd.' },
+  { id: 'pm-4', type: 'qr', name: 'QR Code', description: 'Scan QR code to pay from any banking app', enabled: true, accountDetails: 'Scan the QR code below with any Nepal-pay enabled app' },
+];
+
+// ---------- Payment Receipts ----------
+export const mockPaymentReceipts: PaymentReceipt[] = [
+  { id: 'pr-1', tenantId: 't1', tenantName: 'ABC Store', amount: 2999, packageId: 'pkg-2', packageName: 'Plan 2', paymentMethod: 'esewa', receiptFile: 'esewa_receipt_abc_jun2025.png', status: 'pending', uploadedAt: '2025-06-14T10:30:00' },
+  { id: 'pr-2', tenantId: 't3', tenantName: 'Kathmandu Grocers', amount: 12999, packageId: 'pkg-4', packageName: 'Plan 4', paymentMethod: 'bank', receiptFile: 'bank_slip_ktm_may2025.pdf', status: 'approved', uploadedAt: '2025-05-20T14:00:00', reviewedAt: '2025-05-21T09:00:00', reviewedBy: 'Super Admin' },
+  { id: 'pr-3', tenantId: 't4', tenantName: 'Pokhara Electronics', amount: 5999, packageId: 'pkg-3', packageName: 'Plan 3', paymentMethod: 'khalti', receiptFile: 'khalti_screenshot_pkr_jun2025.jpg', status: 'pending', uploadedAt: '2025-06-13T16:45:00' },
+  { id: 'pr-4', tenantId: 't6', tenantName: 'Lalitpur Fashion', amount: 5999, packageId: 'pkg-3', packageName: 'Plan 3', paymentMethod: 'qr', receiptFile: 'qr_payment_lalitpur_jun2025.png', status: 'rejected', uploadedAt: '2025-06-12T11:20:00', reviewedAt: '2025-06-12T15:00:00', reviewedBy: 'Super Admin', notes: 'Receipt amount does not match the package price. Please upload correct receipt.' },
+  { id: 'pr-5', tenantId: 't8', tenantName: 'Biratnagar Hardware', amount: 12999, packageId: 'pkg-4', packageName: 'Plan 4', paymentMethod: 'esewa', receiptFile: 'esewa_brt_may2025.png', status: 'approved', uploadedAt: '2025-05-15T10:00:00', reviewedAt: '2025-05-16T08:30:00', reviewedBy: 'Super Admin' },
+];

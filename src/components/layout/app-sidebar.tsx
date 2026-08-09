@@ -37,6 +37,8 @@ import {
   Gift,
   UserCircle,
   MapPin,
+  Wallet,
+  Headphones,
   type LucideIcon,
 } from 'lucide-react';
 import { CommandPalette } from '@/components/layout/command-palette';
@@ -72,6 +74,13 @@ const superAdminGlobalMenu: SidebarGroup[] = [
       { label: 'Documents', section: 'sa-documents', icon: FolderOpen },
       { label: 'Promotions', section: 'sa-promotions', icon: Tag },
       { label: 'Referrals', section: 'sa-referrals', icon: Gift },
+    ],
+  },
+  {
+    title: 'Finance',
+    items: [
+      { label: 'Payment', section: 'sa-payment', icon: Wallet },
+      { label: 'Support Tickets', section: 'sa-support-tickets', icon: Headphones },
     ],
   },
   {
@@ -147,6 +156,7 @@ const tenantAdminMenu: SidebarGroup[] = [
       { label: 'Outlets', section: 'tenant-outlets', icon: MapPin },
       { label: 'Store Profile', section: 'store-profile', icon: Store },
       { label: 'Staff', section: 'tenant-staff', icon: UserCog },
+      { label: 'Support', section: 'tenant-support', icon: Headphones },
       { label: 'Profile', section: 'tenant-profile', icon: UserCircle },
       { label: 'Settings', section: 'tenant-settings', icon: Settings },
     ],

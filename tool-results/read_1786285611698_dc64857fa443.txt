@@ -1,0 +1,763 @@
+   150→const faqs = [
+   151→  {
+   152→    q: 'What is POS Nepal?',
+   153→    a: 'POS Nepal is a comprehensive multi-tenant Point of Sale, Inventory Management, and Billing System designed specifically for Nepali businesses. It includes built-in VAT calculation, PAN support, and multi-store management.',
+   154→  },
+   155→  {
+   156→    q: 'How does multi-tenant work?',
+   157→    a: 'Multi-tenancy allows you to manage multiple stores or business outlets from a single platform. Each tenant has fully isolated data, ensuring privacy and security while enabling centralized oversight.',
+   158→  },
+   159→  {
+   160→    q: 'What payment methods are supported?',
+   161→    a: 'POS Nepal supports cash, bank transfers, mobile wallets (eSewa, Khalti, IME Pay), and card payments through our integrated payment gateway (available on eligible plans).',
+   162→  },
+   163→  {
+   164→    q: 'Can I upgrade my plan later?',
+   165→    a: 'Absolutely! You can upgrade or downgrade your plan at any time. When you upgrade, the new features are available immediately and billing is prorated for the remainder of your cycle.',
+   166→  },
+   167→  {
+   168→    q: 'Is there a free trial?',
+   169→    a: 'Yes! Every new account comes with a 14-day free trial with full access to all features. No credit card is required to start, and you can cancel anytime during the trial period.',
+   170→  },
+   171→];
+   172→
+   173→const featureToggles: { key: keyof (typeof mockPackages)[number]; label: string }[] = [
+   174→  { key: 'paymentGateway', label: 'Payment Gateway' },
+   175→  { key: 'billing', label: 'Billing' },
+   176→  { key: 'receipt', label: 'Receipt' },
+   177→  { key: 'export', label: 'Export' },
+   178→  { key: 'advanceInventory', label: 'Advance Inventory' },
+   179→  { key: 'pos', label: 'POS' },
+   180→  { key: 'multipleOutlets', label: 'Multiple Outlets' },
+   181→];
+   182→
+   183→const navLinks = [
+   184→  { label: 'Features', href: '#features' },
+   185→  { label: 'How It Works', href: '#how-it-works' },
+   186→  { label: 'Pricing', href: '#pricing' },
+   187→  { label: 'Testimonials', href: '#testimonials' },
+   188→  { label: 'FAQ', href: '#faq' },
+   189→  { label: 'Referral', href: '#referral' },
+   190→];
+   191→
+   192→/* ------------------------------------------------------------------ */
+   193→/*  Component                                                          */
+   194→/* ------------------------------------------------------------------ */
+   195→
+   196→export default function LandingPage({ onSignIn }: { onSignIn: () => void }) {
+   197→  const { setTheme, resolvedTheme } = useTheme();
+   198→  const [mobileMenu, setMobileMenu] = useState(false);
+   199→  const [promoCode, setPromoCode] = useState('');
+   200→  const [appliedPromo, setAppliedPromo] = useState('');
+   201→
+   202→  const handleApplyPromo = () => {
+   203→    if (promoCode.trim()) {
+   204→      setAppliedPromo(promoCode.trim().toUpperCase());
+   205→    }
+   206→  };
+   207→
+   208→  return (
+   209→    <div className="min-h-screen flex flex-col bg-background text-foreground">
+   210→      {/* ============================================================ */}
+   211→      {/*  NAVBAR                                                      */}
+   212→      {/* ============================================================ */}
+   213→      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+   214→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+   215→          {/* Logo */}
+   216→          <div className="flex items-center gap-2.5">
+   217→            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+   218→              <Monitor className="h-5 w-5" />
+   219→            </div>
+   220→            <span className="text-lg font-bold">POS Nepal</span>
+   221→          </div>
+   222→
+   223→          {/* Desktop nav links */}
+   224→          <nav className="hidden lg:flex items-center gap-6 text-sm font-medium text-muted-foreground">
+   225→            {navLinks.map((link) => (
+   226→              <a
+   227→                key={link.href}
+   228→                href={link.href}
+   229→                className="hover:text-foreground transition-colors"
+   230→              >
+   231→                {link.label}
+   232→              </a>
+   233→            ))}
+   234→          </nav>
+   235→
+   236→          {/* Right actions */}
+   237→          <div className="flex items-center gap-2">
+   238→            <Button
+   239→              variant="ghost"
+   240→              size="icon"
+   241→              className="h-9 w-9"
+   242→              onClick={() =>
+   243→                setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')
+   244→              }
+   245→            >
+   246→              <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+   247→              <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+   248→            </Button>
+   249→            <Button
+   250→              variant="outline"
+   251→              className="hidden sm:flex"
+   252→              onClick={onSignIn}
+   253→            >
+   254→              Sign In
+   255→            </Button>
+   256→            <Button className="hidden sm:flex" onClick={onSignIn}>
+   257→              Get Started
+   258→            </Button>
+   259→            <Button
+   260→              variant="ghost"
+   261→              size="icon"
+   262→              className="lg:hidden"
+   263→              onClick={() => setMobileMenu(!mobileMenu)}
+   264→            >
+   265→              {mobileMenu ? (
+   266→                <XIcon className="h-5 w-5" />
+   267→              ) : (
+   268→                <Menu className="h-5 w-5" />
+   269→              )}
+   270→            </Button>
+   271→          </div>
+   272→        </div>
+   273→
+   274→        {/* Mobile menu */}
+   275→        {mobileMenu && (
+   276→          <div className="lg:hidden border-t px-4 py-4 space-y-3">
+   277→            {navLinks.map((link) => (
+   278→              <a
+   279→                key={link.href}
+   280→                href={link.href}
+   281→                className="block text-sm font-medium"
+   282→                onClick={() => setMobileMenu(false)}
+   283→              >
+   284→                {link.label}
+   285→              </a>
+   286→            ))}
+   287→            <Separator />
+   288→            <div className="flex gap-2">
+   289→              <Button
+   290→                variant="outline"
+   291→                className="flex-1"
+   292→                onClick={() => {
+   293→                  setMobileMenu(false);
+   294→                  onSignIn();
+   295→                }}
+   296→              >
+   297→                Sign In
+   298→              </Button>
+   299→              <Button
+   300→                className="flex-1"
+   301→                onClick={() => {
+   302→                  setMobileMenu(false);
+   303→                  onSignIn();
+   304→                }}
+   305→              >
+   306→                Get Started
+   307→              </Button>
+   308→            </div>
+   309→          </div>
+   310→        )}
+   311→      </header>
+   312→
+   313→      <main className="flex-1">
+   314→        {/* ============================================================ */}
+   315→        {/*  HERO                                                        */}
+   316→        {/* ============================================================ */}
+   317→        <section className="relative overflow-hidden">
+   318→          {/* Gradient accents */}
+   319→          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5" />
+   320→          <div className="absolute -top-40 -right-40 h-[500px] w-[500px] rounded-full bg-primary/10 blur-3xl" />
+   321→          <div className="absolute -bottom-40 -left-40 h-[400px] w-[400px] rounded-full bg-primary/5 blur-3xl" />
+   322→
+   323→          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-32 text-center">
+   324→            <motion.div
+   325→              initial={{ opacity: 0, y: 20 }}
+   326→              animate={{ opacity: 1, y: 0 }}
+   327→              transition={{ duration: 0.5 }}
+   328→            >
+   329→              <Badge
+   330→                variant="secondary"
+   331→                className="mb-6 px-4 py-1.5 text-sm"
+   332→              >
+   333→                <Zap className="h-3.5 w-3.5 mr-1.5" /> Trusted by 500+ businesses
+   334→                across Nepal
+   335→              </Badge>
+   336→              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight max-w-4xl mx-auto leading-tight">
+   337→                Streamline Your Business with{' '}
+   338→                <span className="text-primary">POS Nepal</span>
+   339→              </h1>
+   340→              <p className="mt-6 text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+   341→                Multi-tenant Point of Sale, Inventory Management & Billing
+   342→                System designed specifically for Nepali businesses. Built-in
+   343→                VAT, PAN support, and more.
+   344→              </p>
+   345→              <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+   346→                <Button
+   347→                  size="lg"
+   348→                  className="text-base px-8 h-12"
+   349→                  onClick={onSignIn}
+   350→                >
+   351→                  Get Started Free <ArrowRight className="ml-2 h-4 w-4" />
+   352→                </Button>
+   353→                <Button
+   354→                  size="lg"
+   355→                  variant="outline"
+   356→                  className="text-base px-8 h-12"
+   357→                  onClick={onSignIn}
+   358→                >
+   359→                  View Demo
+   360→                </Button>
+   361→              </div>
+   362→              <div className="mt-12 flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground">
+   363→                <span className="flex items-center gap-1.5">
+   364→                  <Check className="h-4 w-4 text-emerald-500" /> 14-day free
+   365→                  trial
+   366→                </span>
+   367→                <span className="flex items-center gap-1.5">
+   368→                  <Check className="h-4 w-4 text-emerald-500" /> No credit card
+   369→                  required
+   370→                </span>
+   371→                <span className="flex items-center gap-1.5">
+   372→                  <Check className="h-4 w-4 text-emerald-500" /> Cancel anytime
+   373→                </span>
+   374→              </div>
+   375→            </motion.div>
+   376→          </div>
+   377→        </section>
+   378→
+   379→        {/* ============================================================ */}
+   380→        {/*  FEATURES                                                    */}
+   381→        {/* ============================================================ */}
+   382→        <section id="features" className="py-20 bg-muted/30">
+   383→          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   384→            <motion.div
+   385→              className="text-center mb-14"
+   386→              initial={{ opacity: 0, y: 20 }}
+   387→              whileInView={{ opacity: 1, y: 0 }}
+   388→              viewport={{ once: true }}
+   389→              transition={{ duration: 0.4 }}
+   390→            >
+   391→              <h2 className="text-3xl sm:text-4xl font-bold">
+   392→                Everything You Need
+   393→              </h2>
+   394→              <p className="mt-3 text-lg text-muted-foreground max-w-2xl mx-auto">
+   395→                Powerful features to manage your retail business efficiently
+   396→              </p>
+   397→            </motion.div>
+   398→            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+   399→              {features.map((f, i) => (
+   400→                <motion.div
+   401→                  key={f.title}
+   402→                  initial={{ opacity: 0, y: 20 }}
+   403→                  whileInView={{ opacity: 1, y: 0 }}
+   404→                  viewport={{ once: true }}
+   405→                  transition={{ delay: i * 0.1, duration: 0.4 }}
+   406→                >
+   407→                  <Card className="h-full transition-shadow hover:shadow-lg">
+   408→                    <CardContent className="p-6">
+   409→                      <div
+   410→                        className={cn(
+   411→                          'h-12 w-12 rounded-xl flex items-center justify-center mb-4',
+   412→                          f.bg,
+   413→                        )}
+   414→                      >
+   415→                        <f.icon className={cn('h-6 w-6', f.color)} />
+   416→                      </div>
+   417→                      <h3 className="text-lg font-semibold mb-2">{f.title}</h3>
+   418→                      <p className="text-sm text-muted-foreground leading-relaxed">
+   419→                        {f.desc}
+   420→                      </p>
+   421→                    </CardContent>
+   422→                  </Card>
+   423→                </motion.div>
+   424→              ))}
+   425→            </div>
+   426→          </div>
+   427→        </section>
+   428→
+   429→        {/* ============================================================ */}
+   430→        {/*  HOW IT WORKS                                                */}
+   431→        {/* ============================================================ */}
+   432→        <section id="how-it-works" className="py-20">
+   433→          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   434→            <motion.div
+   435→              className="text-center mb-14"
+   436→              initial={{ opacity: 0, y: 20 }}
+   437→              whileInView={{ opacity: 1, y: 0 }}
+   438→              viewport={{ once: true }}
+   439→              transition={{ duration: 0.4 }}
+   440→            >
+   441→              <h2 className="text-3xl sm:text-4xl font-bold">
+   442→                How It Works
+   443→              </h2>
+   444→              <p className="mt-3 text-lg text-muted-foreground max-w-2xl mx-auto">
+   445→                Get up and running in four simple steps
+   446→              </p>
+   447→            </motion.div>
+   448→
+   449→            {/* Stepper */}
+   450→            <div className="relative">
+   451→              {/* Connecting line (desktop) */}
+   452→              <div className="hidden md:block absolute top-12 left-[calc(12.5%+1.5rem)] right-[calc(12.5%+1.5rem)] h-0.5 bg-border" />
+   453→
+   454→              <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+   455→                {steps.map((step, i) => (
+   456→                  <motion.div
+   457→                    key={step.title}
+   458→                    className="flex flex-col items-center text-center"
+   459→                    initial={{ opacity: 0, y: 20 }}
+   460→                    whileInView={{ opacity: 1, y: 0 }}
+   461→                    viewport={{ once: true }}
+   462→                    transition={{ delay: i * 0.15, duration: 0.4 }}
+   463→                  >
+   464→                    <div className="relative z-10 flex h-24 w-24 items-center justify-center rounded-full bg-background border-2 border-primary shadow-sm">
+   465→                      <step.icon className="h-10 w-10 text-primary" />
+   466→                    </div>
+   467→                    <span className="mt-4 inline-flex items-center justify-center h-6 w-6 rounded-full bg-primary text-primary-foreground text-xs font-bold">
+   468→                      {i + 1}
+   469→                    </span>
+   470→                    <h3 className="mt-3 text-base font-semibold">
+   471→                      {step.title}
+   472→                    </h3>
+   473→                    <p className="mt-2 text-sm text-muted-foreground max-w-[220px]">
+   474→                      {step.desc}
+   475→                    </p>
+   476→                  </motion.div>
+   477→                ))}
+   478→              </div>
+   479→            </div>
+   480→          </div>
+   481→        </section>
+   482→
+   483→        {/* ============================================================ */}
+   484→        {/*  PRICING                                                     */}
+   485→        {/* ============================================================ */}
+   486→        <section id="pricing" className="py-20 bg-muted/30">
+   487→          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   488→            <motion.div
+   489→              className="text-center mb-14"
+   490→              initial={{ opacity: 0, y: 20 }}
+   491→              whileInView={{ opacity: 1, y: 0 }}
+   492→              viewport={{ once: true }}
+   493→              transition={{ duration: 0.4 }}
+   494→            >
+   495→              <h2 className="text-3xl sm:text-4xl font-bold">
+   496→                Simple, Transparent Pricing
+   497→              </h2>
+   498→              <p className="mt-3 text-lg text-muted-foreground">
+   499→                Choose the plan that fits your business
+   500→              </p>
+   501→            </motion.div>
+   502→
+   503→            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+   504→              {mockPackages.map((plan, i) => (
+   505→                <motion.div
+   506→                  key={plan.id}
+   507→                  initial={{ opacity: 0, y: 20 }}
+   508→                  whileInView={{ opacity: 1, y: 0 }}
+   509→                  viewport={{ once: true }}
+   510→                  transition={{ delay: i * 0.1, duration: 0.4 }}
+   511→                >
+   512→                  <Card
+   513→                    className={cn(
+   514→                      'relative h-full flex flex-col transition-shadow hover:shadow-lg',
+   515→                      plan.popular &&
+   516→                        'border-primary shadow-md ring-1 ring-primary/20',
+   517→                    )}
+   518→                  >
+   519→                    {/* Popular badge */}
+   520→                    {plan.popular && (
+   521→                      <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+   522→                        <Badge className="px-3 py-1">
+   523→                          <Star className="h-3 w-3 mr-1" /> Most Popular
+   524→                        </Badge>
+   525→                      </div>
+   526→                    )}
+   527→
+   528→                    <CardHeader className="text-center pb-2">
+   529→                      <CardTitle className="text-xl">
+   530→                        {plan.name}
+   531→                      </CardTitle>
+   532→                      <div className="mt-4">
+   533→                        <span className="text-sm text-muted-foreground">
+   534→                          NPR
+   535→                        </span>{' '}
+   536→                        <span className="text-4xl font-extrabold">
+   537→                          {nprFull(plan.price)}
+   538→                        </span>
+   539→                        <span className="text-muted-foreground">
+   540→                          /{plan.interval}
+   541→                        </span>
+   542→                      </div>
+   543→                    </CardHeader>
+   544→
+   545→                    <CardContent className="flex-1 flex flex-col pt-0">
+   546→                      {/* Plan specs */}
+   547→                      <ul className="space-y-1.5 text-sm mb-4 pb-4 border-b">
+   548→                        <li className="flex justify-between">
+   549→                          <span className="text-muted-foreground">
+   550→                            Max Products
+   551→                          </span>
+   552→                          <span className="font-medium">
+   553→                            {plan.maxProducts.toLocaleString()}
+   554→                          </span>
+   555→                        </li>
+   556→                        <li className="flex justify-between">
+   557→                          <span className="text-muted-foreground">
+   558→                            Staff Accounts
+   559→                          </span>
+   560→                          <span className="font-medium">
+   561→                            {plan.maxStaff}
+   562→                          </span>
+   563→                        </li>
+   564→                        <li className="flex justify-between">
+   565→                          <span className="text-muted-foreground">
+   566→                            Analytics
+   567→                          </span>
+   568→                          <span className="font-medium capitalize">
+   569→                            {plan.analytics}
+   570→                          </span>
+   571→                        </li>
+   572→                        <li className="flex justify-between">
+   573→                          <span className="text-muted-foreground">
+   574→                            Support
+   575→                          </span>
+   576→                          <span className="font-medium capitalize">
+   577→                            {plan.support}
+   578→                          </span>
+   579→                        </li>
+   580→                      </ul>
+   581→
+   582→                      {/* Feature toggles */}
+   583→                      <ul className="space-y-2 flex-1 mb-6">
+   584→                        {featureToggles.map((ft) => {
+   585→                          const enabled = plan[ft.key] as boolean;
+   586→                          return (
+   587→                            <li
+   588→                              key={ft.key}
+   589→                              className="flex items-center gap-2 text-sm"
+   590→                            >
+   591→                              {enabled ? (
+   592→                                <Check className="h-4 w-4 text-emerald-500 shrink-0" />
+   593→                              ) : (
+   594→                                <X className="h-4 w-4 text-muted-foreground/40 shrink-0" />
+   595→                              )}
+   596→                              <span
+   597→                                className={cn(
+   598→                                  !enabled && 'text-muted-foreground/60',
+   599→                                )}
+   600→                              >
+   601→                                {ft.label}
+   602→                              </span>
+   603→                            </li>
+   604→                          );
+   605→                        })}
+   606→                      </ul>
+   607→
+   608→                      <Button
+   609→                        className="w-full"
+   610→                        variant={plan.popular ? 'default' : 'outline'}
+   611→                        onClick={onSignIn}
+   612→                      >
+   613→                        Get Started <ChevronRight className="ml-1 h-4 w-4" />
+   614→                      </Button>
+   615→                    </CardContent>
+   616→                  </Card>
+   617→                </motion.div>
+   618→              ))}
+   619→            </div>
+   620→
+   621→            {/* Promo Code */}
+   622→            <div className="mt-10 max-w-md mx-auto">
+   623→              <div className="flex gap-2">
+   624→                <Input
+   625→                  placeholder="Enter promo code..."
+   626→                  value={promoCode}
+   627→                  onChange={(e) => {
+   628→                    setPromoCode(e.target.value);
+   629→                    setAppliedPromo('');
+   630→                  }}
+   631→                  className="h-10 font-mono"
+   632→                  onKeyDown={(e) => e.key === 'Enter' && handleApplyPromo()}
+   633→                />
+   634→                <Button variant="outline" onClick={handleApplyPromo}>
+   635→                  Apply
+   636→                </Button>
+   637→              </div>
+   638→              {appliedPromo && (
+   639→                <motion.p
+   640→                  initial={{ opacity: 0, y: -5 }}
+   641→                  animate={{ opacity: 1, y: 0 }}
+   642→                  className="mt-2 text-sm text-emerald-600 dark:text-emerald-400 font-medium"
+   643→                >
+   644→                  <Gift className="h-3.5 w-3.5 inline mr-1" /> Code
+   645→                  &quot;{appliedPromo}&quot; applied! Discount will be reflected at
+   646→                  checkout.
+   647→                </motion.p>
+   648→              )}
+   649→            </div>
+   650→          </div>
+   651→        </section>
+   652→
+   653→        {/* ============================================================ */}
+   654→        {/*  TESTIMONIALS                                                */}
+   655→        {/* ============================================================ */}
+   656→        <section id="testimonials" className="py-20">
+   657→          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   658→            <motion.div
+   659→              className="text-center mb-14"
+   660→              initial={{ opacity: 0, y: 20 }}
+   661→              whileInView={{ opacity: 1, y: 0 }}
+   662→              viewport={{ once: true }}
+   663→              transition={{ duration: 0.4 }}
+   664→            >
+   665→              <h2 className="text-3xl sm:text-4xl font-bold">
+   666→                Loved by Businesses Across Nepal
+   667→              </h2>
+   668→              <p className="mt-3 text-lg text-muted-foreground max-w-2xl mx-auto">
+   669→                See what our customers have to say about POS Nepal
+   670→              </p>
+   671→            </motion.div>
+   672→            <div className="grid gap-6 md:grid-cols-3">
+   673→              {testimonials.map((t, i) => (
+   674→                <motion.div
+   675→                  key={t.name}
+   676→                  initial={{ opacity: 0, y: 20 }}
+   677→                  whileInView={{ opacity: 1, y: 0 }}
+   678→                  viewport={{ once: true }}
+   679→                  transition={{ delay: i * 0.1, duration: 0.4 }}
+   680→                >
+   681→                  <Card className="h-full">
+   682→                    <CardContent className="p-6 flex flex-col">
+   683→                      {/* Stars */}
+   684→                      <div className="flex gap-0.5 mb-4">
+   685→                        {Array.from({ length: t.stars }).map((_, si) => (
+   686→                          <Star
+   687→                            key={si}
+   688→                            className="h-4 w-4 fill-amber-400 text-amber-400"
+   689→                          />
+   690→                        ))}
+   691→                      </div>
+   692→                      {/* Quote */}
+   693→                      <blockquote className="flex-1 text-sm leading-relaxed text-muted-foreground">
+   694→                        <Quote className="h-4 w-4 text-primary/30 mb-2 block" />
+   695→                        &ldquo;{t.quote}&rdquo;
+   696→                      </blockquote>
+   697→                      <Separator className="my-4" />
+   698→                      <div>
+   699→                        <p className="text-sm font-semibold">{t.name}</p>
+   700→                        <p className="text-xs text-muted-foreground">
+   701→                          {t.role}
+   702→                        </p>
+   703→                      </div>
+   704→                    </CardContent>
+   705→                  </Card>
+   706→                </motion.div>
+   707→              ))}
+   708→            </div>
+   709→          </div>
+   710→        </section>
+   711→
+   712→        {/* ============================================================ */}
+   713→        {/*  FAQ                                                         */}
+   714→        {/* ============================================================ */}
+   715→        <section id="faq" className="py-20 bg-muted/30">
+   716→          <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+   717→            <motion.div
+   718→              className="text-center mb-14"
+   719→              initial={{ opacity: 0, y: 20 }}
+   720→              whileInView={{ opacity: 1, y: 0 }}
+   721→              viewport={{ once: true }}
+   722→              transition={{ duration: 0.4 }}
+   723→            >
+   724→              <h2 className="text-3xl sm:text-4xl font-bold">
+   725→                Frequently Asked Questions
+   726→              </h2>
+   727→              <p className="mt-3 text-lg text-muted-foreground">
+   728→                Got questions? We&apos;ve got answers.
+   729→              </p>
+   730→            </motion.div>
+   731→            <motion.div
+   732→              initial={{ opacity: 0, y: 20 }}
+   733→              whileInView={{ opacity: 1, y: 0 }}
+   734→              viewport={{ once: true }}
+   735→              transition={{ duration: 0.4 }}
+   736→            >
+   737→              <Accordion type="single" collapsible className="w-full">
+   738→                {faqs.map((faq, i) => (
+   739→                  <AccordionItem key={i} value={`faq-${i}`}>
+   740→                    <AccordionTrigger className="text-left">
+   741→                      {faq.q}
+   742→                    </AccordionTrigger>
+   743→                    <AccordionContent className="text-muted-foreground">
+   744→                      {faq.a}
+   745→                    </AccordionContent>
+   746→                  </AccordionItem>
+   747→                ))}
+   748→              </Accordion>
+   749→            </motion.div>
+   750→          </div>
+   751→        </section>
+   752→
+   753→        {/* ============================================================ */}
+   754→        {/*  REFERRAL CTA                                                */}
+   755→        {/* ============================================================ */}
+   756→        <section id="referral" className="py-20">
+   757→          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+   758→            <motion.div
+   759→              initial={{ opacity: 0, y: 20 }}
+   760→              whileInView={{ opacity: 1, y: 0 }}
+   761→              viewport={{ once: true }}
+   762→              transition={{ duration: 0.4 }}
+   763→            >
+   764→              <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 mb-6">
+   765→                <Gift className="h-8 w-8 text-primary" />
+   766→              </div>
+   767→              <h2 className="text-3xl sm:text-4xl font-bold">
+   768→                Refer a Friend, Earn Rewards
+   769→              </h2>
+   770→              <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
+   771→                Share your unique referral link with other businesses. When they
+   772→                sign up, you both get a discount on your subscription.
+   773→              </p>
+   774→              <div className="mt-10 grid sm:grid-cols-3 gap-6">
+   775→                <Card>
+   776→                  <CardContent className="p-6 text-center">
+   777→                    <p className="text-3xl font-extrabold text-primary">
+   778→                      20%
+   779→                    </p>
+   780→                    <p className="text-sm text-muted-foreground mt-1">
+   781→                      Discount per referral
+   782→                    </p>
+   783→                  </CardContent>
+   784→                </Card>
+   785→                <Card>
+   786→                  <CardContent className="p-6 text-center">
+   787→                    <p className="text-3xl font-extrabold text-primary">
+   788→                      Unlimited
+   789→                    </p>
+   790→                    <p className="text-sm text-muted-foreground mt-1">
+   791→                      Referrals allowed
+   792→                    </p>
+   793→                  </CardContent>
+   794→                </Card>
+   795→                <Card>
+   796→                  <CardContent className="p-6 text-center">
+   797→                    <p className="text-3xl font-extrabold text-primary">
+   798→                      Instant
+   799→                    </p>
+   800→                    <p className="text-sm text-muted-foreground mt-1">
+   801→                      Reward application
+   802→                    </p>
+   803→                  </CardContent>
+   804→                </Card>
+   805→              </div>
+   806→              <Button
+   807→                size="lg"
+   808→                className="mt-10 text-base px-8 h-12"
+   809→                onClick={onSignIn}
+   810→              >
+   811→                Start Referring <ArrowRight className="ml-2 h-4 w-4" />
+   812→              </Button>
+   813→            </motion.div>
+   814→          </div>
+   815→        </section>
+   816→      </main>
+   817→
+   818→      {/* ============================================================ */}
+   819→      {/*  FOOTER                                                      */}
+   820→      {/* ============================================================ */}
+   821→      <footer className="border-t bg-muted/30">
+   822→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+   823→          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+   824→            {/* Brand */}
+   825→            <div>
+   826→              <div className="flex items-center gap-2.5 mb-4">
+   827→                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+   828→                  <Monitor className="h-4 w-4" />
+   829→                </div>
+   830→                <span className="font-bold">POS Nepal</span>
+   831→              </div>
+   832→              <p className="text-sm text-muted-foreground leading-relaxed">
+   833→                Multi-tenant POS, Inventory & Billing System built for Nepali
+   834→                businesses.
+   835→              </p>
+   836→            </div>
+   837→
+   838→            {/* Product */}
+   839→            <div>
+   840→              <h4 className="font-semibold mb-3">Product</h4>
+   841→              <ul className="space-y-2 text-sm text-muted-foreground">
+   842→                <li>
+   843→                  <a
+   844→                    href="#features"
+   845→                    className="hover:text-foreground transition-colors"
+   846→                  >
+   847→                    Features
+   848→                  </a>
+   849→                </li>
+   850→                <li>
+   851→                  <a
+   852→                    href="#pricing"
+   853→                    className="hover:text-foreground transition-colors"
+   854→                  >
+   855→                    Pricing
+   856→                  </a>
+   857→                </li>
+   858→                <li>
+   859→                  <a
+   860→                    href="#how-it-works"
+   861→                    className="hover:text-foreground transition-colors"
+   862→                  >
+   863→                    How It Works
+   864→                  </a>
+   865→                </li>
+   866→                <li>
+   867→                  <a
+   868→                    href="#referral"
+   869→                    className="hover:text-foreground transition-colors"
+   870→                  >
+   871→                    Referral Program
+   872→                  </a>
+   873→                </li>
+   874→              </ul>
+   875→            </div>
+   876→
+   877→            {/* Support */}
+   878→            <div>
+   879→              <h4 className="font-semibold mb-3">Support</h4>
+   880→              <ul className="space-y-2 text-sm text-muted-foreground">
+   881→                <li className="flex items-center gap-1.5">
+   882→                  <Headphones className="h-3.5 w-3.5" /> 24/7 Support
+   883→                </li>
+   884→                <li className="flex items-center gap-1.5">
+   885→                  <TrendingUp className="h-3.5 w-3.5" /> Help Center
+   886→                </li>
+   887→                <li className="flex items-center gap-1.5">
+   888→                  <Lock className="h-3.5 w-3.5" /> Privacy Policy
+   889→                </li>
+   890→              </ul>
+   891→            </div>
+   892→
+   893→            {/* Contact */}
+   894→            <div>
+   895→              <h4 className="font-semibold mb-3">Contact</h4>
+   896→              <ul className="space-y-2 text-sm text-muted-foreground">
+   897→                <li>Kathmandu, Nepal</li>
+   898→                <li>info@posnepal.com</li>
+   899→                <li>+977-9800000000</li>
+   900→              </ul>
+   901→            </div>
+   902→          </div>
+   903→          <Separator className="my-8" />
+   904→          <p className="text-center text-sm text-muted-foreground">
+   905→            &copy; 2025 POS Nepal &middot; All rights reserved
+   906→          </p>
+   907→        </div>
+   908→      </footer>
+   909→    </div>
+   910→  );
+   911→}
+   912→

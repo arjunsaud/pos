@@ -41,3 +41,33 @@ Work Log:
 Stage Summary:
 - All previous bugs resolved
 - Codebase stable for new feature development
+
+---
+Task ID: 3
+Agent: Main
+Task: Landing page pricing toggle, registration, WhatsApp button, SA Payment page, Support Tickets system
+
+Work Log:
+- **Types**: Added SupportTicket (with priority/status/category), AdminPaymentMethod, PaymentReceipt types; Added sa-payment, sa-support-tickets, tenant-support to NavSection
+- **Mock Data**: Added mockSupportTickets (7 tickets across tenants), mockAdminPaymentMethods (eSewa/Khalti/Bank/QR), mockPaymentReceipts (5 receipts with various statuses)
+- **Landing Page**: Complete rewrite with:
+  - Monthly/Annually billing toggle (animated spring toggle button)
+  - 20% discount badge and "Limited Time Offer" for annual plans
+  - Strikethrough original price showing savings
+  - Registration dialog (store name, full name, email, phone, password, referral code)
+  - Free Plan 7-Day Trial banner in pricing section
+  - Trial Expired popup (progress bar, quick plan selection, upgrade CTA)
+  - WhatsApp floating button (bottom-right, green, hover tooltip "Chat with us!")
+  - FAQ updated: 7-day trial (was 14-day)
+- **SA Payment Page** (new): Payment Methods tab with eSewa/Khalti/Bank/QR cards + toggle switches; Payment Receipts tab with table, View/Approve/Reject actions, dialogs
+- **SA Support Tickets Page** (new): All tenant tickets, status/category filters, search, expandable cards with inline response textarea, Mark as Resolved
+- **Tenant Support Page** (new): Create/view tickets for tenant, New Ticket dialog with category/priority, expandable ticket cards showing responses
+- **Sidebar**: Added Finance section (Payment, Support Tickets) to SA; Added Support to Tenant Settings group
+- **page.tsx**: Added imports and mappings for SAPayment, SASupportTickets, TenantSupport
+
+Stage Summary:
+- All 5 features implemented and browser-verified
+- Landing page: pricing toggle works, registration dialog, WhatsApp button visible, trial popup functional
+- SA Payment: 4 payment methods with QR mock, 5 receipts with approve/reject flow
+- Support Tickets: Full bidirectional flow (tenant creates, SA responds)
+- Lint passes clean, no runtime errors

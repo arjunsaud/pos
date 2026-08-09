@@ -46,8 +46,11 @@ export type NavSection =
   | 'sa-tenant-subscription'
   | 'sa-tenant-features'
   | 'sa-tenant-vendors'
+  | 'sa-payment'
+  | 'sa-support-tickets'
   // Tenant Admin
   | 'tenant-dashboard'
+  | 'tenant-support'
   | 'pos'
   | 'billing'
   | 'products'
@@ -420,4 +423,54 @@ export interface UserProfile {
   referralCount?: number;
   referralEarnings?: number;
   joinedAt: string;
+}
+
+// ---------- Support Ticket ----------
+export type TicketPriority = 'low' | 'medium' | 'high' | 'critical';
+export type TicketStatus = 'open' | 'in_progress' | 'resolved' | 'closed';
+export type TicketCategory = 'bug' | 'feature_request' | 'billing' | 'technical' | 'other';
+
+export interface SupportTicket {
+  id: string;
+  tenantId: string;
+  tenantName: string;
+  subject: string;
+  description: string;
+  category: TicketCategory;
+  priority: TicketPriority;
+  status: TicketStatus;
+  createdAt: string;
+  updatedAt: string;
+  respondedAt?: string;
+  response?: string;
+  attachments?: string[];
+}
+
+// ---------- Payment Method (SA admin) ----------
+export type AdminPaymentType = 'esewa' | 'khalti' | 'bank' | 'qr';
+
+export interface AdminPaymentMethod {
+  id: string;
+  type: AdminPaymentType;
+  name: string;
+  description: string;
+  enabled: boolean;
+  accountDetails: string;
+  qrCodeUrl?: string;
+}
+
+export interface PaymentReceipt {
+  id: string;
+  tenantId: string;
+  tenantName: string;
+  amount: number;
+  packageId: string;
+  packageName: string;
+  paymentMethod: AdminPaymentType;
+  receiptFile?: string;
+  status: 'pending' | 'approved' | 'rejected';
+  uploadedAt: string;
+  reviewedAt?: string;
+  reviewedBy?: string;
+  notes?: string;
 }

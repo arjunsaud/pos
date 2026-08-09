@@ -21,6 +21,8 @@ import SuperAdminSettings from '@/features/super-admin/settings/components/super
 import SAPromotions from '@/features/super-admin/promotions/components/sa-promotions';
 import SAReferrals from '@/features/super-admin/referrals/components/sa-referrals';
 import SAProfile from '@/features/super-admin/profile/components/sa-profile';
+import SAPayment from '@/features/super-admin/payment/components/sa-payment';
+import SASupportTickets from '@/features/super-admin/support-tickets/components/sa-support-tickets';
 
 // Super Admin - Tenant View pages
 import SaTenantOverview from '@/features/super-admin/tenant-view/components/sa-tenant-overview';
@@ -50,6 +52,7 @@ import StoreProfile from '@/features/tenant/store-profile/components/store-profi
 import TenantProfile from '@/features/tenant/profile/components/tenant-profile';
 import TenantSettings from '@/features/tenant/settings/components/tenant-settings';
 import TenantOutlets from '@/features/tenant/outlets/components/tenant-outlets';
+import TenantSupport from '@/features/tenant/support/components/tenant-support';
 
 import type { NavSection } from '@/lib/types';
 
@@ -65,6 +68,8 @@ const sectionComponents: Record<NavSection, React.ComponentType> = {
   'sa-promotions': SAPromotions,
   'sa-referrals': SAReferrals,
   'sa-profile': SAProfile,
+  'sa-payment': SAPayment,
+  'sa-support-tickets': SASupportTickets,
   // Super Admin - Tenant View
   'sa-tenant-overview': SaTenantOverview,
   'sa-tenant-billing': SaTenantBilling,
@@ -92,6 +97,7 @@ const sectionComponents: Record<NavSection, React.ComponentType> = {
   'tenant-profile': TenantProfile,
   'tenant-settings': TenantSettings,
   'tenant-outlets': TenantOutlets,
+  'tenant-support': TenantSupport,
 };
 
 export default function HomePage() {
