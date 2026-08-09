@@ -111,3 +111,43 @@ export function getLogDotColor(type: string): string {
   };
   return colors[type] || 'bg-gray-400';
 }
+
+// ---------- Promotion ----------
+export function getPromotionStatusBadgeClasses(status: string): string {
+  switch (status) {
+    case 'active': return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400';
+    case 'expired': return 'bg-gray-100 text-gray-600 dark:bg-gray-800/50 dark:text-gray-400';
+    case 'scheduled': return 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400';
+    case 'paused': return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400';
+    default: return 'bg-muted text-muted-foreground';
+  }
+}
+
+export function getReferralStatusBadgeClasses(status: string): string {
+  switch (status) {
+    case 'rewarded': return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400';
+    case 'converted': return 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400';
+    case 'pending': return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400';
+    default: return 'bg-muted text-muted-foreground';
+  }
+}
+
+export function getPromotionTypeLabel(type: string): string {
+  const labels: Record<string, string> = {
+    percentage: '%',
+    fixed: 'NPR',
+    trial_extension: 'days',
+    free_month: 'month',
+  };
+  return labels[type] || '';
+}
+
+export function getPromotionValueDisplay(type: string, value: number): string {
+  switch (type) {
+    case 'percentage': return `${value}% off`;
+    case 'fixed': return `NPR ${nprFull(value)} off`;
+    case 'trial_extension': return `${value} extra days`;
+    case 'free_month': return `${value} free month${value > 1 ? 's' : ''}`;
+    default: return String(value);
+  }
+}

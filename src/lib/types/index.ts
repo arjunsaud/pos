@@ -33,6 +33,9 @@ export type NavSection =
   | 'activity-logs'
   | 'content'
   | 'super-admin-settings'
+  | 'sa-promotions'
+  | 'sa-referrals'
+  | 'sa-profile'
   // Super Admin - Tenant View (when a tenant is selected)
   | 'sa-tenant-overview'
   | 'sa-tenant-billing'
@@ -60,7 +63,11 @@ export type NavSection =
   | 'tenant-staff'
   | 'store-profile'
   | 'settlement'
-  | 'notifications';
+  | 'notifications'
+  | 'tenant-profile'
+  | 'tenant-settings'
+  // Landing Page
+  | 'landing-page';
 
 export interface NavItem {
   label: string;
@@ -356,4 +363,57 @@ export interface HeldSale {
   customerName: string;
   heldAt: string;
   total: number;
+}
+
+// ---------- Promotion ----------
+export type PromotionStatus = 'active' | 'expired' | 'scheduled' | 'paused';
+export type PromotionType = 'percentage' | 'fixed' | 'trial_extension' | 'free_month';
+
+export interface Promotion {
+  id: string;
+  code: string;
+  name: string;
+  description: string;
+  type: PromotionType;
+  value: number;
+  status: PromotionStatus;
+  maxUses: number;
+  usedCount: number;
+  validFrom: string;
+  validUntil: string;
+  createdAt: string;
+  createdBy: string;
+}
+
+// ---------- Referral ----------
+export interface Referral {
+  id: string;
+  referrerTenantId: string;
+  referrerTenantName: string;
+  referredTenantId: string;
+  referredTenantName: string;
+  referralCode: string;
+  status: 'pending' | 'converted' | 'rewarded';
+  rewardType: 'percentage_discount' | 'fixed_discount' | 'free_month';
+  rewardValue: number;
+  createdAt: string;
+  convertedAt?: string;
+}
+
+// ---------- User Profile ----------
+export interface UserProfile {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  avatar?: string;
+  role: UserRole;
+  bio?: string;
+  address?: string;
+  city?: string;
+  pan?: string;
+  referralCode?: string;
+  referralCount?: number;
+  referralEarnings?: number;
+  joinedAt: string;
 }

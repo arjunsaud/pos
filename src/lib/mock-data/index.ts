@@ -23,6 +23,9 @@ import type {
   Contract,
   TenantDocument,
   TenantFeature,
+  Promotion,
+  Referral,
+  UserProfile,
 } from '@/lib/types';
 
 // ---------- Tenants ----------
@@ -311,4 +314,37 @@ export const mockTenantStats: TenantStats = {
     { name: 'Tokla Tea (500g)', sold: 67, revenue: 18760 },
   ],
   lowStockAlerts: 3,
+};
+
+// ---------- Promotions ----------
+export const mockPromotions: Promotion[] = [
+  { id: 'promo-1', code: 'LAUNCH2025', name: 'New Year Launch', description: '20% off on all plans for new signups in January 2025', type: 'percentage', value: 20, status: 'active', maxUses: 100, usedCount: 34, validFrom: '2025-01-01', validUntil: '2025-01-31', createdAt: '2024-12-20', createdBy: 'Super Admin' },
+  { id: 'promo-2', code: 'REFER50', name: 'Referral Bonus', description: '50% off first month when referred by existing tenant', type: 'percentage', value: 50, status: 'active', maxUses: 200, usedCount: 12, validFrom: '2025-01-01', validUntil: '2025-06-30', createdAt: '2024-12-25', createdBy: 'Super Admin' },
+  { id: 'promo-3', code: 'ENTERPRISE1K', name: 'Enterprise Discount', description: 'NPR 1,000 off on Enterprise plan', type: 'fixed', value: 1000, status: 'active', maxUses: 50, usedCount: 8, validFrom: '2025-01-15', validUntil: '2025-03-31', createdAt: '2025-01-10', createdBy: 'Super Admin' },
+  { id: 'promo-4', code: 'FREETRIAL14', name: '14-Day Free Trial', description: 'Extended 14-day free trial on any plan', type: 'trial_extension', value: 14, status: 'active', maxUses: 500, usedCount: 89, validFrom: '2025-01-01', validUntil: '2025-12-31', createdAt: '2024-12-15', createdBy: 'Super Admin' },
+  { id: 'promo-5', code: 'DASHAIN2024', name: 'Dashain Festival Offer', description: 'Free month on annual Enterprise subscription', type: 'free_month', value: 1, status: 'expired', maxUses: 30, usedCount: 30, validFrom: '2024-10-01', validUntil: '2024-10-20', createdAt: '2024-09-20', createdBy: 'Super Admin' },
+  { id: 'promo-6', code: 'TIHAR24', name: 'Tihar Celebration', description: '15% off Pro and Enterprise plans during Tihar', type: 'percentage', value: 15, status: 'expired', maxUses: 75, usedCount: 62, validFrom: '2024-11-01', validUntil: '2024-11-15', createdAt: '2024-10-25', createdBy: 'Super Admin' },
+  { id: 'promo-7', code: 'SUMMER25', name: 'Summer Special 2025', description: '25% off all plans during summer', type: 'percentage', value: 25, status: 'scheduled', maxUses: 150, usedCount: 0, validFrom: '2025-06-01', validUntil: '2025-08-31', createdAt: '2025-01-05', createdBy: 'Super Admin' },
+  { id: 'promo-8', code: 'NEWYEAR26', name: 'New Year 2026', description: '10% off annual subscriptions for 2026', type: 'percentage', value: 10, status: 'paused', maxUses: 200, usedCount: 0, validFrom: '2025-12-25', validUntil: '2026-01-31', createdAt: '2025-01-10', createdBy: 'Super Admin' },
+];
+
+// ---------- Referrals ----------
+export const mockReferrals: Referral[] = [
+  { id: 'ref-1', referrerTenantId: 't1', referrerTenantName: 'ABC Store', referredTenantId: 't5', referredTenantName: 'Bhaktapur Handicraft', referralCode: 'ABCSTORE', status: 'rewarded', rewardType: 'percentage_discount', rewardValue: 20, createdAt: '2024-04-10', convertedAt: '2024-05-10' },
+  { id: 'ref-2', referrerTenantId: 't1', referrerTenantName: 'ABC Store', referredTenantId: 't7', referredTenantName: 'Chitwan Fresh', referralCode: 'ABCSTORE', status: 'converted', rewardType: 'percentage_discount', rewardValue: 20, createdAt: '2024-06-01', convertedAt: '2024-06-18' },
+  { id: 'ref-3', referrerTenantId: 't3', referrerTenantName: 'Kathmandu Grocers', referredTenantId: 't4', referredTenantName: 'Pokhara Electronics', referralCode: 'KTMGROC', status: 'rewarded', rewardType: 'fixed_discount', rewardValue: 1500, createdAt: '2024-01-20', convertedAt: '2024-02-28' },
+  { id: 'ref-4', referrerTenantId: 't3', referrerTenantName: 'Kathmandu Grocers', referredTenantId: 't6', referredTenantName: 'Lalitpur Fashion', referralCode: 'KTMGROC', status: 'rewarded', rewardType: 'fixed_discount', rewardValue: 1500, createdAt: '2024-03-01', convertedAt: '2024-04-05' },
+  { id: 'ref-5', referrerTenantId: 't3', referrerTenantName: 'Kathmandu Grocers', referredTenantId: 't8', referredTenantName: 'Biratnagar Hardware', referralCode: 'KTMGROC', status: 'rewarded', rewardType: 'free_month', rewardValue: 1, createdAt: '2024-08-01', convertedAt: '2024-09-20' },
+  { id: 'ref-6', referrerTenantId: 't4', referrerTenantName: 'Pokhara Electronics', referredTenantId: 't2', referredTenantName: 'XYZ Mart', referralCode: 'PKRELEC', status: 'converted', rewardType: 'percentage_discount', rewardValue: 15, createdAt: '2024-03-10', convertedAt: '2024-03-22' },
+  { id: 'ref-7', referrerTenantId: 't6', referrerTenantName: 'Lalitpur Fashion', referredTenantId: '', referredTenantName: 'Pending User', referralCode: 'LTPSTYLE', status: 'pending', rewardType: 'percentage_discount', rewardValue: 15, createdAt: '2025-01-08' },
+  { id: 'ref-8', referrerTenantId: 't8', referrerTenantName: 'Biratnagar Hardware', referredTenantId: '', referredTenantName: 'Pending User', referralCode: 'BRTHARDW', status: 'pending', rewardType: 'fixed_discount', rewardValue: 1000, createdAt: '2025-01-10' },
+];
+
+// ---------- User Profiles ----------
+export const mockSuperAdminProfile: UserProfile = {
+  id: 'sa-main', name: 'Super Admin', email: 'admin@posnepal.com', phone: '+977-9800000001', role: 'super-admin', bio: 'Platform administrator managing POS Nepal operations.', address: 'Durbar Marg, Kathmandu', city: 'Kathmandu', joinedAt: '2023-01-01',
+};
+
+export const mockTenantAdminProfile: UserProfile = {
+  id: 'ta-main', name: 'Rajesh Sharma', email: 'admin@abcstore.com', phone: '+977-9801234567', role: 'tenant-admin', bio: 'Owner and manager of ABC Store, a leading retail shop in Kathmandu.', address: 'Putalisadak, Kathmandu', city: 'Kathmandu', pan: '301234567', referralCode: 'ABCSTORE', referralCount: 2, referralEarnings: 3200, joinedAt: '2024-01-15',
 };
