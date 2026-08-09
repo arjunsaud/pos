@@ -36,6 +36,7 @@ import {
   SlidersHorizontal,
   Truck,
   Eye,
+  ArrowLeft,
   type LucideIcon,
 } from 'lucide-react';
 import { CommandPalette } from '@/components/layout/command-palette';
@@ -283,7 +284,8 @@ export function AppSidebar() {
   let menu: SidebarGroup[];
   if (isSuperAdmin) {
     if (selectedTenantId) {
-      menu = [...superAdminGlobalMenu, ...superAdminTenantViewMenu];
+      // When a tenant is selected, show ONLY tenant view menus
+      menu = superAdminTenantViewMenu;
     } else {
       menu = superAdminGlobalMenu;
     }
@@ -308,6 +310,22 @@ export function AppSidebar() {
 
       {/* Tenant Selector (only for super admin) */}
       {isSuperAdmin && <TenantSelector />}
+
+      {/* Back to Admin button (when tenant selected) */}
+      {isSuperAdmin && selectedTenantId && (
+        <div className="px-3 pt-1 pb-2">
+          <button
+            onClick={() => {
+              useTenantSelectorStore.getState().setSelectedTenantId(null);
+              useNavStore.getState().setCurrentSection('super-admin-dashboard');
+            }}
+            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-medium text-muted-foreground hover:bg-accent/60 hover:text-accent-foreground transition-all duration-150"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span>Back to Admin</span>
+          </button>
+        </div>
+      )}
 
       <SidebarNav menu={menu} />
 
@@ -340,7 +358,8 @@ export function MobileSidebarTrigger() {
   let menu: SidebarGroup[];
   if (isSuperAdmin) {
     if (selectedTenantId) {
-      menu = [...superAdminGlobalMenu, ...superAdminTenantViewMenu];
+      // When a tenant is selected, show ONLY tenant view menus
+      menu = superAdminTenantViewMenu;
     } else {
       menu = superAdminGlobalMenu;
     }
@@ -369,6 +388,21 @@ export function MobileSidebarTrigger() {
             </div>
           </div>
           {isSuperAdmin && <TenantSelector />}
+          {isSuperAdmin && selectedTenantId && (
+            <div className="px-3 pt-1 pb-2">
+              <button
+                onClick={() => {
+                  useTenantSelectorStore.getState().setSelectedTenantId(null);
+                  useNavStore.getState().setCurrentSection('super-admin-dashboard');
+                  setOpen(false);
+                }}
+                className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-medium text-muted-foreground hover:bg-accent/60 hover:text-accent-foreground transition-all duration-150"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                <span>Back to Admin</span>
+              </button>
+            </div>
+          )}
           <SidebarNav menu={menu} onClose={() => setOpen(false)} />
           <div className="border-t p-3">
             <div className="rounded-lg bg-muted/50 px-3 py-2.5">

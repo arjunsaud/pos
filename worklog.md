@@ -1,9 +1,9 @@
 # POS Nepal - Multi-Tenant POS, Inventory & Billing System
 
-## Current Project Status (as of Round 12 Development Session)
+## Current Project Status (as of Round 13 Bug Fix)
 
 ### Assessment
-The project is in a **production-quality UI prototype state** with **32 feature pages** across 3 roles. Round 12 focused on **major architectural expansion: Super Admin tenant selector with dynamic sidebar, 15 new pages (Contracts, Documents, Vendor CRUD, Subscription CRUD, 11 SA Tenant View pages, Tenant Vendor page), Product-Vendor linkage, and POS rename**. The codebase compiles cleanly with 0 ESLint errors. All QA tests pass via agent-browser.
+The project is in a **production-quality UI prototype state** with **32 feature pages** across 3 roles. Round 13 was a focused bug-fix session fixing two reported issues: (1) Super Admin tenant selector now hides admin menus and shows only tenant view menus, with a "Back to Admin" button; (2) SA Tenant Vendors page runtime error fixed (missing `formatDate` import).
 
 ### Architecture
 - **Framework**: Next.js 16 (App Router) + TypeScript 5
@@ -176,3 +176,28 @@ Work Log:
 Stage Summary:
 - Tenant Vendors page: full CRUD with PAN/VAT fields, 8 mock vendors
 - Products page: new Vendor column and vendor selection in Add/Edit dialog
+
+---
+Task ID: 13
+Agent: main
+Task: Fix two bugs - (1) tenant selection should hide admin menus, (2) Vendors page not working
+
+Work Log:
+- Fixed `app-sidebar.tsx`: Changed menu logic so when `selectedTenantId` is set, only `superAdminTenantViewMenu` is shown (was `[...superAdminGlobalMenu, ...superAdminTenantViewMenu]`)
+- Added "Back to Admin" button that appears between tenant selector and nav when a tenant is selected (both desktop and mobile sidebar)
+- Imported `ArrowLeft` icon from lucide-react for the back button
+- Fixed `sa-tenant-vendors.tsx`: Added missing `formatDate` import from `@/lib/helpers` (was only importing `getStatusBadgeClasses`, causing runtime ReferenceError)
+- ESLint: 0 errors, 0 warnings
+- Agent-browser QA verified all fixes:
+  - Super Admin login → admin menus visible (Dashboard, Tenants, Staff, Subscriptions, Contracts, Documents, Activity Logs, Content, Settings)
+  - Select tenant → admin menus hidden, only Tenant View + Tenant Config menus shown
+  - "Back to Admin" button visible, clicking it restores admin menus and navigates to Dashboard
+  - SA Tenant Vendors page loads correctly with stat cards, search, filter, and vendor table
+  - Tenant Admin Vendors page (CRUD) works correctly
+  - No console errors in dev.log
+
+Stage Summary:
+- Bug 1 fixed: Tenant selection now hides super admin global menus and shows only tenant view menus
+- Bug 2 fixed: SA Tenant Vendors page no longer crashes (added missing formatDate import)
+- Added UX improvement: "Back to Admin" button for easy navigation back to global admin view
+- Version: POS Nepal v2.5.0 (unchanged)

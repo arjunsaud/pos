@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import { Store, Search, Truck, UserCheck, FileCheck, Receipt, Eye } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { getStatusBadgeClasses } from '@/lib/helpers';
+import { formatDate, getStatusBadgeClasses } from '@/lib/helpers';
 import { PageHeader } from '@/components/shared/page-header';
 import { useTenantSelectorStore } from '@/features/auth/store';
 import { mockTenants, mockVendors } from '@/lib/mock-data';
