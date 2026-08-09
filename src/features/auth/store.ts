@@ -52,6 +52,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ user: null, isAuthenticated: false });
     // Clear tenant selection on logout
     useTenantSelectorStore.getState().clearSelection();
+    useOutletSelectorStore.getState().clearSelection();
   },
 }));
 
@@ -104,4 +105,19 @@ export const useTenantSelectorStore = create<TenantSelectorState>((set) => ({
     }
   },
   clearSelection: () => set({ selectedTenantId: null }),
+}));
+
+// ---------- Outlet Selector State (Tenant) ----------
+interface OutletSelectorState {
+  selectedOutletId: string | null;
+  setSelectedOutletId: (id: string | null) => void;
+  clearSelection: () => void;
+}
+
+export const useOutletSelectorStore = create<OutletSelectorState>((set) => ({
+  selectedOutletId: null,
+  setSelectedOutletId: (id: string | null) => {
+    set({ selectedOutletId: id });
+  },
+  clearSelection: () => set({ selectedOutletId: null }),
 }));

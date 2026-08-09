@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { npr, nprFull, formatDate, getStatusBadgeClasses, getPlanBadgeClasses, getStockBadgeClasses, getStockStatus } from '@/lib/helpers';
 import { PageHeader } from '@/components/shared/page-header';
 import { useTenantSelectorStore } from '@/features/auth/store';
-import { mockTenants, mockProducts, mockInventory, mockSales, mockTenantStaff, mockSubscriptions, mockPlans } from '@/lib/mock-data';
+import { mockTenants, mockProducts, mockInventory, mockSales, mockTenantStaff, mockSubscriptions, mockPackages } from '@/lib/mock-data';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -34,7 +34,7 @@ export default function SATenantOverview() {
   const selectedTenantId = useTenantSelectorStore(s => s.selectedTenantId);
   const tenant = mockTenants.find(t => t.id === selectedTenantId);
 
-  const plan = useMemo(() => mockPlans.find(p => p.name === tenant?.plan), [tenant?.plan]);
+  const plan = useMemo(() => mockPackages.find(p => p.name === tenant?.plan), [tenant?.plan]);
   const activeSub = useMemo(() => mockSubscriptions.find(s => s.tenantId === tenant?.id && s.status === 'active'), [tenant?.id]);
   const recentSales = useMemo(() => [...mockSales].reverse().slice(0, 5), []);
   const lowStockItems = useMemo(() => mockInventory.filter(i => i.currentStock <= i.minStock), []);
@@ -88,7 +88,7 @@ export default function SATenantOverview() {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Active Subscription</p>
-              <p className="text-2xl font-bold">{activeSub ? activeSub.planName.charAt(0).toUpperCase() + activeSub.planName.slice(1) : 'None'}</p>
+              <p className="text-2xl font-bold">{activeSub ? activeSub.packageName : 'None'}</p>
             </div>
           </CardContent>
         </Card>
@@ -147,7 +147,7 @@ export default function SATenantOverview() {
               <p className="text-xs text-muted-foreground">Plan Details</p>
               {plan && (
                 <p className="text-sm mt-1">
-                  {plan.features.join(' · ')}
+                  Analytics: {plan.analytics.charAt(0).toUpperCase() + plan.analytics.slice(1)} · Support: {plan.support.charAt(0).toUpperCase() + plan.support.slice(1)}{plan.paymentGateway ? ' · Payment Gateway' : ''}{plan.billing ? ' · Billing' : ''}{plan.receipt ? ' · Receipt' : ''}{plan.export ? ' · Export' : ''}{plan.advanceInventory ? ' · Advanced Inventory' : ''}{plan.pos ? ' · POS' : ''}{plan.multipleOutlets ? ' · Multiple Outlets' : ''}
                 </p>
               )}
             </div>

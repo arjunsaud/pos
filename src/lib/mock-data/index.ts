@@ -4,7 +4,7 @@
 
 import type {
   Tenant,
-  SubscriptionPlan,
+  SubscriptionPackage,
   Subscription,
   Product,
   Category,
@@ -18,59 +18,83 @@ import type {
   VATReportData,
   SuperAdminStats,
   TenantStats,
-  Customer,
   Vendor,
-  Contract,
   TenantDocument,
   TenantFeature,
   Promotion,
   Referral,
   UserProfile,
+  Outlet,
+  Customer,
 } from '@/lib/types';
 
 // ---------- Tenants ----------
 export const mockTenants: Tenant[] = [
-  { id: 't1', name: 'ABC Store', email: 'admin@abcstore.com', phone: '+977-9801234567', plan: 'pro', status: 'active', createdAt: '2024-01-15', domain: 'abcstore.posnepal.com', ownerName: 'Rajesh Sharma', productCount: 245, monthlyRevenue: 125000 },
-  { id: 't2', name: 'XYZ Mart', email: 'info@xyzmart.com', phone: '+977-9812345678', plan: 'basic', status: 'inactive', createdAt: '2024-03-22', domain: 'xyzmart.posnepal.com', ownerName: 'Sita Devi', productCount: 89, monthlyRevenue: 45000 },
-  { id: 't3', name: 'Kathmandu Grocers', email: 'hello@ktmgrcoers.com', phone: '+977-9823456789', plan: 'enterprise', status: 'active', createdAt: '2023-11-10', domain: 'ktmgrcoers.posnepal.com', ownerName: 'Bikash Thapa', productCount: 1200, monthlyRevenue: 890000 },
-  { id: 't4', name: 'Pokhara Electronics', email: 'contact@pkr-electronics.com', phone: '+977-9834567890', plan: 'pro', status: 'active', createdAt: '2024-02-28', domain: 'pkrelectronics.posnepal.com', ownerName: 'Anita Gurung', productCount: 340, monthlyRevenue: 567000 },
-  { id: 't5', name: 'Bhaktapur Handicraft', email: 'info@bktcraft.com', phone: '+977-9845678901', plan: 'basic', status: 'active', createdAt: '2024-05-10', domain: 'bktcraft.posnepal.com', ownerName: 'Hari Prasad', productCount: 156, monthlyRevenue: 78000 },
-  { id: 't6', name: 'Lalitpur Fashion', email: 'style@ltpfashion.com', phone: '+977-9856789012', plan: 'pro', status: 'active', createdAt: '2024-04-05', domain: 'ltpfashion.posnepal.com', ownerName: 'Priya Maharjan', productCount: 412, monthlyRevenue: 234000 },
-  { id: 't7', name: 'Chitwan Fresh', email: 'fresh@chitwanfresh.com', phone: '+977-9867890123', plan: 'basic', status: 'inactive', createdAt: '2024-06-18', domain: 'chitwanfresh.posnepal.com', ownerName: 'Dil Kumar', productCount: 67, monthlyRevenue: 32000 },
-  { id: 't8', name: 'Biratnagar Hardware', email: 'sales@brthardware.com', phone: '+977-9878901234', plan: 'enterprise', status: 'active', createdAt: '2023-09-20', domain: 'brthardware.posnepal.com', ownerName: 'Kumar Rai', productCount: 890, monthlyRevenue: 1456000 },
+  { id: 't1', name: 'ABC Store', email: 'admin@abcstore.com', phone: '+977-9801234567', plan: 'Plan 2', status: 'active', createdAt: '2024-01-15', domain: 'abcstore.posnepal.com', ownerName: 'Rajesh Sharma', productCount: 245, monthlyRevenue: 125000 },
+  { id: 't2', name: 'XYZ Mart', email: 'info@xyzmart.com', phone: '+977-9812345678', plan: 'Plan 1', status: 'inactive', createdAt: '2024-03-22', domain: 'xyzmart.posnepal.com', ownerName: 'Sita Devi', productCount: 89, monthlyRevenue: 45000 },
+  { id: 't3', name: 'Kathmandu Grocers', email: 'hello@ktmgrcoers.com', phone: '+977-9823456789', plan: 'Plan 4', status: 'active', createdAt: '2023-11-10', domain: 'ktmgrcoers.posnepal.com', ownerName: 'Bikash Thapa', productCount: 1200, monthlyRevenue: 890000 },
+  { id: 't4', name: 'Pokhara Electronics', email: 'contact@pkr-electronics.com', phone: '+977-9834567890', plan: 'Plan 3', status: 'active', createdAt: '2024-02-28', domain: 'pkrelectronics.posnepal.com', ownerName: 'Anita Gurung', productCount: 340, monthlyRevenue: 567000 },
+  { id: 't5', name: 'Bhaktapur Handicraft', email: 'info@bktcraft.com', phone: '+977-9845678901', plan: 'Plan 1', status: 'active', createdAt: '2024-05-10', domain: 'bktcraft.posnepal.com', ownerName: 'Hari Prasad', productCount: 156, monthlyRevenue: 78000 },
+  { id: 't6', name: 'Lalitpur Fashion', email: 'style@ltpfashion.com', phone: '+977-9856789012', plan: 'Plan 3', status: 'active', createdAt: '2024-04-05', domain: 'ltpfashion.posnepal.com', ownerName: 'Priya Maharjan', productCount: 412, monthlyRevenue: 234000 },
+  { id: 't7', name: 'Chitwan Fresh', email: 'fresh@chitwanfresh.com', phone: '+977-9867890123', plan: 'Plan 1', status: 'inactive', createdAt: '2024-06-18', domain: 'chitwanfresh.posnepal.com', ownerName: 'Dil Kumar', productCount: 67, monthlyRevenue: 32000 },
+  { id: 't8', name: 'Biratnagar Hardware', email: 'sales@brthardware.com', phone: '+977-9878901234', plan: 'Plan 4', status: 'active', createdAt: '2023-09-20', domain: 'brthardware.posnepal.com', ownerName: 'Kumar Rai', productCount: 890, monthlyRevenue: 1456000 },
 ];
 
-// ---------- Subscription Plans ----------
-export const mockPlans: SubscriptionPlan[] = [
+// ---------- Subscription Packages ----------
+export const mockPackages: SubscriptionPackage[] = [
   {
-    id: 'plan-1', name: 'basic', price: 999, currency: 'NPR', interval: 'month',
-    features: ['Up to 100 Products', '1 Staff Account', 'Basic Reports', 'Email Support', 'POS System'],
-    maxProducts: 100, maxStaff: 1,
+    id: 'pkg-1', name: 'Plan 1', price: 999, interval: 'monthly', status: 'active',
+    maxProducts: 200, maxStaff: 5, analytics: 'basic', support: 'basic',
+    paymentGateway: true, billing: false, receipt: false, export: false,
+    advanceInventory: false, pos: false, multipleOutlets: false,
+    createdAt: '2023-01-01', updatedAt: '2025-01-01',
   },
   {
-    id: 'plan-2', name: 'pro', price: 2999, currency: 'NPR', interval: 'month', popular: true,
-    features: ['Up to 500 Products', '5 Staff Accounts', 'Advanced Reports', 'Priority Support', 'POS System', 'Inventory Management', 'Billing & Invoicing'],
-    maxProducts: 500, maxStaff: 5,
+    id: 'pkg-2', name: 'Plan 2', price: 2999, interval: 'monthly', status: 'active',
+    maxProducts: 1000, maxStaff: 10, analytics: 'standard', support: 'quick',
+    paymentGateway: true, billing: false, receipt: false, export: false,
+    advanceInventory: false, pos: false, multipleOutlets: false,
+    popular: true, createdAt: '2023-01-01', updatedAt: '2025-01-01',
   },
   {
-    id: 'plan-3', name: 'enterprise', price: 7999, currency: 'NPR', interval: 'month',
-    features: ['Unlimited Products', 'Unlimited Staff', 'Custom Reports', '24/7 Support', 'POS System', 'Inventory Management', 'Billing & Invoicing', 'API Access', 'Custom Domain', 'Multi-Branch Support'],
-    maxProducts: 99999, maxStaff: 99999,
+    id: 'pkg-3', name: 'Plan 3', price: 5999, interval: 'monthly', status: 'active',
+    maxProducts: 2000, maxStaff: 20, analytics: 'advanced', support: 'priority',
+    paymentGateway: true, billing: true, receipt: true, export: true,
+    advanceInventory: false, pos: false, multipleOutlets: false,
+    createdAt: '2023-01-01', updatedAt: '2025-01-01',
+  },
+  {
+    id: 'pkg-4', name: 'Plan 4', price: 12999, interval: 'monthly', status: 'active',
+    maxProducts: 5000, maxStaff: 50, analytics: 'advanced', support: 'dedicated',
+    paymentGateway: true, billing: true, receipt: true, export: true,
+    advanceInventory: true, pos: true, multipleOutlets: true,
+    createdAt: '2023-01-01', updatedAt: '2025-01-01',
   },
 ];
 
-// ---------- Subscriptions (entity CRUD) ----------
+// ---------- Subscriptions (tenant assignments) ----------
 export const mockSubscriptions: Subscription[] = [
-  { id: 'sub-1', tenantId: 't1', tenantName: 'ABC Store', planId: 'plan-2', planName: 'pro', status: 'active', startDate: '2024-01-15', endDate: '2025-01-15', amount: 2999, currency: 'NPR', autoRenew: true },
-  { id: 'sub-2', tenantId: 't2', tenantName: 'XYZ Mart', planId: 'plan-1', planName: 'basic', status: 'expired', startDate: '2024-03-22', endDate: '2024-09-22', amount: 999, currency: 'NPR', autoRenew: false },
-  { id: 'sub-3', tenantId: 't3', tenantName: 'Kathmandu Grocers', planId: 'plan-3', planName: 'enterprise', status: 'active', startDate: '2023-11-10', endDate: '2025-11-10', amount: 7999, currency: 'NPR', autoRenew: true },
-  { id: 'sub-4', tenantId: 't4', tenantName: 'Pokhara Electronics', planId: 'plan-2', planName: 'pro', status: 'active', startDate: '2024-02-28', endDate: '2025-02-28', amount: 2999, currency: 'NPR', autoRenew: true },
-  { id: 'sub-5', tenantId: 't5', tenantName: 'Bhaktapur Handicraft', planId: 'plan-1', planName: 'basic', status: 'active', startDate: '2024-05-10', endDate: '2025-05-10', amount: 999, currency: 'NPR', autoRenew: false },
-  { id: 'sub-6', tenantId: 't6', tenantName: 'Lalitpur Fashion', planId: 'plan-2', planName: 'pro', status: 'active', startDate: '2024-04-05', endDate: '2025-04-05', amount: 2999, currency: 'NPR', autoRenew: true },
-  { id: 'sub-7', tenantId: 't7', tenantName: 'Chitwan Fresh', planId: 'plan-1', planName: 'basic', status: 'cancelled', startDate: '2024-06-18', endDate: '2024-12-18', amount: 999, currency: 'NPR', autoRenew: false },
-  { id: 'sub-8', tenantId: 't8', tenantName: 'Biratnagar Hardware', planId: 'plan-3', planName: 'enterprise', status: 'active', startDate: '2023-09-20', endDate: '2025-09-20', amount: 7999, currency: 'NPR', autoRenew: true },
-  { id: 'sub-9', tenantId: 't1', tenantName: 'ABC Store', planId: 'plan-1', planName: 'basic', status: 'expired', startDate: '2023-06-15', endDate: '2024-01-15', amount: 999, currency: 'NPR', autoRenew: false },
-  { id: 'sub-10', tenantId: 't3', tenantName: 'Kathmandu Grocers', planId: 'plan-2', planName: 'pro', status: 'expired', startDate: '2022-11-10', endDate: '2023-11-10', amount: 2999, currency: 'NPR', autoRenew: false },
+  { id: 'sub-1', tenantId: 't1', tenantName: 'ABC Store', packageId: 'pkg-2', packageName: 'Plan 2', status: 'active', startDate: '2024-01-15', endDate: '2025-01-15', amount: 2999, currency: 'NPR', autoRenew: true },
+  { id: 'sub-2', tenantId: 't2', tenantName: 'XYZ Mart', packageId: 'pkg-1', packageName: 'Plan 1', status: 'expired', startDate: '2024-03-22', endDate: '2024-09-22', amount: 999, currency: 'NPR', autoRenew: false },
+  { id: 'sub-3', tenantId: 't3', tenantName: 'Kathmandu Grocers', packageId: 'pkg-4', packageName: 'Plan 4', status: 'active', startDate: '2023-11-10', endDate: '2025-11-10', amount: 12999, currency: 'NPR', autoRenew: true },
+  { id: 'sub-4', tenantId: 't4', tenantName: 'Pokhara Electronics', packageId: 'pkg-3', packageName: 'Plan 3', status: 'active', startDate: '2024-02-28', endDate: '2025-02-28', amount: 5999, currency: 'NPR', autoRenew: true },
+  { id: 'sub-5', tenantId: 't5', tenantName: 'Bhaktapur Handicraft', packageId: 'pkg-1', packageName: 'Plan 1', status: 'active', startDate: '2024-05-10', endDate: '2025-05-10', amount: 999, currency: 'NPR', autoRenew: false },
+  { id: 'sub-6', tenantId: 't6', tenantName: 'Lalitpur Fashion', packageId: 'pkg-3', packageName: 'Plan 3', status: 'active', startDate: '2024-04-05', endDate: '2025-04-05', amount: 5999, currency: 'NPR', autoRenew: true },
+  { id: 'sub-7', tenantId: 't7', tenantName: 'Chitwan Fresh', packageId: 'pkg-1', packageName: 'Plan 1', status: 'cancelled', startDate: '2024-06-18', endDate: '2024-12-18', amount: 999, currency: 'NPR', autoRenew: false },
+  { id: 'sub-8', tenantId: 't8', tenantName: 'Biratnagar Hardware', packageId: 'pkg-4', packageName: 'Plan 4', status: 'active', startDate: '2023-09-20', endDate: '2025-09-20', amount: 12999, currency: 'NPR', autoRenew: true },
+];
+
+// ---------- Outlets ----------
+export const mockOutlets: Outlet[] = [
+  { id: 'out-1', tenantId: 't1', name: 'ABC Store - Main Branch', address: 'Putalisadak', city: 'Kathmandu', phone: '+977-9801234567', isDefault: true, status: 'active', createdAt: '2024-01-15' },
+  { id: 'out-2', tenantId: 't1', name: 'ABC Store - Baneshwor', address: 'Baneshwor', city: 'Kathmandu', phone: '+977-9801234568', isDefault: false, status: 'active', createdAt: '2024-06-01' },
+  { id: 'out-3', tenantId: 't1', name: 'ABC Store - Lalitpur', address: 'Pulchowk', city: 'Lalitpur', phone: '+977-9801234569', isDefault: false, status: 'active', createdAt: '2024-09-10' },
+  { id: 'out-4', tenantId: 't3', name: 'KTM Grocers - Ason', address: 'Ason', city: 'Kathmandu', phone: '+977-9823456780', isDefault: true, status: 'active', createdAt: '2023-11-10' },
+  { id: 'out-5', tenantId: 't3', name: 'KTM Grocers - Jawalakhel', address: 'Jawalakhel', city: 'Lalitpur', phone: '+977-9823456781', isDefault: false, status: 'active', createdAt: '2024-04-15' },
+  { id: 'out-6', tenantId: 't3', name: 'KTM Grocers - Bhaktapur', address: 'Bhaktapur Durbar', city: 'Bhaktapur', phone: '+977-9823456782', isDefault: false, status: 'inactive', createdAt: '2024-08-20' },
+  { id: 'out-7', tenantId: 't8', name: 'BR Hardware - Main', address: 'Itahari', city: 'Biratnagar', phone: '+977-9878901230', isDefault: true, status: 'active', createdAt: '2023-09-20' },
+  { id: 'out-8', tenantId: 't8', name: 'BR Hardware - Dharan', address: 'Dharan Chowk', city: 'Dharan', phone: '+977-9878901231', isDefault: false, status: 'active', createdAt: '2024-05-10' },
+  { id: 'out-9', tenantId: 't2', name: 'XYZ Mart - Main', address: 'Balaju', city: 'Kathmandu', phone: '+977-9812345670', isDefault: true, status: 'active', createdAt: '2024-03-22' },
 ];
 
 // ---------- Vendors ----------
@@ -85,18 +109,6 @@ export const mockVendors: Vendor[] = [
   { id: 'v8', name: 'Chitwan Fresh Farms', contactPerson: 'Dil Kumar', email: 'supply@ctfresh.com.np', phone: '+977-9808888888', pan: '308888888', vatNumber: 'VAT-308888888', address: 'Narayanghat', city: 'Chitwan', status: 'active', productCount: 3, createdAt: '2024-03-10' },
 ];
 
-// ---------- Contracts ----------
-export const mockContracts: Contract[] = [
-  { id: 'ct-1', tenantId: 't1', tenantName: 'ABC Store', title: 'Annual POS Service Agreement', type: 'service', status: 'active', startDate: '2024-01-15', endDate: '2025-01-15', value: 35988, currency: 'NPR', description: 'Annual POS system service including maintenance, updates, and 24/7 support for Pro plan.' },
-  { id: 'ct-2', tenantId: 't3', tenantName: 'Kathmandu Grocers', title: 'Enterprise License Contract', type: 'license', status: 'active', startDate: '2023-11-10', endDate: '2025-11-10', value: 191976, currency: 'NPR', description: 'Enterprise license with API access, custom domain, and multi-branch support.' },
-  { id: 'ct-3', tenantId: 't4', tenantName: 'Pokhara Electronics', title: 'Pro Plan Service Agreement', type: 'service', status: 'active', startDate: '2024-02-28', endDate: '2025-02-28', value: 35988, currency: 'NPR', description: 'Pro plan service with inventory management and advanced reporting.' },
-  { id: 'ct-4', tenantId: 't5', tenantName: 'Bhaktapur Handicraft', title: 'Basic Plan Contract', type: 'service', status: 'active', startDate: '2024-05-10', endDate: '2025-05-10', value: 11988, currency: 'NPR', description: 'Basic POS service agreement with email support.' },
-  { id: 'ct-5', tenantId: 't2', tenantName: 'XYZ Mart', title: 'Initial Setup & Onboarding', type: 'custom', status: 'expired', startDate: '2024-03-22', endDate: '2024-06-22', value: 5000, currency: 'NPR', description: 'One-time onboarding and setup assistance.' },
-  { id: 'ct-6', tenantId: 't6', tenantName: 'Lalitpur Fashion', title: 'Pro Plan Service Agreement', type: 'service', status: 'active', startDate: '2024-04-05', endDate: '2025-04-05', value: 35988, currency: 'NPR', description: 'Pro plan service with billing and invoicing features.' },
-  { id: 'ct-7', tenantId: 't8', tenantName: 'Biratnagar Hardware', title: 'Enterprise Custom Integration', type: 'custom', status: 'active', startDate: '2023-09-20', endDate: '2025-09-20', value: 250000, currency: 'NPR', description: 'Custom ERP integration with hardware inventory tracking system.' },
-  { id: 'ct-8', tenantId: 't7', tenantName: 'Chitwan Fresh', title: 'Basic Plan Contract', type: 'service', status: 'terminated', startDate: '2024-06-18', endDate: '2024-12-18', value: 5994, currency: 'NPR', description: 'Basic POS service - terminated early due to non-payment.' },
-];
-
 // ---------- Tenant Documents ----------
 export const mockTenantDocuments: TenantDocument[] = [
   { id: 'doc-1', tenantId: 't1', tenantName: 'ABC Store', type: 'pan', name: 'PAN Certificate', fileName: 'abc_store_pan.pdf', fileSize: '245 KB', uploadedAt: '2024-01-15', status: 'verified' },
@@ -105,15 +117,11 @@ export const mockTenantDocuments: TenantDocument[] = [
   { id: 'doc-4', tenantId: 't3', tenantName: 'Kathmandu Grocers', type: 'pan', name: 'PAN Certificate', fileName: 'ktm_grocers_pan.pdf', fileSize: '198 KB', uploadedAt: '2023-11-10', status: 'verified' },
   { id: 'doc-5', tenantId: 't3', tenantName: 'Kathmandu Grocers', type: 'vat', name: 'VAT Registration', fileName: 'ktm_grocers_vat.pdf', fileSize: '267 KB', uploadedAt: '2023-11-10', status: 'verified' },
   { id: 'doc-6', tenantId: 't3', tenantName: 'Kathmandu Grocers', type: 'business_license', name: 'Company Registration', fileName: 'ktm_grocers_company.pdf', fileSize: '1.2 MB', uploadedAt: '2023-11-10', status: 'verified' },
-  { id: 'doc-7', tenantId: 't3', tenantName: 'Kathmandu Grocers', type: 'bank_statement', name: 'Bank Statement Q1 2024', fileName: 'ktm_grocers_bank_q1.pdf', fileSize: '890 KB', uploadedAt: '2024-04-15', status: 'verified' },
-  { id: 'doc-8', tenantId: 't4', tenantName: 'Pokhara Electronics', type: 'pan', name: 'PAN Certificate', fileName: 'pkr_elec_pan.pdf', fileSize: '210 KB', uploadedAt: '2024-02-28', status: 'verified' },
-  { id: 'doc-9', tenantId: 't4', tenantName: 'Pokhara Electronics', type: 'vat', name: 'VAT Registration', fileName: 'pkr_elec_vat.pdf', fileSize: '298 KB', uploadedAt: '2024-02-28', status: 'pending' },
-  { id: 'doc-10', tenantId: 't5', tenantName: 'Bhaktapur Handicraft', type: 'pan', name: 'PAN Certificate', fileName: 'bkt_craft_pan.pdf', fileSize: '220 KB', uploadedAt: '2024-05-10', status: 'verified' },
-  { id: 'doc-11', tenantId: 't5', tenantName: 'Bhaktapur Handicraft', type: 'other', name: 'Handicraft Export License', fileName: 'bkt_craft_export.pdf', fileSize: '456 KB', uploadedAt: '2024-05-12', status: 'pending' },
-  { id: 'doc-12', tenantId: 't8', tenantName: 'Biratnagar Hardware', type: 'pan', name: 'PAN Certificate', fileName: 'brt_hw_pan.pdf', fileSize: '205 KB', uploadedAt: '2023-09-20', status: 'verified' },
-  { id: 'doc-13', tenantId: 't8', tenantName: 'Biratnagar Hardware', type: 'vat', name: 'VAT Registration', fileName: 'brt_hw_vat.pdf', fileSize: '310 KB', uploadedAt: '2023-09-20', status: 'verified' },
-  { id: 'doc-14', tenantId: 't8', tenantName: 'Biratnagar Hardware', type: 'business_license', name: 'Trade License', fileName: 'brt_hw_trade.pdf', fileSize: '780 KB', uploadedAt: '2023-09-20', status: 'rejected' },
-  { id: 'doc-15', tenantId: 't6', tenantName: 'Lalitpur Fashion', type: 'pan', name: 'PAN Certificate', fileName: 'ltp_fashion_pan.pdf', fileSize: '230 KB', uploadedAt: '2024-04-05', status: 'verified' },
+  { id: 'doc-7', tenantId: 't4', tenantName: 'Pokhara Electronics', type: 'pan', name: 'PAN Certificate', fileName: 'pkr_elec_pan.pdf', fileSize: '210 KB', uploadedAt: '2024-02-28', status: 'verified' },
+  { id: 'doc-8', tenantId: 't4', tenantName: 'Pokhara Electronics', type: 'vat', name: 'VAT Registration', fileName: 'pkr_elec_vat.pdf', fileSize: '298 KB', uploadedAt: '2024-02-28', status: 'pending' },
+  { id: 'doc-9', tenantId: 't5', tenantName: 'Bhaktapur Handicraft', type: 'pan', name: 'PAN Certificate', fileName: 'bkt_craft_pan.pdf', fileSize: '220 KB', uploadedAt: '2024-05-10', status: 'verified' },
+  { id: 'doc-10', tenantId: 't8', tenantName: 'Biratnagar Hardware', type: 'pan', name: 'PAN Certificate', fileName: 'brt_hw_pan.pdf', fileSize: '205 KB', uploadedAt: '2023-09-20', status: 'verified' },
+  { id: 'doc-11', tenantId: 't8', tenantName: 'Biratnagar Hardware', type: 'vat', name: 'VAT Registration', fileName: 'brt_hw_vat.pdf', fileSize: '310 KB', uploadedAt: '2023-09-20', status: 'verified' },
 ];
 
 // ---------- Tenant Features ----------
@@ -135,7 +143,6 @@ export const mockTenantFeatures: TenantFeature[] = [
   { id: 'f15', key: 'int_bank', label: 'Bank Transfer', description: 'Bank transfer payment integration', category: 'integration', enabled: false },
   { id: 'f16', key: 'adv_multi_branch', label: 'Multi-Branch', description: 'Manage multiple store branches', category: 'advanced', enabled: false },
   { id: 'f17', key: 'adv_api', label: 'API Access', description: 'RESTful API for external integrations', category: 'advanced', enabled: false },
-  { id: 'f18', key: 'adv_custom_domain', label: 'Custom Domain', description: 'Use your own domain name', category: 'advanced', enabled: false },
 ];
 
 // ---------- Categories ----------
@@ -188,8 +195,6 @@ export const mockStockMovements: StockMovement[] = [
   { id: 'sm4', productId: 'p8', productName: 'Frozen Chicken (1kg)', type: 'out', quantity: 5, reason: 'Sold to customer', date: '2024-06-14', performedBy: 'Sita' },
   { id: 'sm5', productId: 'p3', productName: 'Basmati Rice (5kg)', type: 'in', quantity: 20, reason: 'New stock received from supplier', date: '2024-06-13', performedBy: 'Ramesh' },
   { id: 'sm6', productId: 'p5', productName: 'Goldstar Shoes', type: 'in', quantity: 10, reason: 'New stock received from supplier', date: '2024-06-13', performedBy: 'Hari' },
-  { id: 'sm7', productId: 'p11', productName: 'Musk Melon', type: 'out', quantity: 3, reason: 'Expired - disposed', date: '2024-06-12', performedBy: 'Ramesh' },
-  { id: 'sm8', productId: 'p9', productName: 'Coca Cola (500ml)', type: 'in', quantity: 200, reason: 'New stock received from distributor', date: '2024-06-12', performedBy: 'Hari' },
 ];
 
 // ---------- Sales ----------
@@ -221,20 +226,25 @@ export const mockTenantStaff: StaffMember[] = [
   { id: 'ts3', name: 'Hari Bahadur', email: 'hari@abcstore.com', phone: '+977-9833333333', role: 'manager', status: 'active', createdAt: '2024-01-15', permissions: ['all'] },
 ];
 
+// ---------- Customers (used internally by POS for billing) ----------
+export const mockCustomers: Customer[] = [
+  { id: 'c1', name: 'Kumar Hardware', email: 'kumar@hardware.com.np', phone: '+977-9841234567', pan: '301234567', address: 'Putalisadak, Kathmandu', totalPurchases: 47, totalSpent: 245600, lastVisit: '2024-06-15T11:15:00', createdAt: '2024-01-10', isActive: true },
+  { id: 'c2', name: 'Hotel Himalayan', email: 'orders@hotelhimalayan.com', phone: '+977-9851234567', pan: '402345678', address: 'Thamel, Kathmandu', totalPurchases: 32, totalSpent: 189400, lastVisit: '2024-06-14T14:30:00', createdAt: '2024-01-20', isActive: true },
+  { id: 'c3', name: 'Thapa Enterprises', email: 'thapa@enterprises.com.np', phone: '+977-9861234567', pan: '503456789', address: 'Baneshwor, Kathmandu', totalPurchases: 18, totalSpent: 89500, lastVisit: '2024-06-12T11:00:00', createdAt: '2024-02-05', isActive: true },
+  { id: 'c4', name: 'Gurung Bakery', email: 'gurung@bakery.com.np', phone: '+977-9871234567', pan: '604567890', address: 'Lazimpat, Kathmandu', totalPurchases: 56, totalSpent: 124300, lastVisit: '2024-06-15T09:00:00', createdAt: '2023-11-15', isActive: true },
+  { id: 'c5', name: 'Walk-in Customer', email: '', phone: '', pan: '', address: '', totalPurchases: 0, totalSpent: 0, lastVisit: '', createdAt: '2024-01-01', isActive: true },
+];
+
 // ---------- Activity Logs ----------
 export const mockActivityLogs: ActivityLog[] = [
   { id: 'al1', user: 'Admin User', action: 'Created Tenant', details: 'Created new tenant: Chitwan Fresh', timestamp: '2024-06-15T10:00:00', type: 'success' },
-  { id: 'al2', user: 'Support Ram', action: 'Updated Tenant', details: 'Upgraded XYZ Mart from Basic to Pro plan', timestamp: '2024-06-15T09:30:00', type: 'info' },
+  { id: 'al2', user: 'Support Ram', action: 'Updated Tenant', details: 'Upgraded XYZ Mart from Plan 1 to Plan 2', timestamp: '2024-06-15T09:30:00', type: 'info' },
   { id: 'al3', user: 'Finance Sita', action: 'Generated Report', details: 'Generated monthly revenue report for June 2024', timestamp: '2024-06-14T16:00:00', type: 'info' },
   { id: 'al4', user: 'Admin User', action: 'Disabled Tenant', details: 'Disabled tenant: Chitwan Fresh (payment overdue)', timestamp: '2024-06-14T14:00:00', type: 'warning' },
   { id: 'al5', user: 'System', action: 'Backup Completed', details: 'Daily backup completed successfully. Size: 2.3GB', timestamp: '2024-06-14T03:00:00', type: 'success' },
   { id: 'al6', user: 'Support Hari', action: 'Ticket Resolved', details: 'Resolved support ticket #1245 for Pokhara Electronics', timestamp: '2024-06-13T15:30:00', type: 'success' },
-  { id: 'al7', user: 'Admin User', action: 'Plan Updated', details: 'Updated Enterprise plan pricing from NPR 7,499 to NPR 7,999', timestamp: '2024-06-13T11:00:00', type: 'info' },
-  { id: 'al8', user: 'System', action: 'SSL Renewal', details: 'Auto-renewed SSL certificate for bhaktapurhandicraft.com', timestamp: '2024-06-13T00:00:00', type: 'success' },
-  { id: 'al9', user: 'Finance Sita', action: 'Payment Received', details: 'Received NPR 7,999 from Biratnagar Hardware (Enterprise)', timestamp: '2024-06-12T14:20:00', type: 'success' },
-  { id: 'al10', user: 'Support Ram', action: 'New Ticket', details: 'New support ticket #1250 opened by Lalitpur Fashion', timestamp: '2024-06-12T10:00:00', type: 'warning' },
-  { id: 'al11', user: 'Admin User', action: 'Staff Created', details: 'Created new staff account: Support Hari', timestamp: '2024-06-11T09:00:00', type: 'info' },
-  { id: 'al12', user: 'System', action: 'System Update', details: 'System updated to v2.4.1 - Bug fixes and improvements', timestamp: '2024-06-11T02:00:00', type: 'info' },
+  { id: 'al7', user: 'Admin User', action: 'Package Updated', details: 'Updated Plan 4 pricing from NPR 11,999 to NPR 12,999', timestamp: '2024-06-13T11:00:00', type: 'info' },
+  { id: 'al8', user: 'System', action: 'System Update', details: 'System updated to v2.5.0 - Bug fixes and improvements', timestamp: '2024-06-11T02:00:00', type: 'info' },
 ];
 
 // ---------- Report Data ----------
@@ -276,20 +286,6 @@ export const mockVATReportData: VATReportData[] = [
   { month: '2024-06', taxableAmount: 423500, vatCollected: 55055, vatPaid: 28000 },
 ];
 
-// ---------- Customers ----------
-export const mockCustomers: Customer[] = [
-  { id: 'c1', name: 'Kumar Hardware', email: 'kumar@hardware.com.np', phone: '+977-9841234567', pan: '301234567', address: 'Putalisadak, Kathmandu', totalPurchases: 47, totalSpent: 245600, lastVisit: '2024-06-15T11:15:00', createdAt: '2024-01-10', isActive: true },
-  { id: 'c2', name: 'Hotel Himalayan', email: 'orders@hotelhimalayan.com', phone: '+977-9851234567', pan: '402345678', address: 'Thamel, Kathmandu', totalPurchases: 32, totalSpent: 189400, lastVisit: '2024-06-14T14:30:00', createdAt: '2024-01-20', isActive: true },
-  { id: 'c3', name: 'Thapa Enterprises', email: 'thapa@enterprises.com.np', phone: '+977-9861234567', pan: '503456789', address: 'Baneshwor, Kathmandu', totalPurchases: 18, totalSpent: 89500, lastVisit: '2024-06-12T11:00:00', createdAt: '2024-02-05', isActive: true },
-  { id: 'c4', name: 'Gurung Bakery', email: 'gurung@bakery.com.np', phone: '+977-9871234567', pan: '604567890', address: 'Lazimpat, Kathmandu', totalPurchases: 56, totalSpent: 124300, lastVisit: '2024-06-15T09:00:00', createdAt: '2023-11-15', isActive: true },
-  { id: 'c5', name: 'Shrestha Restaurant', email: 'shrestha@restaurant.com', phone: '+977-9801234580', pan: '705678901', address: 'Pulchowk, Lalitpur', totalPurchases: 29, totalSpent: 67800, lastVisit: '2024-06-13T16:30:00', createdAt: '2024-03-01', isActive: true },
-  { id: 'c6', name: 'Magar Traders', email: 'magar@traders.com.np', phone: '+977-9811234580', pan: '806789012', address: 'Kalanki, Kathmandu', totalPurchases: 8, totalSpent: 34200, lastVisit: '2024-06-10T12:00:00', createdAt: '2024-04-10', isActive: true },
-  { id: 'c7', name: 'Dorje Corner Store', email: 'dorje@corner.com.np', phone: '+977-9821234580', pan: '907890123', address: 'Jorpati, Kathmandu', totalPurchases: 41, totalSpent: 156700, lastVisit: '2024-06-14T10:00:00', createdAt: '2023-12-05', isActive: true },
-  { id: 'c8', name: 'Tamang Electronics', email: 'tamang@electronics.com', phone: '+977-9831234580', pan: '', address: 'New Road, Kathmandu', totalPurchases: 3, totalSpent: 12500, lastVisit: '2024-05-28T14:00:00', createdAt: '2024-05-01', isActive: false },
-  { id: 'c9', name: 'Rai Wholesale', email: 'rai@wholesale.com.np', phone: '+977-9841234580', pan: '118901234', address: 'Teku, Kathmandu', totalPurchases: 65, totalSpent: 432100, lastVisit: '2024-06-15T16:00:00', createdAt: '2023-10-20', isActive: true },
-  { id: 'c10', name: 'Limbu Cafe', email: 'limbu@cafe.com.np', phone: '+977-9851234580', pan: '', address: 'Boudha, Kathmandu', totalPurchases: 12, totalSpent: 28900, lastVisit: '2024-06-11T09:30:00', createdAt: '2024-04-25', isActive: true },
-];
-
 // ---------- Dashboard Stats ----------
 export const mockSuperAdminStats: SuperAdminStats = {
   totalTenants: 8,
@@ -320,12 +316,10 @@ export const mockTenantStats: TenantStats = {
 export const mockPromotions: Promotion[] = [
   { id: 'promo-1', code: 'LAUNCH2025', name: 'New Year Launch', description: '20% off on all plans for new signups in January 2025', type: 'percentage', value: 20, status: 'active', maxUses: 100, usedCount: 34, validFrom: '2025-01-01', validUntil: '2025-01-31', createdAt: '2024-12-20', createdBy: 'Super Admin' },
   { id: 'promo-2', code: 'REFER50', name: 'Referral Bonus', description: '50% off first month when referred by existing tenant', type: 'percentage', value: 50, status: 'active', maxUses: 200, usedCount: 12, validFrom: '2025-01-01', validUntil: '2025-06-30', createdAt: '2024-12-25', createdBy: 'Super Admin' },
-  { id: 'promo-3', code: 'ENTERPRISE1K', name: 'Enterprise Discount', description: 'NPR 1,000 off on Enterprise plan', type: 'fixed', value: 1000, status: 'active', maxUses: 50, usedCount: 8, validFrom: '2025-01-15', validUntil: '2025-03-31', createdAt: '2025-01-10', createdBy: 'Super Admin' },
+  { id: 'promo-3', code: 'ENTERPRISE1K', name: 'Enterprise Discount', description: 'NPR 1,000 off on Plan 4', type: 'fixed', value: 1000, status: 'active', maxUses: 50, usedCount: 8, validFrom: '2025-01-15', validUntil: '2025-03-31', createdAt: '2025-01-10', createdBy: 'Super Admin' },
   { id: 'promo-4', code: 'FREETRIAL14', name: '14-Day Free Trial', description: 'Extended 14-day free trial on any plan', type: 'trial_extension', value: 14, status: 'active', maxUses: 500, usedCount: 89, validFrom: '2025-01-01', validUntil: '2025-12-31', createdAt: '2024-12-15', createdBy: 'Super Admin' },
-  { id: 'promo-5', code: 'DASHAIN2024', name: 'Dashain Festival Offer', description: 'Free month on annual Enterprise subscription', type: 'free_month', value: 1, status: 'expired', maxUses: 30, usedCount: 30, validFrom: '2024-10-01', validUntil: '2024-10-20', createdAt: '2024-09-20', createdBy: 'Super Admin' },
-  { id: 'promo-6', code: 'TIHAR24', name: 'Tihar Celebration', description: '15% off Pro and Enterprise plans during Tihar', type: 'percentage', value: 15, status: 'expired', maxUses: 75, usedCount: 62, validFrom: '2024-11-01', validUntil: '2024-11-15', createdAt: '2024-10-25', createdBy: 'Super Admin' },
-  { id: 'promo-7', code: 'SUMMER25', name: 'Summer Special 2025', description: '25% off all plans during summer', type: 'percentage', value: 25, status: 'scheduled', maxUses: 150, usedCount: 0, validFrom: '2025-06-01', validUntil: '2025-08-31', createdAt: '2025-01-05', createdBy: 'Super Admin' },
-  { id: 'promo-8', code: 'NEWYEAR26', name: 'New Year 2026', description: '10% off annual subscriptions for 2026', type: 'percentage', value: 10, status: 'paused', maxUses: 200, usedCount: 0, validFrom: '2025-12-25', validUntil: '2026-01-31', createdAt: '2025-01-10', createdBy: 'Super Admin' },
+  { id: 'promo-5', code: 'DASHAIN2024', name: 'Dashain Festival Offer', description: 'Free month on annual Plan 4 subscription', type: 'free_month', value: 1, status: 'expired', maxUses: 30, usedCount: 30, validFrom: '2024-10-01', validUntil: '2024-10-20', createdAt: '2024-09-20', createdBy: 'Super Admin' },
+  { id: 'promo-6', code: 'SUMMER25', name: 'Summer Special 2025', description: '25% off all plans during summer', type: 'percentage', value: 25, status: 'scheduled', maxUses: 150, usedCount: 0, validFrom: '2025-06-01', validUntil: '2025-08-31', createdAt: '2025-01-05', createdBy: 'Super Admin' },
 ];
 
 // ---------- Referrals ----------
@@ -337,7 +331,6 @@ export const mockReferrals: Referral[] = [
   { id: 'ref-5', referrerTenantId: 't3', referrerTenantName: 'Kathmandu Grocers', referredTenantId: 't8', referredTenantName: 'Biratnagar Hardware', referralCode: 'KTMGROC', status: 'rewarded', rewardType: 'free_month', rewardValue: 1, createdAt: '2024-08-01', convertedAt: '2024-09-20' },
   { id: 'ref-6', referrerTenantId: 't4', referrerTenantName: 'Pokhara Electronics', referredTenantId: 't2', referredTenantName: 'XYZ Mart', referralCode: 'PKRELEC', status: 'converted', rewardType: 'percentage_discount', rewardValue: 15, createdAt: '2024-03-10', convertedAt: '2024-03-22' },
   { id: 'ref-7', referrerTenantId: 't6', referrerTenantName: 'Lalitpur Fashion', referredTenantId: '', referredTenantName: 'Pending User', referralCode: 'LTPSTYLE', status: 'pending', rewardType: 'percentage_discount', rewardValue: 15, createdAt: '2025-01-08' },
-  { id: 'ref-8', referrerTenantId: 't8', referrerTenantName: 'Biratnagar Hardware', referredTenantId: '', referredTenantName: 'Pending User', referralCode: 'BRTHARDW', status: 'pending', rewardType: 'fixed_discount', rewardValue: 1000, createdAt: '2025-01-10' },
 ];
 
 // ---------- User Profiles ----------

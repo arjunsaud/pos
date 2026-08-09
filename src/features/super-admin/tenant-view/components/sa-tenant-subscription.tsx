@@ -6,7 +6,7 @@ import { nprFull, formatDate, getStatusBadgeClasses, getPlanBadgeClasses } from 
 import { cn } from '@/lib/utils';
 import { PageHeader } from '@/components/shared/page-header';
 import { useTenantSelectorStore } from '@/features/auth/store';
-import { mockTenants, mockSubscriptions, mockPlans } from '@/lib/mock-data';
+import { mockTenants, mockSubscriptions, mockPackages } from '@/lib/mock-data';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -47,7 +47,7 @@ export default function SATenantSubscription() {
   );
 
   const activePlan = useMemo(
-    () => activeSub ? mockPlans.find(p => p.name === activeSub.planName) : null,
+    () => activeSub ? mockPackages.find(p => p.name === activeSub.packageName) : null,
     [activeSub]
   );
 
@@ -71,8 +71,8 @@ export default function SATenantSubscription() {
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <div>
                 <p className="text-xs text-muted-foreground">Plan</p>
-                <Badge className={cn('mt-1 capitalize', getPlanBadgeClasses(activeSub.planName))}>
-                  {activeSub.planName}
+                <Badge className={cn('mt-1 capitalize', getPlanBadgeClasses(activeSub.packageName))}>
+                  {activeSub.packageName}
                 </Badge>
               </div>
               <div>
@@ -102,12 +102,56 @@ export default function SATenantSubscription() {
             <div>
               <p className="text-xs text-muted-foreground mb-2">Plan Features</p>
               <div className="grid grid-cols-1 gap-1 sm:grid-cols-2">
-                {activePlan.features.map((f, i) => (
-                  <div key={i} className="flex items-center gap-2 text-sm">
+                {activePlan.paymentGateway && (
+                  <div className="flex items-center gap-2 text-sm">
                     <Check className="h-4 w-4 text-emerald-500 shrink-0" />
-                    <span>{f}</span>
+                    <span>Payment Gateway</span>
                   </div>
-                ))}
+                )}
+                {activePlan.billing && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <Check className="h-4 w-4 text-emerald-500 shrink-0" />
+                    <span>Billing</span>
+                  </div>
+                )}
+                {activePlan.receipt && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <Check className="h-4 w-4 text-emerald-500 shrink-0" />
+                    <span>Receipt</span>
+                  </div>
+                )}
+                {activePlan.export && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <Check className="h-4 w-4 text-emerald-500 shrink-0" />
+                    <span>Export</span>
+                  </div>
+                )}
+                {activePlan.advanceInventory && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <Check className="h-4 w-4 text-emerald-500 shrink-0" />
+                    <span>Advanced Inventory</span>
+                  </div>
+                )}
+                {activePlan.pos && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <Check className="h-4 w-4 text-emerald-500 shrink-0" />
+                    <span>POS</span>
+                  </div>
+                )}
+                {activePlan.multipleOutlets && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <Check className="h-4 w-4 text-emerald-500 shrink-0" />
+                    <span>Multiple Outlets</span>
+                  </div>
+                )}
+                <div className="flex items-center gap-2 text-sm">
+                  <Check className="h-4 w-4 text-emerald-500 shrink-0" />
+                  <span>Analytics: {activePlan.analytics.charAt(0).toUpperCase() + activePlan.analytics.slice(1)}</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <Check className="h-4 w-4 text-emerald-500 shrink-0" />
+                  <span>Support: {activePlan.support.charAt(0).toUpperCase() + activePlan.support.slice(1)}</span>
+                </div>
               </div>
             </div>
           </CardContent>
@@ -130,8 +174,8 @@ export default function SATenantSubscription() {
       <div>
         <h3 className="text-lg font-semibold mb-4">Plan Comparison</h3>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          {mockPlans.map(plan => {
-            const isCurrentPlan = activeSub?.planName === plan.name;
+          {mockPackages.map(plan => {
+            const isCurrentPlan = activeSub?.packageName === plan.name;
             return (
               <Card key={plan.id} className={cn('transition-shadow hover:shadow-md relative', isCurrentPlan && 'border-primary ring-2 ring-primary/20')}>
                 {plan.popular && (
@@ -142,7 +186,7 @@ export default function SATenantSubscription() {
                   </div>
                 )}
                 <CardHeader className="pb-2 text-center">
-                  <CardTitle className="text-lg capitalize">{plan.name}</CardTitle>
+                  <CardTitle className="text-lg">{plan.name}</CardTitle>
                   <div>
                     <span className="text-3xl font-bold">{nprFull(plan.price)}</span>
                     <span className="text-sm text-muted-foreground">/{plan.interval}</span>
@@ -150,12 +194,56 @@ export default function SATenantSubscription() {
                 </CardHeader>
                 <CardContent className="p-4 pt-0">
                   <div className="space-y-2">
-                    {plan.features.map((f, i) => (
-                      <div key={i} className="flex items-center gap-2 text-sm">
+                    {plan.paymentGateway && (
+                      <div className="flex items-center gap-2 text-sm">
                         <Check className="h-4 w-4 text-emerald-500 shrink-0" />
-                        <span>{f}</span>
+                        <span>Payment Gateway</span>
                       </div>
-                    ))}
+                    )}
+                    {plan.billing && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Check className="h-4 w-4 text-emerald-500 shrink-0" />
+                        <span>Billing</span>
+                      </div>
+                    )}
+                    {plan.receipt && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Check className="h-4 w-4 text-emerald-500 shrink-0" />
+                        <span>Receipt</span>
+                      </div>
+                    )}
+                    {plan.export && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Check className="h-4 w-4 text-emerald-500 shrink-0" />
+                        <span>Export</span>
+                      </div>
+                    )}
+                    {plan.advanceInventory && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Check className="h-4 w-4 text-emerald-500 shrink-0" />
+                        <span>Advanced Inventory</span>
+                      </div>
+                    )}
+                    {plan.pos && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Check className="h-4 w-4 text-emerald-500 shrink-0" />
+                        <span>POS</span>
+                      </div>
+                    )}
+                    {plan.multipleOutlets && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Check className="h-4 w-4 text-emerald-500 shrink-0" />
+                        <span>Multiple Outlets</span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2 text-sm">
+                      <Check className="h-4 w-4 text-emerald-500 shrink-0" />
+                      <span>Analytics: {plan.analytics.charAt(0).toUpperCase() + plan.analytics.slice(1)}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <Check className="h-4 w-4 text-emerald-500 shrink-0" />
+                      <span>Support: {plan.support.charAt(0).toUpperCase() + plan.support.slice(1)}</span>
+                    </div>
                   </div>
                   {isCurrentPlan && (
                     <Badge className="mt-4 w-full justify-center bg-primary text-primary-foreground">Current Plan</Badge>
@@ -190,7 +278,7 @@ export default function SATenantSubscription() {
                   {subHistory.map(sub => (
                     <TableRow key={sub.id} className="transition-colors hover:bg-muted/50">
                       <TableCell>
-                        <Badge className={cn('capitalize', getPlanBadgeClasses(sub.planName))}>{sub.planName}</Badge>
+                        <Badge className={cn('capitalize', getPlanBadgeClasses(sub.packageName))}>{sub.packageName}</Badge>
                       </TableCell>
                       <TableCell className="font-medium">{nprFull(sub.amount)}</TableCell>
                       <TableCell>

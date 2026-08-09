@@ -3,7 +3,7 @@
 // ============================================================
 
 import { cn } from '@/lib/utils';
-import type { PlanType, TenantStaffRole, SuperAdminStaffRole } from '@/lib/types';
+import type { TenantStaffRole, SuperAdminStaffRole } from '@/lib/types';
 
 // ---------- Currency ----------
 export const npr = (n: number) => new Intl.NumberFormat('en-NP').format(Math.round(n * 100) / 100);
@@ -58,7 +58,7 @@ export function getStatusBadgeClasses(status: string): string {
   }
 }
 
-export function getPlanBadgeClasses(plan: PlanType): string {
+export function getPlanBadgeClasses(plan: string): string {
   switch (plan) {
     case 'basic':
       return 'bg-secondary text-secondary-foreground';

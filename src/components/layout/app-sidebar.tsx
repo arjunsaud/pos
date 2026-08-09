@@ -1,6 +1,6 @@
 'use client';
 
-import { useAuthStore, useNavStore, useTenantSelectorStore } from '@/features/auth/store';
+import { useAuthStore, useNavStore, useTenantSelectorStore, useOutletSelectorStore } from '@/features/auth/store';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -27,9 +27,7 @@ import {
   Store,
   Monitor,
   Menu,
-  Users,
   Bell,
-  FileCheck2,
   FolderOpen,
   SlidersHorizontal,
   Truck,
@@ -38,12 +36,13 @@ import {
   Tag,
   Gift,
   UserCircle,
+  MapPin,
   type LucideIcon,
 } from 'lucide-react';
 import { CommandPalette } from '@/components/layout/command-palette';
 import type { NavSection, UserRole } from '@/lib/types';
 import { useState } from 'react';
-import { mockTenants } from '@/lib/mock-data';
+import { mockTenants, mockOutlets } from '@/lib/mock-data';
 
 interface SidebarItem {
   label: string;
@@ -69,8 +68,7 @@ const superAdminGlobalMenu: SidebarGroup[] = [
     items: [
       { label: 'Tenants', section: 'tenants', icon: Store },
       { label: 'Staff', section: 'super-admin-staff', icon: UserCog },
-      { label: 'Subscriptions', section: 'super-admin-subscriptions', icon: CreditCard },
-      { label: 'Contracts', section: 'sa-contracts', icon: FileCheck2 },
+      { label: 'Packages', section: 'sa-packages', icon: CreditCard },
       { label: 'Documents', section: 'sa-documents', icon: FolderOpen },
       { label: 'Promotions', section: 'sa-promotions', icon: Tag },
       { label: 'Referrals', section: 'sa-referrals', icon: Gift },
@@ -124,7 +122,6 @@ const tenantAdminMenu: SidebarGroup[] = [
     title: 'Point of Sale',
     items: [
       { label: 'POS', section: 'pos', icon: ShoppingCart },
-      { label: 'Customers', section: 'customers', icon: Users },
       { label: 'Billing', section: 'billing', icon: Receipt },
     ],
   },
@@ -147,6 +144,7 @@ const tenantAdminMenu: SidebarGroup[] = [
     title: 'Settings',
     items: [
       { label: 'Subscription', section: 'tenant-subscription', icon: CreditCard },
+      { label: 'Outlets', section: 'tenant-outlets', icon: MapPin },
       { label: 'Store Profile', section: 'store-profile', icon: Store },
       { label: 'Staff', section: 'tenant-staff', icon: UserCog },
       { label: 'Profile', section: 'tenant-profile', icon: UserCircle },
@@ -199,9 +197,6 @@ function TenantSelector() {
                   )}
                 />
                 {tenant.name}
-                <span className="text-xs text-muted-foreground">
-                  ({tenant.plan})
-                </span>
               </span>
             </SelectItem>
           ))}
@@ -214,6 +209,62 @@ function TenantSelector() {
           </span>
           <button
             onClick={() => setSelectedTenantId(null)}
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Clear
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------- Outlet Selector Component (for tenant) ----------
+function OutletSelector() {
+  const { user } = useAuthStore();
+  const tenantId = user?.tenantId || 't1';
+  const { selectedOutletId, setSelectedOutletId } = useOutletSelectorStore();
+  const tenantOutlets = mockOutlets.filter(o => o.tenantId === tenantId);
+  const selectedOutlet = tenantOutlets.find(o => o.id === selectedOutletId);
+
+  return (
+    <div className="px-3 pt-3 pb-1">
+      <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70 mb-1.5 block">
+        Select Outlet
+      </label>
+      <Select
+        value={selectedOutletId || ''}
+        onValueChange={(v) => setSelectedOutletId(v || null)}
+      >
+        <SelectTrigger className="h-9 w-full text-sm">
+          <SelectValue placeholder="Choose an outlet..." />
+        </SelectTrigger>
+        <SelectContent>
+          {tenantOutlets.map((outlet) => (
+            <SelectItem key={outlet.id} value={outlet.id}>
+              <span className="flex items-center gap-2">
+                <span
+                  className={cn(
+                    'h-2 w-2 rounded-full',
+                    outlet.status === 'active' ? 'bg-emerald-500' : 'bg-gray-400'
+                  )}
+                />
+                {outlet.name}
+                {outlet.isDefault && (
+                  <span className="text-[10px] text-muted-foreground">(Default)</span>
+                )}
+              </span>
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      {selectedOutlet && (
+        <div className="mt-1.5 flex items-center justify-between rounded-md bg-muted/50 px-2.5 py-1.5">
+          <span className="text-xs text-muted-foreground truncate">
+            Outlet: <span className="font-medium text-foreground">{selectedOutlet.name}</span>
+          </span>
+          <button
+            onClick={() => setSelectedOutletId(null)}
             className="text-xs text-muted-foreground hover:text-foreground transition-colors"
           >
             Clear
@@ -283,16 +334,16 @@ export function AppSidebar() {
   if (!user) return null;
 
   const isSuperAdmin = user.role === 'super-admin';
+  const isTenant = user.role === 'tenant-admin';
 
   let menu: SidebarGroup[];
   if (isSuperAdmin) {
     if (selectedTenantId) {
-      // When a tenant is selected, show ONLY tenant view menus
       menu = superAdminTenantViewMenu;
     } else {
       menu = superAdminGlobalMenu;
     }
-  } else if (user.role === 'tenant-admin') {
+  } else if (isTenant) {
     menu = tenantAdminMenu;
   } else {
     menu = staffMenu;
@@ -313,6 +364,9 @@ export function AppSidebar() {
 
       {/* Tenant Selector (only for super admin) */}
       {isSuperAdmin && <TenantSelector />}
+
+      {/* Outlet Selector (only for tenant admin) */}
+      {isTenant && <OutletSelector />}
 
       {/* Back to Admin button (when tenant selected) */}
       {isSuperAdmin && selectedTenantId && (
@@ -357,15 +411,17 @@ export function MobileSidebarTrigger() {
   if (!user || user.role === 'staff') return null;
 
   const isSuperAdmin = user.role === 'super-admin';
+  const isTenant = user.role === 'tenant-admin';
 
   let menu: SidebarGroup[];
   if (isSuperAdmin) {
     if (selectedTenantId) {
-      // When a tenant is selected, show ONLY tenant view menus
       menu = superAdminTenantViewMenu;
     } else {
       menu = superAdminGlobalMenu;
     }
+  } else if (isTenant) {
+    menu = tenantAdminMenu;
   } else {
     menu = tenantAdminMenu;
   }
@@ -391,6 +447,7 @@ export function MobileSidebarTrigger() {
             </div>
           </div>
           {isSuperAdmin && <TenantSelector />}
+          {isTenant && <OutletSelector />}
           {isSuperAdmin && selectedTenantId && (
             <div className="px-3 pt-1 pb-2">
               <button

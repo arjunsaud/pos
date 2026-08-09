@@ -55,19 +55,14 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { mockTenants } from '@/lib/mock-data';
-import type { Tenant, PlanType, TenantStatus } from '@/lib/types';
+import type { Tenant, TenantStatus } from '@/lib/types';
 import { npr, nprFull, getStatusBadgeClasses, getPlanBadgeClasses, formatRelativeTime, formatDate } from '@/lib/helpers';
 
-const planBadgeVariant: Record<PlanType, 'secondary' | 'default' | 'outline'> = {
-  basic: 'secondary',
-  pro: 'default',
-  enterprise: 'outline',
-};
-
-const planColors: Record<PlanType, { border: string; bg: string; text: string }> = {
-  basic: { border: 'border-slate-200 dark:border-slate-700', bg: 'bg-slate-50 dark:bg-slate-900/30', text: 'text-slate-600 dark:text-slate-400' },
-  pro: { border: 'border-primary/30 dark:border-primary/20', bg: 'bg-primary/5 dark:bg-primary/10', text: 'text-primary dark:text-primary' },
-  enterprise: { border: 'border-amber-200 dark:border-amber-800/50', bg: 'bg-amber-50 dark:bg-amber-900/20', text: 'text-amber-700 dark:text-amber-400' },
+const planColors: Record<string, { border: string; bg: string; text: string }> = {
+  'Plan 1': { border: 'border-slate-200 dark:border-slate-700', bg: 'bg-slate-50 dark:bg-slate-900/30', text: 'text-slate-600 dark:text-slate-400' },
+  'Plan 2': { border: 'border-primary/30 dark:border-primary/20', bg: 'bg-primary/5 dark:bg-primary/10', text: 'text-primary dark:text-primary' },
+  'Plan 3': { border: 'border-purple-200 dark:border-purple-800/50', bg: 'bg-purple-50 dark:bg-purple-900/20', text: 'text-purple-700 dark:text-purple-400' },
+  'Plan 4': { border: 'border-amber-200 dark:border-amber-800/50', bg: 'bg-amber-50 dark:bg-amber-900/20', text: 'text-amber-700 dark:text-amber-400' },
 };
 
 // Mock activity per tenant for detail dialog
@@ -107,7 +102,7 @@ export default function TenantManagement() {
   const [formEmail, setFormEmail] = useState('');
   const [formPhone, setFormPhone] = useState('');
   const [formDomain, setFormDomain] = useState('');
-  const [formPlan, setFormPlan] = useState<PlanType>('basic');
+  const [formPlan, setFormPlan] = useState('Plan 1');
 
   // Local tenant list for toggle/delete
   const [tenants, setTenants] = useState<Tenant[]>(mockTenants);
@@ -119,7 +114,7 @@ export default function TenantManagement() {
         statusFilter === 'all' || t.status === statusFilter;
       return matchesSearch && matchesStatus;
     });
-    const planOrder: Record<PlanType, number> = { basic: 0, pro: 1, enterprise: 2 };
+    const planOrder: Record<string, number> = { 'Plan 1': 0, 'Plan 2': 1, 'Plan 3': 2, 'Plan 4': 3 };
     result.sort((a, b) => {
       let cmp = 0;
       if (sortField === 'name') cmp = a.name.localeCompare(b.name);
@@ -164,7 +159,7 @@ export default function TenantManagement() {
     setFormEmail('');
     setFormPhone('');
     setFormDomain('');
-    setFormPlan('basic');
+    setFormPlan('Plan 1');
   };
 
   const handleToggleStatus = (tenant: Tenant) => {
@@ -243,14 +238,15 @@ export default function TenantManagement() {
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="tenant-plan">Plan</Label>
-                <Select value={formPlan} onValueChange={(v: PlanType) => setFormPlan(v)}>
+                <Select value={formPlan} onValueChange={setFormPlan}>
                   <SelectTrigger className="w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="basic">Basic</SelectItem>
-                    <SelectItem value="pro">Pro</SelectItem>
-                    <SelectItem value="enterprise">Enterprise</SelectItem>
+                    <SelectItem value="Plan 1">Plan 1</SelectItem>
+                    <SelectItem value="Plan 2">Plan 2</SelectItem>
+                    <SelectItem value="Plan 3">Plan 3</SelectItem>
+                    <SelectItem value="Plan 4">Plan 4</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -383,7 +379,7 @@ export default function TenantManagement() {
                       {tenant.email}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={planBadgeVariant[tenant.plan]}>
+                      <Badge variant="secondary">
                         {tenant.plan.charAt(0).toUpperCase() + tenant.plan.slice(1)}
                       </Badge>
                     </TableCell>
@@ -489,17 +485,17 @@ export default function TenantManagement() {
           {selectedTenant && (
             <div className="grid gap-5 py-2">
               {/* Tenant Header Card */}
-              <div className={"rounded-lg border p-4 " + planColors[selectedTenant.plan].bg + ' ' + planColors[selectedTenant.plan].border}>
+              <div className={cn("rounded-lg border p-4", planColors[selectedTenant.plan]?.bg, planColors[selectedTenant.plan]?.border)}>
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
-                    <div className={"flex h-12 w-12 items-center justify-center rounded-xl text-lg font-bold text-white " + (selectedTenant.plan === 'enterprise' ? 'bg-amber-500' : selectedTenant.plan === 'pro' ? 'bg-primary' : 'bg-slate-500')}>
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl text-lg font-bold text-white bg-primary">
                       {selectedTenant.name.charAt(0)}
                     </div>
                     <div>
                       <p className="font-semibold text-base">{selectedTenant.name}</p>
                       <p className="text-xs text-muted-foreground">Owned by {selectedTenant.ownerName}</p>
                       <div className="mt-1 flex items-center gap-2">
-                        <Badge className={getPlanBadgeClasses(selectedTenant.plan)}>
+                        <Badge className={getPlanBadgeClasses(selectedTenant.plan)} variant="secondary">
                           {selectedTenant.plan.charAt(0).toUpperCase() + selectedTenant.plan.slice(1)} Plan
                         </Badge>
                         <Badge className={getStatusBadgeClasses(selectedTenant.status)}>
@@ -508,7 +504,7 @@ export default function TenantManagement() {
                       </div>
                     </div>
                   </div>
-                  {selectedTenant.plan === 'enterprise' && (
+                  {selectedTenant.plan === 'Plan 4' && (
                     <Crown className="h-5 w-5 text-amber-500" />
                   )}
                 </div>

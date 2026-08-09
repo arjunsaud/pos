@@ -12,7 +12,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/
 import {
   ShoppingBag, Banknote, ClipboardList, AlertTriangle, Wallet, CreditCard,
   Smartphone, ArrowUpRight, ShoppingCart, FileText, Package, BarChart3,
-  Users, Tag, Receipt, ExternalLink, RotateCcw,
+  Users, Tag, Receipt, ExternalLink, RotateCcw, Copy, Share2, Link2, Gift,
 } from 'lucide-react';
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { mockTenantStats, mockSalesReportData, mockSales } from '@/lib/mock-data';
@@ -232,6 +232,75 @@ function LowStockAlertsCard() {
   );
 }
 
+function ReferralCard() {
+  const referralCode = 'ABCSTORE';
+  const referralLink = `https://posnepal.com/ref/${referralCode}`;
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(referralLink);
+      toast.success('Referral link copied to clipboard!');
+    } catch {
+      toast.error('Failed to copy link');
+    }
+  };
+
+  const handleShare = () => {
+    toast.info('Share dialog coming soon!');
+  };
+
+  return (
+    <Card className="border-0 bg-gradient-to-r from-emerald-10 to-teal-10">
+      <CardContent className="p-4 md:p-5">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          {/* Left: Info */}
+          <div className="flex items-start gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-100 dark:bg-emerald-900/30">
+              <Gift className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-semibold">Refer & Earn</h3>
+                <Badge variant="secondary" className="text-xs bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                  <Link2 className="h-3 w-3 mr-1" />
+                  {referralCode}
+                </Badge>
+              </div>
+              <p className="text-xs text-muted-foreground">Share your referral link and earn rewards for every signup.</p>
+              <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                <span className="font-medium text-foreground">2 Referrals</span>
+                <span className="font-medium text-emerald-600 dark:text-emerald-400">NPR 3,200 Earned</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Right: Actions */}
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs gap-1.5"
+              onClick={handleCopyLink}
+            >
+              <Copy className="h-3.5 w-3.5" />
+              Copy Link
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs gap-1.5"
+              onClick={handleShare}
+            >
+              <Share2 className="h-3.5 w-3.5" />
+              Share
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 function GreetingBanner({ name }: { name: string }) {
   const { greeting } = getGreeting();
   const storeName = 'ABC Store';
@@ -315,6 +384,9 @@ export default function TenantDashboard() {
 
       {/* Greeting Banner */}
       <GreetingBanner name={firstName} />
+
+      {/* Referral Card */}
+      <ReferralCard />
 
       {/* Stat Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

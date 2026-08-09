@@ -27,8 +27,7 @@ export type NavSection =
   | 'super-admin-dashboard'
   | 'tenants'
   | 'super-admin-staff'
-  | 'super-admin-subscriptions'
-  | 'sa-contracts'
+  | 'sa-packages'
   | 'sa-documents'
   | 'activity-logs'
   | 'super-admin-settings'
@@ -50,7 +49,6 @@ export type NavSection =
   // Tenant Admin
   | 'tenant-dashboard'
   | 'pos'
-  | 'customers'
   | 'billing'
   | 'products'
   | 'inventory'
@@ -62,6 +60,7 @@ export type NavSection =
   | 'store-profile'
   | 'tenant-profile'
   | 'tenant-settings'
+  | 'tenant-outlets'
   // Landing Page
   | 'landing-page';
 
@@ -74,14 +73,13 @@ export interface NavItem {
 
 // ---------- Tenant ----------
 export type TenantStatus = 'active' | 'inactive';
-export type PlanType = 'basic' | 'pro' | 'enterprise';
 
 export interface Tenant {
   id: string;
   name: string;
   email: string;
   phone: string;
-  plan: PlanType;
+  plan: string;
   status: TenantStatus;
   createdAt: string;
   domain: string;
@@ -90,28 +88,51 @@ export interface Tenant {
   monthlyRevenue: number;
 }
 
-// ---------- Subscription Plans ----------
-export interface SubscriptionPlan {
+// ---------- Outlet ----------
+export interface Outlet {
   id: string;
-  name: PlanType;
-  price: number;
-  currency: string;
-  interval: string;
-  features: string[];
-  popular?: boolean;
-  maxProducts: number;
-  maxStaff: number;
+  tenantId: string;
+  name: string;
+  address: string;
+  city: string;
+  phone: string;
+  isDefault: boolean;
+  status: 'active' | 'inactive';
+  createdAt: string;
 }
 
-// ---------- Subscription (entity for CRUD) ----------
+// ---------- Subscription Package (Super Admin manages these) ----------
+export interface SubscriptionPackage {
+  id: string;
+  name: string;
+  price: number;
+  interval: 'monthly' | 'yearly';
+  status: 'active' | 'inactive';
+  maxProducts: number;
+  maxStaff: number;
+  analytics: 'basic' | 'standard' | 'advanced';
+  support: 'basic' | 'quick' | 'priority' | 'dedicated';
+  paymentGateway: boolean;
+  billing: boolean;
+  receipt: boolean;
+  export: boolean;
+  advanceInventory: boolean;
+  pos: boolean;
+  multipleOutlets: boolean;
+  popular?: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ---------- Subscription (tenant assignment) ----------
 export type SubscriptionStatus = 'active' | 'expired' | 'cancelled' | 'trial';
 
 export interface Subscription {
   id: string;
   tenantId: string;
   tenantName: string;
-  planId: string;
-  planName: PlanType;
+  packageId: string;
+  packageName: string;
   status: SubscriptionStatus;
   startDate: string;
   endDate: string;
@@ -134,23 +155,6 @@ export interface Vendor {
   status: 'active' | 'inactive';
   productCount: number;
   createdAt: string;
-}
-
-// ---------- Contract ----------
-export type ContractStatus = 'active' | 'expired' | 'draft' | 'terminated';
-
-export interface Contract {
-  id: string;
-  tenantId: string;
-  tenantName: string;
-  title: string;
-  type: 'service' | 'license' | 'custom';
-  status: ContractStatus;
-  startDate: string;
-  endDate: string;
-  value: number;
-  currency: string;
-  description: string;
 }
 
 // ---------- Tenant Document ----------
@@ -194,6 +198,7 @@ export interface Product {
   image?: string;
   vendorId?: string;
   vendorName?: string;
+  outletId?: string;
 }
 
 // ---------- Category ----------
@@ -214,6 +219,7 @@ export interface InventoryItem {
   currentStock: number;
   minStock: number;
   lastUpdated: string;
+  outletId?: string;
 }
 
 export interface StockMovement {
@@ -225,6 +231,7 @@ export interface StockMovement {
   reason: string;
   date: string;
   performedBy: string;
+  outletId?: string;
 }
 
 // ---------- POS / Cart ----------
@@ -256,6 +263,7 @@ export interface Sale {
   status: 'completed' | 'refunded' | 'pending';
   date: string;
   staffName: string;
+  outletId?: string;
 }
 
 export interface SaleItem {
@@ -337,7 +345,7 @@ export interface TenantStats {
   lowStockAlerts: number;
 }
 
-// ---------- Customer ----------
+// ---------- Customer (used internally by POS for billing) ----------
 export interface Customer {
   id: string;
   name: string;

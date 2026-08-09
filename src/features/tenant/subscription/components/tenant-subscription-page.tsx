@@ -6,23 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
-import { Check, Crown, X, RefreshCw, Calendar, Package, Users, HardDrive, Star, ArrowUpRight, ArrowDownRight } from 'lucide-react';
-import { mockPlans, mockProducts, mockTenantStaff } from '@/lib/mock-data';
+import { Check, Crown, RefreshCw, Calendar, Package, Users, HardDrive, Star, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { mockPackages, mockProducts, mockTenantStaff } from '@/lib/mock-data';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { npr } from '@/lib/helpers';
 
-const planColors: Record<string, { bg: string; text: string; border: string; accent: string }> = {
-  basic: { bg: 'bg-amber-100 dark:bg-amber-900/30', text: 'text-amber-700 dark:text-amber-400', border: 'border-amber-300 dark:border-amber-700', accent: 'bg-amber-500' },
-  pro: { bg: 'bg-blue-100 dark:bg-blue-900/30', text: 'text-blue-700 dark:text-blue-400', border: 'border-blue-300 dark:border-blue-700', accent: 'bg-blue-500' },
-  enterprise: { bg: 'bg-purple-100 dark:bg-purple-900/30', text: 'text-purple-700 dark:text-purple-400', border: 'border-purple-300 dark:border-purple-700', accent: 'bg-purple-500' },
-};
-
-const planKeyFeatures: Record<string, string[]> = {
-  basic: ['POS', 'Basic Reports', 'Email Support'],
-  pro: ['Everything in Basic', 'Inventory Management', 'Billing & Invoicing', 'Priority Support'],
-  enterprise: ['Everything in Pro', 'API Access', 'Custom Domain', 'Multi-Branch', '24/7 Support'],
-};
 
 function getUsageColor(pct: number) {
   if (pct > 90) return 'bg-red-500';
@@ -37,8 +26,8 @@ function getUsageLabel(pct: number) {
 }
 
 export default function TenantSubscriptionPage() {
-  const currentPlanName = 'pro';
-  const currentPlan = mockPlans.find((p) => p.name === currentPlanName)!;
+  const currentPlanName = 'Plan 2';
+  const currentPlan = mockPackages.find((p) => p.name === currentPlanName)!;
   const now = new Date();
   now.setMonth(now.getMonth() + 1);
   const renewalDate = now.toISOString().slice(0, 10);
@@ -53,9 +42,6 @@ export default function TenantSubscriptionPage() {
   const storageLimit = 10;
   const storagePct = Math.round((storageUsed / storageLimit) * 100);
 
-  const planInitial = currentPlanName.charAt(0).toUpperCase();
-  const colors = planColors[currentPlanName];
-
   return (
     <div className='space-y-6'>
       <PageHeader title='Subscription' description='Manage your subscription plan' />
@@ -68,14 +54,13 @@ export default function TenantSubscriptionPage() {
           <div className='flex flex-wrap items-start justify-between gap-6'>
             <div className='space-y-3'>
               <div className='flex items-center gap-3'>
-                {/* Plan icon circle */}
-                <div className={cn('flex h-10 w-10 items-center justify-center rounded-full font-bold text-white', colors.accent)}>
-                  {planInitial}
+                <div className='flex h-10 w-10 items-center justify-center rounded-full font-bold text-white bg-primary'>
+                  {currentPlanName.replace('Plan ', '')}
                 </div>
                 <div>
                   <div className='flex items-center gap-2'>
                     <Crown className='h-5 w-5 text-primary' />
-                    <h2 className='text-xl font-bold'>{currentPlanName.charAt(0).toUpperCase() + currentPlanName.slice(1)} Plan</h2>
+                    <h2 className='text-xl font-bold'>{currentPlanName}</h2>
                     <Badge>Current</Badge>
                   </div>
                   <p className='text-2xl font-bold mt-1'>
@@ -203,11 +188,9 @@ export default function TenantSubscriptionPage() {
       <div>
         <h3 className='text-lg font-semibold mb-4'>Compare Plans</h3>
         <div className='grid gap-6 md:grid-cols-3'>
-          {mockPlans.map((plan) => {
+          {mockPackages.map((plan) => {
             const isCurrent = plan.name === currentPlanName;
             const isPopular = plan.popular;
-            const keyFeatures = planKeyFeatures[plan.name] || [];
-            const pc = planColors[plan.name];
             const isUpgrade = plan.price > currentPlan.price;
             return (
               <Card
@@ -223,11 +206,11 @@ export default function TenantSubscriptionPage() {
                     {isPopular && <Badge className='mb-0'>Popular</Badge>}
                     {isCurrent && <Badge variant="secondary" className="mb-0 bg-primary/10 text-primary border-primary/20">Current Plan</Badge>}
                   </div>
-                  <div className={cn('flex h-12 w-12 items-center justify-center rounded-full mx-auto font-bold text-white text-lg mt-2', pc.accent)}>
-                    {plan.name.charAt(0).toUpperCase()}
+                  <div className='flex h-12 w-12 items-center justify-center rounded-full mx-auto font-bold text-white text-lg mt-2 bg-primary'>
+                    {plan.name.replace('Plan ', '')}
                   </div>
                   <CardTitle className='text-xl'>
-                    {plan.name.charAt(0).toUpperCase() + plan.name.slice(1)}
+                    {plan.name}
                   </CardTitle>
                   <CardDescription>
                     <span className='text-3xl font-bold text-foreground'>NPR {npr(plan.price)}</span>
@@ -235,14 +218,58 @@ export default function TenantSubscriptionPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className='space-y-4'>
-                  {/* Key features bullet list */}
+                  {/* Feature flags */}
                   <div className='space-y-2'>
-                    {keyFeatures.map((f) => (
-                      <div key={f} className='flex items-center gap-2 text-sm'>
+                    {plan.paymentGateway && (
+                      <div className='flex items-center gap-2 text-sm'>
                         <Check className='h-4 w-4 shrink-0 text-emerald-600' />
-                        <span>{f}</span>
+                        <span>Payment Gateway</span>
                       </div>
-                    ))}
+                    )}
+                    {plan.billing && (
+                      <div className='flex items-center gap-2 text-sm'>
+                        <Check className='h-4 w-4 shrink-0 text-emerald-600' />
+                        <span>Billing</span>
+                      </div>
+                    )}
+                    {plan.receipt && (
+                      <div className='flex items-center gap-2 text-sm'>
+                        <Check className='h-4 w-4 shrink-0 text-emerald-600' />
+                        <span>Receipt</span>
+                      </div>
+                    )}
+                    {plan.export && (
+                      <div className='flex items-center gap-2 text-sm'>
+                        <Check className='h-4 w-4 shrink-0 text-emerald-600' />
+                        <span>Export</span>
+                      </div>
+                    )}
+                    {plan.advanceInventory && (
+                      <div className='flex items-center gap-2 text-sm'>
+                        <Check className='h-4 w-4 shrink-0 text-emerald-600' />
+                        <span>Advanced Inventory</span>
+                      </div>
+                    )}
+                    {plan.pos && (
+                      <div className='flex items-center gap-2 text-sm'>
+                        <Check className='h-4 w-4 shrink-0 text-emerald-600' />
+                        <span>POS</span>
+                      </div>
+                    )}
+                    {plan.multipleOutlets && (
+                      <div className='flex items-center gap-2 text-sm'>
+                        <Check className='h-4 w-4 shrink-0 text-emerald-600' />
+                        <span>Multiple Outlets</span>
+                      </div>
+                    )}
+                    <div className='flex items-center gap-2 text-sm'>
+                      <Check className='h-4 w-4 shrink-0 text-emerald-600' />
+                      <span>Analytics: {plan.analytics.charAt(0).toUpperCase() + plan.analytics.slice(1)}</span>
+                    </div>
+                    <div className='flex items-center gap-2 text-sm'>
+                      <Check className='h-4 w-4 shrink-0 text-emerald-600' />
+                      <span>Support: {plan.support.charAt(0).toUpperCase() + plan.support.slice(1)}</span>
+                    </div>
                   </div>
                   <Separator />
                   {/* Usage bars for current plan */}
@@ -301,7 +328,7 @@ export default function TenantSubscriptionPage() {
                       variant={isUpgrade ? 'default' : 'outline'}
                       onClick={() =>
                         toast.success(
-                          `${isUpgrade ? 'Upgrade' : 'Downgrade'} request submitted to ${plan.name.charAt(0).toUpperCase() + plan.name.slice(1)}`
+                          `${isUpgrade ? 'Upgrade' : 'Downgrade'} request submitted to ${plan.name}`
                         )
                       }
                     >
@@ -327,7 +354,7 @@ export default function TenantSubscriptionPage() {
               <div className='space-y-1'>
                 <h3 className='font-semibold'>Renew Your Plan</h3>
                 <p className='text-sm text-muted-foreground'>
-                  Your <span className='font-medium text-foreground'>{currentPlanName.charAt(0).toUpperCase() + currentPlanName.slice(1)} Plan</span> renews on{' '}
+                  Your <span className='font-medium text-foreground'>{currentPlanName}</span> renews on{' '}
                   <span className='font-medium text-foreground'>
                     {new Date(renewalDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
                   </span>

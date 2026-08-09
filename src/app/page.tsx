@@ -14,8 +14,7 @@ import { cn } from '@/lib/utils';
 import SuperAdminDashboard from '@/features/super-admin/dashboard/components/super-admin-dashboard';
 import TenantManagement from '@/features/super-admin/tenants/components/tenant-management';
 import SuperAdminStaff from '@/features/super-admin/staff/components/super-admin-staff';
-import SubscriptionManagement from '@/features/super-admin/subscriptions/components/subscription-management';
-import ContractsPage from '@/features/super-admin/contracts/components/contracts-page';
+import SAPackages from '@/features/super-admin/subscriptions/components/subscription-management';
 import DocumentsPage from '@/features/super-admin/documents/components/documents-page';
 import ActivityLogs from '@/features/super-admin/activity-logs/components/activity-logs';
 import SuperAdminSettings from '@/features/super-admin/settings/components/super-admin-settings';
@@ -39,7 +38,6 @@ import SaTenantVendors from '@/features/super-admin/tenant-view/components/sa-te
 // Tenant pages
 import TenantDashboard from '@/features/tenant/dashboard/components/tenant-dashboard';
 import PosTerminal from '@/features/tenant/pos/components/pos-terminal';
-import CustomersPage from '@/features/tenant/customers/components/customers-page';
 import BillingPage from '@/features/tenant/billing/components/billing-page';
 import ProductManagement from '@/features/tenant/products/components/product-management';
 import InventoryPage from '@/features/tenant/inventory/components/inventory-page';
@@ -51,6 +49,7 @@ import TenantStaffPage from '@/features/tenant/staff/components/tenant-staff-pag
 import StoreProfile from '@/features/tenant/store-profile/components/store-profile';
 import TenantProfile from '@/features/tenant/profile/components/tenant-profile';
 import TenantSettings from '@/features/tenant/settings/components/tenant-settings';
+import TenantOutlets from '@/features/tenant/outlets/components/tenant-outlets';
 
 import type { NavSection } from '@/lib/types';
 
@@ -59,8 +58,7 @@ const sectionComponents: Record<NavSection, React.ComponentType> = {
   'super-admin-dashboard': SuperAdminDashboard,
   'tenants': TenantManagement,
   'super-admin-staff': SuperAdminStaff,
-  'super-admin-subscriptions': SubscriptionManagement,
-  'sa-contracts': ContractsPage,
+  'sa-packages': SAPackages,
   'sa-documents': DocumentsPage,
   'activity-logs': ActivityLogs,
   'super-admin-settings': SuperAdminSettings,
@@ -82,7 +80,6 @@ const sectionComponents: Record<NavSection, React.ComponentType> = {
   // Tenant Admin
   'tenant-dashboard': TenantDashboard,
   'pos': PosTerminal,
-  'customers': CustomersPage,
   'billing': BillingPage,
   'products': ProductManagement,
   'inventory': InventoryPage,
@@ -94,6 +91,7 @@ const sectionComponents: Record<NavSection, React.ComponentType> = {
   'store-profile': StoreProfile,
   'tenant-profile': TenantProfile,
   'tenant-settings': TenantSettings,
+  'tenant-outlets': TenantOutlets,
 };
 
 export default function HomePage() {
