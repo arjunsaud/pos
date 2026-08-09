@@ -50,6 +50,7 @@ import {
   X as XIcon,
   Zap,
   ArrowRight,
+  ArrowLeft,
   Star,
   ChevronRight,
   TrendingUp,
@@ -67,6 +68,13 @@ import {
   Phone,
   Mail,
   MapPin,
+  Barcode,
+  Truck,
+  Printer,
+  GraduationCap,
+  HardDrive,
+  Building2,
+  Database,
 } from 'lucide-react';
 
 /* ------------------------------------------------------------------ */
@@ -74,6 +82,10 @@ import {
 /* ------------------------------------------------------------------ */
 
 const ANNUAL_DISCOUNT = 20;
+const WA_URL = 'https://wa.me/9779800000000?text=Hi%20POS%20Nepal%2C%20I%27m%20interested%20in%20your%20POS%20system.';
+const WA_CUSTOM_URL = 'https://wa.me/9779800000000?text=Hi%20POS%20Nepal%2C%20I%27m%20interested%20in%20a%20custom%20plan.';
+
+type PageView = 'landing' | 'terms' | 'privacy';
 
 const features = [
   { icon: ShoppingCart, title: 'Fast POS', desc: 'Lightning-fast point of sale with barcode scanning, cart management, and instant receipts.', color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-100 dark:bg-emerald-900/30' },
@@ -105,14 +117,20 @@ const faqs = [
   { q: 'Is there a free trial?', a: 'Yes! Every new account comes with a 7-day free trial on the Free Plan with access to basic features. No credit card is required to start. Upgrade anytime during or after the trial.' },
 ];
 
-const featureToggles: { key: keyof (typeof mockPackages)[number]; label: string }[] = [
-  { key: 'paymentGateway', label: 'Payment Gateway' },
+const featureToggles: { key: keyof (typeof mockPackages)[number]; label: string; icon?: typeof Check }[] = [
   { key: 'billing', label: 'Billing' },
   { key: 'receipt', label: 'Receipt' },
   { key: 'export', label: 'Export' },
-  { key: 'advanceInventory', label: 'Advanced Inventory' },
+  { key: 'inventory', label: 'Inventory' },
+  { key: 'skuManagement', label: 'SKU Management' },
   { key: 'pos', label: 'POS' },
+  { key: 'paymentGateway', label: 'Payment Gateway' },
   { key: 'multipleOutlets', label: 'Multiple Outlets' },
+  { key: 'vendors', label: 'Vendors' },
+  { key: 'invoicePrinting', label: 'Invoice Printing' },
+  { key: 'trainingAndSupport', label: 'Training & Support' },
+  { key: 'customDomain', label: 'Custom Domain' },
+  { key: 'dailyBackup', label: 'Daily Backup' },
 ];
 
 const navLinks = [
@@ -164,6 +182,53 @@ function RenderMarkdown({ content }: { content: string }) {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Legal Page (Full Page)                                              */
+/* ------------------------------------------------------------------ */
+function LegalPage({ title, icon: Icon, content, onBack }: { title: string; icon: typeof FileText; content: string; onBack: () => void }) {
+  return (
+    <div className="min-h-screen flex flex-col bg-background text-foreground">
+      {/* Header */}
+      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center gap-4">
+          <Button variant="ghost" size="sm" onClick={onBack} className="gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </Button>
+          <Separator orientation="vertical" className="h-6" />
+          <div className="flex items-center gap-2.5">
+            <Icon className="h-5 w-5 text-primary" />
+            <span className="font-semibold">{title}</span>
+          </div>
+        </div>
+      </header>
+
+      {/* Content */}
+      <main className="flex-1">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="prose-sm max-w-none"
+          >
+            <div className="rounded-xl border bg-card p-6 sm:p-10">
+              <RenderMarkdown content={content} />
+            </div>
+          </motion.div>
+        </div>
+      </main>
+
+      {/* Footer */}
+      <footer className="border-t bg-muted/30">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <p className="text-center text-sm text-muted-foreground">&copy; 2025 POS Nepal &middot; All rights reserved</p>
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /*  Component                                                          */
 /* ------------------------------------------------------------------ */
 
@@ -173,6 +238,7 @@ export default function LandingPage({ onSignIn }: { onSignIn: () => void }) {
   const [promoCode, setPromoCode] = useState('');
   const [appliedPromo, setAppliedPromo] = useState('');
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('yearly');
+  const [pageView, setPageView] = useState<PageView>('landing');
 
   // Registration state
   const [showRegister, setShowRegister] = useState(false);
@@ -185,10 +251,6 @@ export default function LandingPage({ onSignIn }: { onSignIn: () => void }) {
 
   // Trial expired popup
   const [showTrialPopup, setShowTrialPopup] = useState(false);
-
-  // Legal pages
-  const [showTerms, setShowTerms] = useState(false);
-  const [showPrivacy, setShowPrivacy] = useState(false);
 
   // Legal content from store
   const { termsContent, privacyContent } = useLegalContentStore();
@@ -212,6 +274,14 @@ export default function LandingPage({ onSignIn }: { onSignIn: () => void }) {
     setShowRegister(false);
     onSignIn();
   };
+
+  // Navigate to legal pages
+  if (pageView === 'terms') {
+    return <LegalPage title="Terms & Conditions" icon={FileText} content={termsContent} onBack={() => setPageView('landing')} />;
+  }
+  if (pageView === 'privacy') {
+    return <LegalPage title="Privacy Policy" icon={Shield} content={privacyContent} onBack={() => setPageView('landing')} />;
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
@@ -430,11 +500,12 @@ export default function LandingPage({ onSignIn }: { onSignIn: () => void }) {
                         <ul className="space-y-1.5 text-sm mb-4 pb-4 border-b">
                           <li className="flex justify-between"><span className="text-muted-foreground">Max Products</span><span className="font-medium">{plan.maxProducts.toLocaleString()}</span></li>
                           <li className="flex justify-between"><span className="text-muted-foreground">Staff Accounts</span><span className="font-medium">{plan.maxStaff}</span></li>
+                          <li className="flex justify-between"><span className="text-muted-foreground">Outlets</span><span className="font-medium">{plan.maxOutlets}</span></li>
                           <li className="flex justify-between"><span className="text-muted-foreground">Analytics</span><span className="font-medium capitalize">{plan.analytics}</span></li>
                           <li className="flex justify-between"><span className="text-muted-foreground">Support</span><span className="font-medium capitalize">{plan.support}</span></li>
                         </ul>
 
-                        <ul className="space-y-2 flex-1 mb-6">
+                        <ul className="space-y-2 flex-1 mb-6 max-h-72 overflow-y-auto pr-1">
                           {featureToggles.map((ft) => {
                             const enabled = plan[ft.key] as boolean;
                             return (
@@ -472,10 +543,11 @@ export default function LandingPage({ onSignIn }: { onSignIn: () => void }) {
                     <ul className="space-y-1.5 text-sm mb-4 pb-4 border-b">
                       <li className="flex justify-between"><span className="text-muted-foreground">Products</span><span className="font-medium">Unlimited</span></li>
                       <li className="flex justify-between"><span className="text-muted-foreground">Staff Accounts</span><span className="font-medium">Unlimited</span></li>
+                      <li className="flex justify-between"><span className="text-muted-foreground">Outlets</span><span className="font-medium">Unlimited</span></li>
                       <li className="flex justify-between"><span className="text-muted-foreground">Analytics</span><span className="font-medium capitalize">Custom</span></li>
                       <li className="flex justify-between"><span className="text-muted-foreground">Support</span><span className="font-medium capitalize">Dedicated</span></li>
                     </ul>
-                    <ul className="space-y-2 flex-1 mb-6">
+                    <ul className="space-y-2 flex-1 mb-6 max-h-72 overflow-y-auto pr-1">
                       {featureToggles.map((ft) => (
                         <li key={ft.key} className="flex items-center gap-2 text-sm">
                           <Check className="h-4 w-4 text-emerald-500 shrink-0" />
@@ -492,7 +564,7 @@ export default function LandingPage({ onSignIn }: { onSignIn: () => void }) {
                       </li>
                     </ul>
                     <Button className="w-full" variant="outline" asChild>
-                      <a href="https://wa.me/9779800000000?text=Hi%20POS%20Nepal%2C%20I%27m%20interested%20in%20a%20custom%20plan." target="_blank" rel="noopener noreferrer">
+                      <a href={WA_CUSTOM_URL} target="_blank" rel="noopener noreferrer">
                         Contact Us <ArrowRight className="ml-1 h-4 w-4" />
                       </a>
                     </Button>
@@ -625,7 +697,7 @@ export default function LandingPage({ onSignIn }: { onSignIn: () => void }) {
       {/* ============================================================ */}
       <footer className="border-t bg-muted/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
             <div>
               <div className="flex items-center gap-2.5 mb-4">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground"><Monitor className="h-4 w-4" /></div>
@@ -656,13 +728,11 @@ export default function LandingPage({ onSignIn }: { onSignIn: () => void }) {
                 <li className="flex items-center gap-1.5"><Mail className="h-3.5 w-3.5 shrink-0" /> info@posnepal.com</li>
                 <li className="flex items-center gap-1.5"><Phone className="h-3.5 w-3.5 shrink-0" /> +977-9800000000</li>
               </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-3">Legal</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><button onClick={() => setShowTerms(true)} className="hover:text-foreground transition-colors flex items-center gap-1.5"><FileText className="h-3.5 w-3.5" /> Terms & Conditions</button></li>
-                <li><button onClick={() => setShowPrivacy(true)} className="hover:text-foreground transition-colors flex items-center gap-1.5"><Shield className="h-3.5 w-3.5" /> Privacy Policy</button></li>
-              </ul>
+              <div className="mt-4 pt-4 border-t">
+                <button onClick={() => setPageView('privacy')} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  <Shield className="h-3.5 w-3.5" /> Privacy Policy
+                </button>
+              </div>
             </div>
           </div>
           <Separator className="my-8" />
@@ -670,11 +740,8 @@ export default function LandingPage({ onSignIn }: { onSignIn: () => void }) {
         </div>
       </footer>
 
-      {/* ============================================================ */}
-      {/*  WHATSAPP FLOATING BUTTON                                     */}
-      {/* ============================================================ */}
       <a
-        href="https://wa.me/9779800000000?text=Hi%20POS%20Nepal%2C%20I%27m%20interested%20in%20your%20POS%20system."
+        href={WA_URL}
         target="_blank"
         rel="noopener noreferrer"
         className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-lg hover:bg-[#20BD5A] hover:shadow-xl transition-all duration-200 hover:scale-110 group"
@@ -744,9 +811,9 @@ export default function LandingPage({ onSignIn }: { onSignIn: () => void }) {
               </Button>
               <p className="text-center text-xs text-muted-foreground">
                 By signing up, you agree to our{' '}
-                <button onClick={() => { setShowRegister(false); setTimeout(() => setShowTerms(true), 200); }} className="underline hover:text-foreground">Terms of Service</button>
+                <button onClick={() => { setShowRegister(false); setTimeout(() => setPageView('terms'), 200); }} className="underline hover:text-foreground">Terms of Service</button>
                 {' '}and{' '}
-                <button onClick={() => { setShowRegister(false); setTimeout(() => setShowPrivacy(true), 200); }} className="underline hover:text-foreground">Privacy Policy</button>.
+                <button onClick={() => { setShowRegister(false); setTimeout(() => setPageView('privacy'), 200); }} className="underline hover:text-foreground">Privacy Policy</button>.
               </p>
             </div>
           </div>
@@ -806,36 +873,6 @@ export default function LandingPage({ onSignIn }: { onSignIn: () => void }) {
                 View All Plans <ArrowRight className="ml-1 h-4 w-4" />
               </Button>
             </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* ============================================================ */}
-      {/*  TERMS & CONDITIONS DIALOG                                     */}
-      {/* ============================================================ */}
-      <Dialog open={showTerms} onOpenChange={setShowTerms}>
-        <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><FileText className="h-5 w-5" /> Terms & Conditions</DialogTitle>
-            <DialogDescription>Last updated: June 15, 2025</DialogDescription>
-          </DialogHeader>
-          <div className="mt-2">
-            <RenderMarkdown content={termsContent} />
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* ============================================================ */}
-      {/*  PRIVACY POLICY DIALOG                                          */}
-      {/* ============================================================ */}
-      <Dialog open={showPrivacy} onOpenChange={setShowPrivacy}>
-        <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><Shield className="h-5 w-5" /> Privacy Policy</DialogTitle>
-            <DialogDescription>Last updated: June 15, 2025</DialogDescription>
-          </DialogHeader>
-          <div className="mt-2">
-            <RenderMarkdown content={privacyContent} />
           </div>
         </DialogContent>
       </Dialog>

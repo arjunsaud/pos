@@ -62,6 +62,12 @@ import {
   Warehouse,
   ShoppingCart,
   MapPin,
+  Barcode,
+  Truck,
+  Printer,
+  GraduationCap,
+  Globe,
+  HardDrive,
 } from 'lucide-react';
 import { mockPackages } from '@/lib/mock-data';
 import type { SubscriptionPackage } from '@/lib/types';
@@ -100,9 +106,15 @@ const FEATURE_ROWS: FeatureRow[] = [
   { key: 'billing', label: 'Billing', icon: Receipt },
   { key: 'receipt', label: 'Receipt', icon: Receipt },
   { key: 'export', label: 'Export Data', icon: FileDown },
-  { key: 'advanceInventory', label: 'Advance Inventory', icon: Warehouse },
+  { key: 'inventory', label: 'Inventory', icon: Warehouse },
+  { key: 'skuManagement', label: 'SKU Management', icon: Barcode },
   { key: 'pos', label: 'POS', icon: ShoppingCart },
   { key: 'multipleOutlets', label: 'Multiple Outlets', icon: MapPin },
+  { key: 'vendors', label: 'Vendors', icon: Truck },
+  { key: 'invoicePrinting', label: 'Invoice Printing', icon: Printer },
+  { key: 'trainingAndSupport', label: 'Training & Support', icon: GraduationCap },
+  { key: 'customDomain', label: 'Custom Domain', icon: Globe },
+  { key: 'dailyBackup', label: 'Daily Backup', icon: HardDrive },
 ];
 
 // ------------------------------------------------------------------
@@ -116,15 +128,22 @@ interface PackageFormData {
   status: 'active' | 'inactive';
   maxProducts: string;
   maxStaff: string;
-  analytics: 'basic' | 'standard' | 'advanced';
+  maxOutlets: string;
+  analytics: 'basic' | 'standard' | 'advanced' | 'none';
   support: 'basic' | 'quick' | 'priority' | 'dedicated';
   paymentGateway: boolean;
   billing: boolean;
   receipt: boolean;
   export: boolean;
-  advanceInventory: boolean;
+  inventory: boolean;
+  skuManagement: boolean;
   pos: boolean;
   multipleOutlets: boolean;
+  vendors: boolean;
+  invoicePrinting: boolean;
+  trainingAndSupport: boolean;
+  customDomain: boolean;
+  dailyBackup: boolean;
   popular: boolean;
 }
 
@@ -135,15 +154,22 @@ const EMPTY_FORM: PackageFormData = {
   status: 'active',
   maxProducts: '200',
   maxStaff: '5',
+  maxOutlets: '1',
   analytics: 'basic',
   support: 'basic',
   paymentGateway: false,
   billing: false,
   receipt: false,
   export: false,
-  advanceInventory: false,
+  inventory: false,
+  skuManagement: false,
   pos: false,
   multipleOutlets: false,
+  vendors: false,
+  invoicePrinting: false,
+  trainingAndSupport: false,
+  customDomain: false,
+  dailyBackup: false,
   popular: false,
 };
 
@@ -155,15 +181,22 @@ function packageToForm(pkg: SubscriptionPackage): PackageFormData {
     status: pkg.status,
     maxProducts: String(pkg.maxProducts),
     maxStaff: String(pkg.maxStaff),
+    maxOutlets: String(pkg.maxOutlets),
     analytics: pkg.analytics,
     support: pkg.support,
     paymentGateway: pkg.paymentGateway,
     billing: pkg.billing,
     receipt: pkg.receipt,
     export: pkg.export,
-    advanceInventory: pkg.advanceInventory,
+    inventory: pkg.inventory,
+    skuManagement: pkg.skuManagement,
     pos: pkg.pos,
     multipleOutlets: pkg.multipleOutlets,
+    vendors: pkg.vendors,
+    invoicePrinting: pkg.invoicePrinting,
+    trainingAndSupport: pkg.trainingAndSupport,
+    customDomain: pkg.customDomain,
+    dailyBackup: pkg.dailyBackup,
     popular: pkg.popular ?? false,
   };
 }
@@ -178,15 +211,22 @@ function formToPackage(form: PackageFormData, id?: string): SubscriptionPackage 
     status: form.status,
     maxProducts: Number(form.maxProducts) || 200,
     maxStaff: Number(form.maxStaff) || 5,
+    maxOutlets: Number(form.maxOutlets) || 1,
     analytics: form.analytics,
     support: form.support,
     paymentGateway: form.paymentGateway,
     billing: form.billing,
     receipt: form.receipt,
     export: form.export,
-    advanceInventory: form.advanceInventory,
+    inventory: form.inventory,
+    skuManagement: form.skuManagement,
     pos: form.pos,
     multipleOutlets: form.multipleOutlets,
+    vendors: form.vendors,
+    invoicePrinting: form.invoicePrinting,
+    trainingAndSupport: form.trainingAndSupport,
+    customDomain: form.customDomain,
+    dailyBackup: form.dailyBackup,
     popular: form.popular || undefined,
     createdAt: now,
     updatedAt: now,
@@ -581,6 +621,25 @@ function PackageFormDialog({
                 </SelectContent>
               </Select>
             </div>
+            <div className="grid gap-2">
+              <Label htmlFor="pkg-outlets">Max Outlets</Label>
+              <Select
+                value={form.maxOutlets}
+                onValueChange={(v) => setForm((f) => ({ ...f, maxOutlets: v }))}
+              >
+                <SelectTrigger id="pkg-outlets">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">1</SelectItem>
+                  <SelectItem value="5">5</SelectItem>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="25">25</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="unlimited">Unlimited</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {/* Analytics & Support */}
@@ -590,13 +649,14 @@ function PackageFormDialog({
               <Select
                 value={form.analytics}
                 onValueChange={(v) =>
-                  setForm((f) => ({ ...f, analytics: v as 'basic' | 'standard' | 'advanced' }))
+                  setForm((f) => ({ ...f, analytics: v as 'basic' | 'standard' | 'advanced' | 'none' }))
                 }
               >
                 <SelectTrigger id="pkg-analytics">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
                   <SelectItem value="basic">Basic</SelectItem>
                   <SelectItem value="standard">Standard</SelectItem>
                   <SelectItem value="advanced">Advanced</SelectItem>
@@ -633,9 +693,15 @@ function PackageFormDialog({
                 { key: 'billing' as const, label: 'Billing', icon: Receipt },
                 { key: 'receipt' as const, label: 'Receipt', icon: Receipt },
                 { key: 'export' as const, label: 'Export Data', icon: FileDown },
-                { key: 'advanceInventory' as const, label: 'Advance Inventory', icon: Warehouse },
+                { key: 'inventory' as const, label: 'Inventory', icon: Warehouse },
+                { key: 'skuManagement' as const, label: 'SKU Management', icon: Barcode },
                 { key: 'pos' as const, label: 'POS', icon: ShoppingCart },
                 { key: 'multipleOutlets' as const, label: 'Multiple Outlets', icon: MapPin },
+                { key: 'vendors' as const, label: 'Vendors', icon: Truck },
+                { key: 'invoicePrinting' as const, label: 'Invoice Printing', icon: Printer },
+                { key: 'trainingAndSupport' as const, label: 'Training & Support', icon: GraduationCap },
+                { key: 'customDomain' as const, label: 'Custom Domain', icon: Globe },
+                { key: 'dailyBackup' as const, label: 'Daily Backup', icon: HardDrive },
               ]).map((feat) => {
                 const FeatIcon = feat.icon;
                 return (

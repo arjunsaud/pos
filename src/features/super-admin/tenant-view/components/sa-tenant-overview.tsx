@@ -147,7 +147,7 @@ export default function SATenantOverview() {
               <p className="text-xs text-muted-foreground">Plan Details</p>
               {plan && (
                 <p className="text-sm mt-1">
-                  Analytics: {plan.analytics.charAt(0).toUpperCase() + plan.analytics.slice(1)} · Support: {plan.support.charAt(0).toUpperCase() + plan.support.slice(1)}{plan.paymentGateway ? ' · Payment Gateway' : ''}{plan.billing ? ' · Billing' : ''}{plan.receipt ? ' · Receipt' : ''}{plan.export ? ' · Export' : ''}{plan.advanceInventory ? ' · Advanced Inventory' : ''}{plan.pos ? ' · POS' : ''}{plan.multipleOutlets ? ' · Multiple Outlets' : ''}
+                  Analytics: {plan.analytics.charAt(0).toUpperCase() + plan.analytics.slice(1)} · Support: {plan.support.charAt(0).toUpperCase() + plan.support.slice(1)}{plan.paymentGateway ? ' · Payment Gateway' : ''}{plan.billing ? ' · Billing' : ''}{plan.receipt ? ' · Receipt' : ''}{plan.export ? ' · Export' : ''}{plan.inventory ? ' · Inventory' : ''}{plan.pos ? ' · POS' : ''}{plan.multipleOutlets ? ' · Multiple Outlets' : ''}
                 </p>
               )}
             </div>

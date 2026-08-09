@@ -244,10 +244,10 @@ export default function TenantSubscriptionPage() {
                         <span>Export</span>
                       </div>
                     )}
-                    {plan.advanceInventory && (
+                    {plan.inventory && (
                       <div className='flex items-center gap-2 text-sm'>
                         <Check className='h-4 w-4 shrink-0 text-emerald-600' />
-                        <span>Advanced Inventory</span>
+                        <span>Inventory</span>
                       </div>
                     )}
                     {plan.pos && (

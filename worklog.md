@@ -96,3 +96,24 @@ Stage Summary:
 - SA Settings: 5 tabs (Branding, Domain, Payment Methods, Terms & Conditions, Privacy Policy)
 - Legal content flows from SA Settings editor → store → landing page dialogs
 - Lint passes clean, all references to old plan names updated
+---
+Task ID: 1
+Agent: Main Agent
+Task: Update packages with new features, landing page redesign, standalone legal pages, custom domain settings
+
+Work Log:
+- Updated SubscriptionPackage type: renamed advanceInventory to inventory, added maxOutlets, skuManagement, vendors, invoicePrinting, trainingAndSupport, customDomain, dailyBackup
+- Updated mockPackages: Basic(1 outlet), Medium(5 outlets), High(10 outlets) with all new feature flags
+- Updated subscription-management.tsx with new feature toggles, imports (Barcode, Truck, Printer, GraduationCap, Globe, HardDrive), maxOutlets form field
+- Fixed all advanceInventory references across sa-tenant-subscription, sa-tenant-overview, tenant-subscription-page
+- Rewrote landing-page.tsx: standalone Terms & Conditions and Privacy Policy full pages (not popups), footer only Privacy Policy link, 13 feature toggles with outlet count, renamed Advanced Inventory to Inventory, default annually selected
+- Added Custom Domains tab to SA Settings with global domain settings, subdomain format, SSL provisioning, tenant subdomain table with copy buttons
+- Added Domain Settings section to Tenant Admin settings with subdomain display, custom domain configuration, DNS verification flow
+- Fixed JSX parsing error with {tenant-name} in SA settings (needed string literal escaping)
+
+Stage Summary:
+- All package features now include: Billing, Receipt, Export, Inventory, SKU Management, POS, Payment Gateway, Multiple Outlets, Vendors, Invoice Printing, Training & Support, Custom Domain, Daily Backup
+- Landing page has full-page legal views with Back navigation
+- SA Settings has 6 tabs: Branding, Domain, Payment Methods, Terms & Conditions, Privacy Policy, Custom Domains
+- Tenant Settings has Domain Settings card with subdomain info and custom domain setup
+- All verified via agent-browser

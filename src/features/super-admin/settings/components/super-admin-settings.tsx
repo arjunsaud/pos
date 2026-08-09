@@ -43,11 +43,16 @@ import {
   Save,
   RotateCcw,
   Eye,
+  Globe,
+  Link2,
+  RefreshCw,
+  AlertCircle,
+  Copy,
 } from 'lucide-react';
+import { mockTenants, mockAdminPaymentMethods } from '@/lib/mock-data';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import type { AdminPaymentMethod, AdminPaymentType } from '@/lib/types';
-import { mockAdminPaymentMethods } from '@/lib/mock-data';
 import { useLegalContentStore, defaultTermsContent, defaultPrivacyContent } from '@/features/auth/store';
 
 const paymentTypeIcons: Record<AdminPaymentType, typeof Wallet> = {
@@ -164,6 +169,7 @@ export default function SuperAdminSettings() {
           <TabsTrigger value="payment">Payment Methods</TabsTrigger>
           <TabsTrigger value="terms">Terms & Conditions</TabsTrigger>
           <TabsTrigger value="privacy">Privacy Policy</TabsTrigger>
+          <TabsTrigger value="custom-domains">Custom Domains</TabsTrigger>
         </TabsList>
 
         {/* Branding Tab */}
@@ -421,6 +427,127 @@ export default function SuperAdminSettings() {
               <Save className="h-4 w-4 mr-2" />Save Privacy Policy
             </Button>
           </div>
+        </TabsContent>
+
+        {/* Custom Domains Tab */}
+        <TabsContent value="custom-domains" className="space-y-6">
+          <div>
+            <h3 className="text-lg font-semibold">Custom Domain Management</h3>
+            <p className="text-sm text-muted-foreground">Manage subdomains and custom domains for tenants. Each tenant gets a subdomain automatically. Custom domains are available on High and Custom plans.</p>
+          </div>
+
+          {/* Global Domain Settings */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2"><Globe className="h-5 w-5" /> Global Domain Settings</CardTitle>
+              <CardDescription>Configure the base domain and subdomain format for all tenants</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-2 sm:max-w-md">
+                <Label htmlFor="base-domain">Base Domain</Label>
+                <div className="flex items-center gap-2">
+                  <Input id="base-domain" value={defaultDomain} onChange={(e) => setDefaultDomain(e.target.value)} />
+                  <Button variant="outline" size="sm" className="shrink-0" onClick={() => toast.success('Domain saved (mock)')}><Save className="h-4 w-4 mr-1.5" />Save</Button>
+                </div>
+                <p className="text-xs text-muted-foreground">This is the main platform domain. Tenant subdomains will be created under this domain.</p>
+              </div>
+              <div className="grid gap-2 sm:max-w-md">
+                <Label htmlFor="subdomain-format">Subdomain Format</Label>
+                <div className="flex items-center h-10 rounded-md border bg-muted/50 px-3 gap-1">
+                  <span className="text-sm font-mono text-muted-foreground">https://</span>
+                  <span className="text-sm font-mono font-medium text-primary">{'{tenant-name}'}</span>
+                  <span className="text-sm font-mono text-muted-foreground">.{defaultDomain || 'posnepal.com'}</span>
+                  <Button variant="ghost" size="icon" className="h-6 w-6 ml-auto shrink-0" onClick={() => { navigator.clipboard.writeText('https://{tenant-name}.posnepal.com'); toast.success('Format copied'); }}><Copy className="h-3 w-3" /></Button>
+                </div>
+                <p className="text-xs text-muted-foreground">Each tenant&apos;s subdomain is auto-generated from their store name (lowercase, no spaces).</p>
+              </div>
+              <div className="flex items-center justify-between rounded-lg border p-4">
+                <div className="flex items-center gap-3">
+                  <ShieldCheck className="h-5 w-5 text-emerald-500" />
+                  <div>
+                    <p className="text-sm font-medium">Auto SSL Provisioning</p>
+                    <p className="text-xs text-muted-foreground">Automatically provision SSL certificates via Let&apos;s Encrypt for all domains and subdomains</p>
+                  </div>
+                </div>
+                <Switch checked={sslEnabled} onCheckedChange={setSslEnabled} />
+              </div>
+              <div className="flex items-center justify-between rounded-lg border p-4">
+                <div className="flex items-center gap-3">
+                  <RefreshCw className="h-5 w-5 text-sky-500" />
+                  <div>
+                    <p className="text-sm font-medium">DNS Propagation</p>
+                    <p className="text-xs text-muted-foreground">Time for new subdomains to become active after creation</p>
+                  </div>
+                </div>
+                <Badge variant="outline" className="text-xs">~5 minutes</Badge>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Tenant Subdomains List */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2"><Link2 className="h-5 w-5" /> Tenant Subdomains</CardTitle>
+              <CardDescription>All registered tenants and their assigned subdomains</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-lg border overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b bg-muted/50">
+                      <th className="text-left p-3 font-medium">Tenant</th>
+                      <th className="text-left p-3 font-medium hidden sm:table-cell">Plan</th>
+                      <th className="text-left p-3 font-medium">Subdomain</th>
+                      <th className="text-left p-3 font-medium hidden md:table-cell">Custom Domain</th>
+                      <th className="text-left p-3 font-medium">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {mockTenants.map((t) => (
+                      <tr key={t.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
+                        <td className="p-3">
+                          <div>
+                            <p className="font-medium">{t.name}</p>
+                            <p className="text-xs text-muted-foreground">{t.ownerName}</p>
+                          </div>
+                        </td>
+                        <td className="p-3 hidden sm:table-cell">
+                          <Badge variant="outline" className="text-xs">{t.plan}</Badge>
+                        </td>
+                        <td className="p-3">
+                          <div className="flex items-center gap-1.5 font-mono text-xs">
+                            <Link2 className="h-3 w-3 text-muted-foreground shrink-0" />
+                            <span>{t.domain}</span>
+                            <Button variant="ghost" size="icon" className="h-5 w-5 shrink-0" onClick={() => { navigator.clipboard.writeText(`https://${t.domain}`); toast.success('Subdomain URL copied'); }}><Copy className="h-2.5 w-2.5" /></Button>
+                          </div>
+                        </td>
+                        <td className="p-3 hidden md:table-cell">
+                          {t.plan === 'High' ? (
+                            <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/50 text-[10px] px-1.5 py-0">Eligible</Badge>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">Not available</span>
+                          )}
+                        </td>
+                        <td className="p-3">
+                          <Badge variant="outline" className={cn('text-[10px] px-1.5 py-0', t.status === 'active' ? 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800/50' : 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800/50')}>
+                            <span className={cn('inline-block h-1.5 w-1.5 rounded-full mr-1', t.status === 'active' ? 'bg-emerald-500' : 'bg-amber-500')} />
+                            {t.status === 'active' ? 'Active' : 'Inactive'}
+                          </Badge>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="mt-4 rounded-lg border border-sky-200 dark:border-sky-800/50 bg-sky-50 dark:bg-sky-900/20 p-3 flex items-start gap-2">
+                <AlertCircle className="h-4 w-4 text-sky-600 dark:text-sky-400 mt-0.5 shrink-0" />
+                <div className="text-xs text-sky-700 dark:text-sky-300">
+                  <p className="font-medium">How Custom Domains Work</p>
+                  <p className="mt-0.5 opacity-80">Tenants on the High plan can configure a custom domain (e.g. mystore.com.np) by adding a CNAME record pointing to their subdomain. SSL is auto-provisioned. Contact support for assistance.</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
 

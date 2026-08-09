@@ -126,10 +126,10 @@ export default function SATenantSubscription() {
                     <span>Export</span>
                   </div>
                 )}
-                {activePlan.advanceInventory && (
+                {activePlan.inventory && (
                   <div className="flex items-center gap-2 text-sm">
                     <Check className="h-4 w-4 text-emerald-500 shrink-0" />
-                    <span>Advanced Inventory</span>
+                    <span>Inventory</span>
                   </div>
                 )}
                 {activePlan.pos && (
@@ -218,10 +218,10 @@ export default function SATenantSubscription() {
                         <span>Export</span>
                       </div>
                     )}
-                    {plan.advanceInventory && (
+                    {plan.inventory && (
                       <div className="flex items-center gap-2 text-sm">
                         <Check className="h-4 w-4 text-emerald-500 shrink-0" />
-                        <span>Advanced Inventory</span>
+                        <span>Inventory</span>
                       </div>
                     )}
                     {plan.pos && (

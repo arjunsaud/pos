@@ -47,23 +47,26 @@ export const mockTenants: Tenant[] = [
 export const mockPackages: SubscriptionPackage[] = [
   {
     id: 'pkg-1', name: 'Basic', price: 999, interval: 'monthly', status: 'active',
-    maxProducts: 50, maxStaff: 1, analytics: 'basic', support: 'basic',
+    maxProducts: 50, maxStaff: 1, maxOutlets: 1, analytics: 'basic', support: 'basic',
     paymentGateway: false, billing: true, receipt: true, export: false,
-    advanceInventory: true, pos: true, multipleOutlets: false,
+    inventory: true, skuManagement: false, pos: true, multipleOutlets: false,
+    vendors: false, invoicePrinting: false, trainingAndSupport: false, customDomain: false, dailyBackup: false,
     createdAt: '2023-01-01', updatedAt: '2025-01-01',
   },
   {
     id: 'pkg-2', name: 'Medium', price: 4999, interval: 'monthly', status: 'active',
-    maxProducts: 200, maxStaff: 5, analytics: 'standard', support: 'quick',
+    maxProducts: 200, maxStaff: 5, maxOutlets: 5, analytics: 'standard', support: 'quick',
     paymentGateway: true, billing: true, receipt: true, export: true,
-    advanceInventory: true, pos: true, multipleOutlets: false,
+    inventory: true, skuManagement: true, pos: true, multipleOutlets: true,
+    vendors: true, invoicePrinting: true, trainingAndSupport: false, customDomain: false, dailyBackup: false,
     popular: true, createdAt: '2023-01-01', updatedAt: '2025-01-01',
   },
   {
     id: 'pkg-3', name: 'High', price: 9999, interval: 'monthly', status: 'active',
-    maxProducts: 500, maxStaff: 10, analytics: 'advanced', support: 'dedicated',
+    maxProducts: 500, maxStaff: 10, maxOutlets: 10, analytics: 'advanced', support: 'dedicated',
     paymentGateway: true, billing: true, receipt: true, export: true,
-    advanceInventory: true, pos: true, multipleOutlets: true,
+    inventory: true, skuManagement: true, pos: true, multipleOutlets: true,
+    vendors: true, invoicePrinting: true, trainingAndSupport: true, customDomain: true, dailyBackup: true,
     createdAt: '2023-01-01', updatedAt: '2025-01-01',
   },
 ];
