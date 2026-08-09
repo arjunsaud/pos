@@ -1,7 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import { useAuthStore, useNavStore, useTenantSelectorStore } from '@/features/auth/store';
 import { LoginPage } from '@/components/layout/login-page';
+import LandingPage from '@/components/layout/landing-page';
 import { AppSidebar, MobileBottomNav, MobileSidebarTrigger } from '@/components/layout/app-sidebar';
 import { AppNavbar } from '@/components/layout/app-navbar';
 import { ErrorBoundary } from '@/components/shared/error-boundary';
@@ -16,8 +18,10 @@ import SubscriptionManagement from '@/features/super-admin/subscriptions/compone
 import ContractsPage from '@/features/super-admin/contracts/components/contracts-page';
 import DocumentsPage from '@/features/super-admin/documents/components/documents-page';
 import ActivityLogs from '@/features/super-admin/activity-logs/components/activity-logs';
-import ContentManagement from '@/features/super-admin/content/components/content-management';
 import SuperAdminSettings from '@/features/super-admin/settings/components/super-admin-settings';
+import SAPromotions from '@/features/super-admin/promotions/components/sa-promotions';
+import SAReferrals from '@/features/super-admin/referrals/components/sa-referrals';
+import SAProfile from '@/features/super-admin/profile/components/sa-profile';
 
 // Super Admin - Tenant View pages
 import SaTenantOverview from '@/features/super-admin/tenant-view/components/sa-tenant-overview';
@@ -41,13 +45,12 @@ import ProductManagement from '@/features/tenant/products/components/product-man
 import InventoryPage from '@/features/tenant/inventory/components/inventory-page';
 import CategoriesPage from '@/features/tenant/categories/components/categories-page';
 import VendorsPage from '@/features/tenant/vendors/components/vendors-page';
-import SalesPage from '@/features/tenant/sales/components/sales-page';
-import ReportsPage from '@/features/tenant/reports/components/reports-page';
+import SalesReportsPage from '@/features/tenant/sales-reports/components/sales-reports-page';
 import TenantSubscriptionPage from '@/features/tenant/subscription/components/tenant-subscription-page';
 import TenantStaffPage from '@/features/tenant/staff/components/tenant-staff-page';
 import StoreProfile from '@/features/tenant/store-profile/components/store-profile';
-import SettlementPage from '@/features/tenant/settlement/components/settlement-page';
-import NotificationsPage from '@/features/tenant/notifications/components/notifications-page';
+import TenantProfile from '@/features/tenant/profile/components/tenant-profile';
+import TenantSettings from '@/features/tenant/settings/components/tenant-settings';
 
 import type { NavSection } from '@/lib/types';
 
@@ -60,8 +63,10 @@ const sectionComponents: Record<NavSection, React.ComponentType> = {
   'sa-contracts': ContractsPage,
   'sa-documents': DocumentsPage,
   'activity-logs': ActivityLogs,
-  'content': ContentManagement,
   'super-admin-settings': SuperAdminSettings,
+  'sa-promotions': SAPromotions,
+  'sa-referrals': SAReferrals,
+  'sa-profile': SAProfile,
   // Super Admin - Tenant View
   'sa-tenant-overview': SaTenantOverview,
   'sa-tenant-billing': SaTenantBilling,
@@ -83,25 +88,27 @@ const sectionComponents: Record<NavSection, React.ComponentType> = {
   'inventory': InventoryPage,
   'categories': CategoriesPage,
   'vendors': VendorsPage,
-  'sales': SalesPage,
-  'reports': ReportsPage,
+  'sales-reports': SalesReportsPage,
   'tenant-subscription': TenantSubscriptionPage,
   'tenant-staff': TenantStaffPage,
   'store-profile': StoreProfile,
-  'settlement': SettlementPage,
-  'notifications': NotificationsPage,
+  'tenant-profile': TenantProfile,
+  'tenant-settings': TenantSettings,
 };
 
 export default function HomePage() {
   const { isAuthenticated, user } = useAuthStore();
   const { currentSection } = useNavStore();
   const { selectedTenantId } = useTenantSelectorStore();
+  const [showLogin, setShowLogin] = useState(false);
 
   if (!isAuthenticated || !user) {
-    return <LoginPage />;
+    if (showLogin) {
+      return <LoginPage />;
+    }
+    return <LandingPage onSignIn={() => setShowLogin(true)} />;
   }
 
-  // If trying to access a tenant-view page without selecting a tenant, redirect to dashboard
   const isTenantViewPage = currentSection.startsWith('sa-tenant-');
   const CurrentPage = sectionComponents[currentSection];
   const isStaff = user.role === 'staff';
@@ -110,10 +117,8 @@ export default function HomePage() {
     <div className="min-h-screen flex flex-col bg-background">
       <div className="flex flex-1 overflow-hidden">
         <AppSidebar />
-
         <div className="flex flex-1 flex-col overflow-hidden">
           <AppNavbar />
-
           <main className={cn(
             'flex-1 overflow-y-auto p-4 md:p-6',
             isStaff ? 'pb-20 md:pb-6' : 'pb-6'
@@ -130,15 +135,9 @@ export default function HomePage() {
                   {!CurrentPage ? (
                     <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
                       {isTenantViewPage && !selectedTenantId ? (
-                        <>
-                          <p className="text-lg font-medium">No Tenant Selected</p>
-                          <p className="text-sm mt-1">Please select a tenant from the dropdown above to view their data.</p>
-                        </>
+                        <><p className="text-lg font-medium">No Tenant Selected</p><p className="text-sm mt-1">Please select a tenant from the dropdown above.</p></>
                       ) : (
-                        <>
-                          <p className="text-lg font-medium">Page Not Found</p>
-                          <p className="text-sm mt-1">The requested section does not exist.</p>
-                        </>
+                        <><p className="text-lg font-medium">Page Not Found</p><p className="text-sm mt-1">The requested section does not exist.</p></>
                       )}
                     </div>
                   ) : (
@@ -150,7 +149,6 @@ export default function HomePage() {
           </main>
         </div>
       </div>
-
       {isStaff && <MobileBottomNav />}
     </div>
   );

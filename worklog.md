@@ -201,3 +201,38 @@ Stage Summary:
 - Bug 2 fixed: SA Tenant Vendors page no longer crashes (added missing formatDate import)
 - Added UX improvement: "Back to Admin" button for easy navigation back to global admin view
 - Version: POS Nepal v2.5.0 (unchanged)
+
+---
+Task ID: 14
+Agent: main
+Task: Major feature expansion - Landing page, Promotions, Referrals, Profile/Settings, removals, Sales+Reports combine
+
+Work Log:
+- Created Landing Page (`src/components/layout/landing-page.tsx`) with hero, features, pricing (with promo code input), referral CTA, footer, dark/light theme toggle, responsive design, framer-motion animations
+- Created SA Promotions page (`src/features/super-admin/promotions/components/sa-promotions.tsx`) - full CRUD for discount codes with stat cards, usage progress bars, copy code, status/type filters
+- Created SA Referrals page (`src/features/super-admin/referrals/components/sa-referrals.tsx`) - read-only table with top referrers leaderboard, status filters, detail dialog, reward tracking
+- Created SA Profile page (`src/features/super-admin/profile/components/sa-profile.tsx`) - avatar, editable fields, bio
+- Created Tenant Profile page (`src/features/tenant/profile/components/tenant-profile.tsx`) - profile editing + referral program section with referral code, referral link, copy buttons, share buttons, referral stats
+- Created Tenant Settings page (`src/features/tenant/settings/components/tenant-settings.tsx`) - change password, 2FA toggle, business info, notification preferences, display preferences (NPR, Asia/Kathmandu timezone)
+- Created combined Sales & Reports page (`src/features/tenant/sales-reports/components/sales-reports-page.tsx`) - merged sales listing with reports tabs (Sales/Inventory/VAT), month/custom date/fiscal year filters
+- Added new types: Promotion, PromotionStatus, PromotionType, Referral, UserProfile
+- Added mock data: 8 promotions, 8 referrals, 2 user profiles
+- Added helper functions: getPromotionStatusBadgeClasses, getReferralStatusBadgeClasses, getPromotionValueDisplay, getPromotionTypeLabel
+- Updated types: removed 'content', 'settlement', 'notifications', 'sales', 'reports' NavSections; added 'sa-promotions', 'sa-referrals', 'sa-profile', 'tenant-profile', 'tenant-settings', 'sales-reports', 'landing-page'
+- Updated sidebar: removed Content & Social, Settlement, Notifications; added Promotions, Referrals, Profile (SA); combined Sales+Reports; added Profile+Settings (Tenant); added Documents to tenant view menu
+- Updated navbar: Profile/Settings dropdown items now navigate to correct pages based on role
+- Updated page.tsx: landing page shown before login, Sign In transitions to login form, removed Content/Settlement/Notifications imports, added all new page imports
+- SA Documents page: auto-filters by selected tenant via useTenantSelectorStore + useEffect
+- Dark/light mode: works on all pages including landing page (theme toggle in navbar AND landing page header)
+- ESLint: 0 errors verified
+
+Stage Summary:
+- 6 new pages created (Landing, SA Promotions, SA Referrals, SA Profile, Tenant Profile, Tenant Settings)
+- 1 new combined page (Sales & Reports replacing separate Sales and Reports)
+- 3 pages/sections removed (Content & Social, Settlement, Notifications)
+- Promotion & Referral system with Nepal-specific mock data
+- Tenant referral program with copyable codes and links
+- Date filtering: month, custom date range, Nepal fiscal year (BS)
+- All pages have dark mode support with `dark:` classes
+- Landing page is the default view for unauthenticated users
+- Agent-browser verified: landing page, SA Promotions, SA Referrals, Tenant Profile (with referral), Tenant Settings (with 2FA/password), all sidebar changes

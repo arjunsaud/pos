@@ -16,7 +16,6 @@ import {
   LayoutDashboard,
   CreditCard,
   Activity,
-  FileText,
   Settings,
   ShoppingCart,
   Receipt,
@@ -29,7 +28,6 @@ import {
   Monitor,
   Menu,
   Users,
-  Calculator,
   Bell,
   FileCheck2,
   FolderOpen,
@@ -37,6 +35,9 @@ import {
   Truck,
   Eye,
   ArrowLeft,
+  Tag,
+  Gift,
+  UserCircle,
   type LucideIcon,
 } from 'lucide-react';
 import { CommandPalette } from '@/components/layout/command-palette';
@@ -71,14 +72,16 @@ const superAdminGlobalMenu: SidebarGroup[] = [
       { label: 'Subscriptions', section: 'super-admin-subscriptions', icon: CreditCard },
       { label: 'Contracts', section: 'sa-contracts', icon: FileCheck2 },
       { label: 'Documents', section: 'sa-documents', icon: FolderOpen },
+      { label: 'Promotions', section: 'sa-promotions', icon: Tag },
+      { label: 'Referrals', section: 'sa-referrals', icon: Gift },
     ],
   },
   {
     title: 'System',
     items: [
       { label: 'Activity Logs', section: 'activity-logs', icon: Activity },
-      { label: 'Content & Social', section: 'content', icon: FileText },
       { label: 'Settings', section: 'super-admin-settings', icon: Settings },
+      { label: 'Profile', section: 'sa-profile', icon: UserCircle },
     ],
   },
 ];
@@ -96,6 +99,7 @@ const superAdminTenantViewMenu: SidebarGroup[] = [
       { label: 'Sales', section: 'sa-tenant-sales', icon: BarChart3 },
       { label: 'Reports', section: 'sa-tenant-reports', icon: BarChart3 },
       { label: 'Staff', section: 'sa-tenant-staff-view', icon: UserCog },
+      { label: 'Documents', section: 'sa-documents', icon: FolderOpen },
     ],
   },
   {
@@ -122,7 +126,6 @@ const tenantAdminMenu: SidebarGroup[] = [
       { label: 'POS', section: 'pos', icon: ShoppingCart },
       { label: 'Customers', section: 'customers', icon: Users },
       { label: 'Billing', section: 'billing', icon: Receipt },
-      { label: 'Settlement', section: 'settlement', icon: Calculator },
     ],
   },
   {
@@ -137,8 +140,7 @@ const tenantAdminMenu: SidebarGroup[] = [
   {
     title: 'Analytics',
     items: [
-      { label: 'Sales', section: 'sales', icon: BarChart3 },
-      { label: 'Reports', section: 'reports', icon: BarChart3 },
+      { label: 'Sales & Reports', section: 'sales-reports', icon: BarChart3 },
     ],
   },
   {
@@ -147,7 +149,8 @@ const tenantAdminMenu: SidebarGroup[] = [
       { label: 'Subscription', section: 'tenant-subscription', icon: CreditCard },
       { label: 'Store Profile', section: 'store-profile', icon: Store },
       { label: 'Staff', section: 'tenant-staff', icon: UserCog },
-      { label: 'Notifications', section: 'notifications', icon: Bell },
+      { label: 'Profile', section: 'tenant-profile', icon: UserCircle },
+      { label: 'Settings', section: 'tenant-settings', icon: Settings },
     ],
   },
 ];
@@ -163,7 +166,7 @@ const staffMenu: SidebarGroup[] = [
   {
     title: 'History',
     items: [
-      { label: 'Sales History', section: 'sales', icon: BarChart3 },
+      { label: 'Sales History', section: 'sales-reports', icon: BarChart3 },
     ],
   },
 ];

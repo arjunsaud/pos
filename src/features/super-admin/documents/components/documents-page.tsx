@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { PageHeader } from '@/components/shared/page-header';
 import { StatCard } from '@/components/shared/stat-card';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -46,6 +46,7 @@ import { toast } from 'sonner';
 import { mockTenantDocuments, mockTenants } from '@/lib/mock-data';
 import type { TenantDocument, DocumentType } from '@/lib/types';
 import { cn } from '@/lib/utils';
+import { useTenantSelectorStore } from '@/features/auth/store';
 
 const docTypeBadgeClasses: Record<DocumentType, string> = {
   pan: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
@@ -106,6 +107,12 @@ export default function DocumentsPage() {
   const [typeFilter, setTypeFilter] = useState<DocumentType | 'all'>('all');
   const [statusFilter, setStatusFilter] = useState<TenantDocument['status'] | 'all'>('all');
   const [tenantFilter, setTenantFilter] = useState<string>('all');
+  const selectedTenantId = useTenantSelectorStore(s => s.selectedTenantId);
+
+  // Auto-filter when tenant selected in sidebar
+  React.useEffect(() => {
+    if (selectedTenantId) setTenantFilter(selectedTenantId);
+  }, [selectedTenantId]);
 
   // Dialog states
   const [addOpen, setAddOpen] = useState(false);

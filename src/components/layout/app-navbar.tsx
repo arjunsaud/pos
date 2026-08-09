@@ -17,10 +17,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { getInitials } from '@/lib/helpers';
 import { NotificationPanel } from '@/components/layout/notification-panel';
+import { useNavStore } from '@/features/auth/store';
 
 export function AppNavbar() {
   const { user, logout } = useAuthStore();
   const { setTheme, resolvedTheme } = useTheme();
+  const { setCurrentSection } = useNavStore();
 
   if (!user) return null;
 
@@ -88,11 +90,11 @@ export function AppNavbar() {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setCurrentSection(user.role === 'super-admin' ? 'sa-profile' : 'tenant-profile')}>
               <User className="mr-2 h-4 w-4" />
               Profile
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setCurrentSection(user.role === 'super-admin' ? 'super-admin-settings' : 'tenant-settings')}>
               <Settings className="mr-2 h-4 w-4" />
               Settings
             </DropdownMenuItem>
