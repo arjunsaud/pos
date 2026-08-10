@@ -16,12 +16,12 @@ import {
 import {
   Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
-import { Package, DollarSign, AlertTriangle, Plus, Search, Download } from 'lucide-react';
-import { mockInventory, mockStockMovements, mockProducts } from '@/lib/mock-data';
+import { Package, DollarSign, AlertTriangle, Plus, Search, Download, Clock, XCircle, CheckCircle, QrCode, ScanBarcode, Printer } from 'lucide-react';
+import { mockInventory, mockStockMovements, mockProducts, mockBatches } from '@/lib/mock-data';
 import { cn } from '@/lib/utils';
 import { npr, getStockBadgeClasses, getStockStatus } from '@/lib/helpers';
 import { toast } from 'sonner';
-import type { StockMovement } from '@/lib/types';
+import type { StockMovement, Batch } from '@/lib/types';
 
 type InventorySortField = 'name' | 'category' | 'stock' | 'price';
 
@@ -32,6 +32,8 @@ export default function InventoryPage() {
   const [page, setPage] = useState(1);
   const [sortField, setSortField] = useState<InventorySortField>('name');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+  const [batchFilter, setBatchFilter] = useState<'all' | 'good' | 'expiring-soon' | 'expired'>('all');
+  const [barcodeSearch, setBarcodeSearch] = useState('');
 
   const totalProducts = mockProducts.length;
   const totalStockValue = mockProducts.reduce((sum, p) => sum + p.stock * p.costPrice, 0);
@@ -134,6 +136,8 @@ export default function InventoryPage() {
         <TabsList>
           <TabsTrigger value="current">Current Stock</TabsTrigger>
           <TabsTrigger value="movements">Stock Movements</TabsTrigger>
+          <TabsTrigger value="batches">Batch & Expiry</TabsTrigger>
+          <TabsTrigger value="barcode">Barcode & QR</TabsTrigger>
         </TabsList>
 
         <TabsContent value="current">
@@ -256,6 +260,289 @@ export default function InventoryPage() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+        {/* Batch & Expiry Tab */}
+        <TabsContent value="batches">
+          {(() => {
+            const filteredBatches = batchFilter === 'all' ? mockBatches : mockBatches.filter(b => b.status === batchFilter);
+            const totalBatches = mockBatches.length;
+            const expiringSoon = mockBatches.filter(b => b.status === 'expiring-soon').length;
+            const expired = mockBatches.filter(b => b.status === 'expired').length;
+            const goodStock = mockBatches.filter(b => b.status === 'good').length;
+
+            const getDaysUntilExpiry = (expiryDate: string) => {
+              const now = new Date();
+              const expiry = new Date(expiryDate);
+              const diff = Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+              return diff;
+            };
+
+            const getBatchStatusBadge = (status: string) => {
+              switch (status) {
+                case 'good': return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400';
+                case 'expiring-soon': return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400';
+                case 'expired': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+                default: return 'bg-muted text-muted-foreground';
+              }
+            };
+
+            const getBatchStatusLabel = (status: string) => {
+              switch (status) {
+                case 'good': return 'Good';
+                case 'expiring-soon': return 'Expiring Soon';
+                case 'expired': return 'Expired';
+                default: return status;
+              }
+            };
+
+            return (
+              <div className="space-y-4">
+                {/* Summary Cards */}
+                <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+                  <StatCard title="Total Batches" value={totalBatches} icon={Package} />
+                  <StatCard title="Expiring Soon" value={expiringSoon} icon={Clock} iconClassName="bg-amber-100 dark:bg-amber-900/30" />
+                  <StatCard title="Expired" value={expired} icon={XCircle} iconClassName="bg-red-100 dark:bg-red-900/30" />
+                  <StatCard title="Good Stock" value={goodStock} icon={CheckCircle} iconClassName="bg-emerald-100 dark:bg-emerald-900/30" />
+                </div>
+
+                {/* Batch Table */}
+                <Card className="transition-shadow hover:shadow-md">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                    <CardTitle>Batch & Expiry Tracking</CardTitle>
+                    <div className="flex items-center gap-2">
+                      <Select value={batchFilter} onValueChange={(v) => setBatchFilter(v as 'all' | 'good' | 'expiring-soon' | 'expired')}>
+                        <SelectTrigger className="w-[140px] h-9">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Status</SelectItem>
+                          <SelectItem value="good">Good</SelectItem>
+                          <SelectItem value="expiring-soon">Expiring Soon</SelectItem>
+                          <SelectItem value="expired">Expired</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="transition-colors hover:bg-muted/50">
+                            <TableHead>Batch #</TableHead>
+                            <TableHead>Product</TableHead>
+                            <TableHead className="hidden sm:table-cell">SKU</TableHead>
+                            <TableHead className="text-center">Qty</TableHead>
+                            <TableHead className="text-center">Remaining</TableHead>
+                            <TableHead className="text-right hidden sm:table-cell">Cost Price</TableHead>
+                            <TableHead className="hidden md:table-cell">MFG Date</TableHead>
+                            <TableHead className="hidden md:table-cell">Expiry Date</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead className="text-center">Days Left</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {filteredBatches.map((batch) => {
+                            const daysLeft = getDaysUntilExpiry(batch.expiryDate);
+                            return (
+                              <TableRow key={batch.id} className="transition-colors hover:bg-muted/50">
+                                <TableCell className="font-mono text-xs text-muted-foreground">{batch.batchNumber}</TableCell>
+                                <TableCell className="font-medium">{batch.productName}</TableCell>
+                                <TableCell className="hidden sm:table-cell text-xs font-mono text-muted-foreground">{batch.sku}</TableCell>
+                                <TableCell className="text-center">{batch.quantity}</TableCell>
+                                <TableCell className="text-center">
+                                  <span className={cn(
+                                    'font-semibold',
+                                    batch.remainingQty === 0 && 'text-red-600 dark:text-red-400',
+                                    batch.remainingQty > 0 && batch.remainingQty <= batch.quantity * 0.3 && 'text-amber-600 dark:text-amber-400',
+                                    batch.remainingQty > batch.quantity * 0.3 && 'text-emerald-600 dark:text-emerald-400',
+                                  )}>
+                                    {batch.remainingQty}
+                                  </span>
+                                </TableCell>
+                                <TableCell className="text-right hidden sm:table-cell">NPR {npr(batch.costPrice)}</TableCell>
+                                <TableCell className="hidden md:table-cell text-muted-foreground text-xs">
+                                  {new Date(batch.mfgDate).toLocaleDateString('en-GB')}
+                                </TableCell>
+                                <TableCell className="hidden md:table-cell text-muted-foreground text-xs">
+                                  {new Date(batch.expiryDate).toLocaleDateString('en-GB')}
+                                </TableCell>
+                                <TableCell>
+                                  <Badge className={getBatchStatusBadge(batch.status)} variant="secondary">
+                                    {getBatchStatusLabel(batch.status)}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell className="text-center">
+                                  <span className={cn(
+                                    'text-sm font-medium',
+                                    daysLeft < 0 && 'text-red-600 dark:text-red-400',
+                                    daysLeft >= 0 && daysLeft <= 7 && 'text-amber-600 dark:text-amber-400',
+                                    daysLeft > 7 && 'text-emerald-600 dark:text-emerald-400',
+                                  )}>
+                                    {daysLeft < 0 ? `${Math.abs(daysLeft)}d ago` : `${daysLeft}d`}
+                                  </span>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                          {filteredBatches.length === 0 && (
+                            <TableRow>
+                              <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
+                                No batches found for the selected filter.
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            );
+          })()}
+        </TabsContent>
+
+        {/* Barcode & QR Tab */}
+        <TabsContent value="barcode">
+          {(() => {
+            const filteredProducts = barcodeSearch
+              ? mockProducts.filter(p =>
+                  p.name.toLowerCase().includes(barcodeSearch.toLowerCase()) ||
+                  p.sku.toLowerCase().includes(barcodeSearch.toLowerCase())
+                )
+              : mockProducts;
+
+            const handlePrintLabels = () => {
+              window.print();
+              toast.success('Print dialog opened for barcode labels');
+            };
+
+            // Generate CSS barcode bars from a string of digits
+            const renderBarcode = (code: string) => {
+              const digits = code.replace(/\D/g, '');
+              if (digits.length === 0) return null;
+              const bars = digits.split('').map((digit, i) => {
+                const w = (parseInt(digit, 10) || 1) + 1;
+                const isBlack = i % 2 === 0;
+                return (
+                  <div
+                    key={i}
+                    className={isBlack ? 'bg-foreground' : 'bg-background'}
+                    style={{ width: `${w}px`, height: '40px' }}
+                  />
+                );
+              });
+              return (
+                <div className="flex items-center rounded border border-border overflow-hidden">
+                  <div className="w-[2px] h-[40px] bg-foreground shrink-0" />
+                  {bars}
+                  <div className="w-[2px] h-[40px] bg-foreground shrink-0" />
+                </div>
+              );
+            };
+
+            // Generate a CSS QR-code-like pattern using a grid of squares
+            const renderQrPlaceholder = (code: string) => {
+              const size = 9;
+              const cells: boolean[][] = [];
+              // Seed from code characters
+              for (let r = 0; r < size; r++) {
+                const row: boolean[] = [];
+                for (let c = 0; c < size; c++) {
+                  const charCode = (code.charCodeAt((r * size + c) % code.length) || 0);
+                  // Corner finder patterns (top-left, top-right, bottom-left)
+                  if (r < 3 && c < 3) { row.push(r === 0 || r === 2 || c === 0 || c === 2); continue; }
+                  if (r < 3 && c >= size - 3) { row.push(r === 0 || r === 2 || c === size - 3 || c === size - 1); continue; }
+                  if (r >= size - 3 && c < 3) { row.push(r === size - 3 || r === size - 1 || c === 0 || c === 2); continue; }
+                  row.push(charCode % 2 === 0);
+                }
+                cells.push(row);
+              }
+              return (
+                <div
+                  className="grid gap-0 border border-foreground/20 rounded-sm"
+                  style={{ gridTemplateColumns: `repeat(${size}, 1fr)`, width: '80px', height: '80px' }}
+                >
+                  {cells.flat().map((filled, idx) => (
+                    <div
+                      key={idx}
+                      className={filled ? 'bg-foreground' : 'bg-background'}
+                    />
+                  ))}
+                </div>
+              );
+            };
+
+            return (
+              <div className="space-y-4">
+                {/* Search & Print Bar */}
+                <Card className="transition-shadow hover:shadow-md">
+                  <CardContent className="pt-6">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                      <div className="relative flex-1 w-full">
+                        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                          placeholder="Search by product name or SKU..."
+                          value={barcodeSearch}
+                          onChange={(e) => setBarcodeSearch(e.target.value)}
+                          className="pl-9 h-9"
+                        />
+                      </div>
+                      <Button variant="outline" size="sm" onClick={handlePrintLabels}>
+                        <Printer className="h-4 w-4" /> Print Barcode Labels
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Product Grid */}
+                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {filteredProducts.map((product) => (
+                    <Card key={product.id} className="transition-shadow hover:shadow-md">
+                      <CardContent className="pt-5 space-y-3">
+                        {/* Header */}
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="font-semibold text-sm truncate">{product.name}</p>
+                            <p className="text-xs text-muted-foreground font-mono">{product.sku}</p>
+                          </div>
+                          <ScanBarcode className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+                        </div>
+
+                        {/* Barcode Number */}
+                        <p className="text-center font-mono text-xs tracking-widest text-muted-foreground bg-muted/50 rounded py-1">
+                          {product.barcode}
+                        </p>
+
+                        {/* Visual Barcode */}
+                        <div className="flex justify-center">
+                          {renderBarcode(product.barcode)}
+                        </div>
+
+                        {/* QR Code + Price */}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            {renderQrPlaceholder(product.barcode)}
+                            <div>
+                              <p className="text-[10px] text-muted-foreground">Unit Price</p>
+                              <p className="text-sm font-semibold">NPR {npr(product.price)}</p>
+                            </div>
+                          </div>
+                          <QrCode className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+
+                {filteredProducts.length === 0 && (
+                  <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+                    <ScanBarcode className="h-10 w-10 mb-3 opacity-40" />
+                    <p className="text-sm">No products found matching your search.</p>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </TabsContent>
       </Tabs>
 

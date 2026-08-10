@@ -29,6 +29,12 @@ import type {
   SupportTicket,
   AdminPaymentMethod,
   PaymentReceipt,
+  PurchaseOrder,
+  Batch,
+  StockTransfer,
+  AppNotification,
+  ReturnRefund,
+  ProfitLossData,
 } from '@/lib/types';
 
 // ---------- Tenants ----------
@@ -158,22 +164,22 @@ export const mockCategories: Category[] = [
 
 // ---------- Products ----------
 export const mockProducts: Product[] = [
-  { id: 'p1', name: 'DDC Milk (1L)', sku: 'DRY-001', price: 100, costPrice: 85, category: 'Dairy & Eggs', stock: 50, minStock: 10, unit: 'Litre', isActive: true, createdAt: '2024-01-15', vendorId: 'v1', vendorName: 'Nepal Dairy Corp' },
-  { id: 'p2', name: 'Wai Wai Noodles', sku: 'SNK-001', price: 25, costPrice: 20, category: 'Snacks & Chips', stock: 200, minStock: 50, unit: 'Pcs', isActive: true, createdAt: '2024-01-15', vendorId: 'v2', vendorName: 'CG Foods Nepal' },
-  { id: 'p3', name: 'Basmati Rice (5kg)', sku: 'RCE-001', price: 650, costPrice: 580, category: 'Rice & Grains', stock: 30, minStock: 5, unit: 'Kg', isActive: true, createdAt: '2024-01-16', vendorId: 'v6', vendorName: 'Nepal Agro Industries' },
-  { id: 'p4', name: 'Sunflower Oil (1L)', sku: 'COK-001', price: 320, costPrice: 280, category: 'Cooking Essentials', stock: 25, minStock: 8, unit: 'Litre', isActive: true, createdAt: '2024-01-16', vendorId: 'v6', vendorName: 'Nepal Agro Industries' },
-  { id: 'p5', name: 'Goldstar Shoes', sku: 'PRC-001', price: 2500, costPrice: 1800, category: 'Personal Care', stock: 12, minStock: 3, unit: 'Pcs', isActive: true, createdAt: '2024-01-18', vendorId: 'v3', vendorName: 'Goldstar Shoe Pvt Ltd' },
-  { id: 'p6', name: 'Tokla Tea (500g)', sku: 'BEV-001', price: 280, costPrice: 240, category: 'Beverages', stock: 40, minStock: 10, unit: 'Pcs', isActive: true, createdAt: '2024-01-18', vendorId: 'v4', vendorName: 'Tokla Tea Estate' },
-  { id: 'p7', name: 'Surf Excel (1kg)', sku: 'CLN-001', price: 250, costPrice: 210, category: 'Cleaning Products', stock: 3, minStock: 5, unit: 'Pcs', isActive: true, createdAt: '2024-02-01', vendorId: 'v5', vendorName: 'Himalayan Snacks Pvt Ltd' },
-  { id: 'p8', name: 'Frozen Chicken (1kg)', sku: 'FRZ-001', price: 450, costPrice: 380, category: 'Frozen Foods', stock: 2, minStock: 5, unit: 'Kg', isActive: true, createdAt: '2024-02-05', vendorId: 'v8', vendorName: 'Chitwan Fresh Farms' },
-  { id: 'p9', name: 'Coca Cola (500ml)', sku: 'BEV-002', price: 60, costPrice: 48, category: 'Beverages', stock: 150, minStock: 30, unit: 'Pcs', isActive: true, createdAt: '2024-01-20', vendorId: 'v2', vendorName: 'CG Foods Nepal' },
-  { id: 'p10', name: 'Lay\'s Chips (Large)', sku: 'SNK-002', price: 80, costPrice: 65, category: 'Snacks & Chips', stock: 80, minStock: 20, unit: 'Pcs', isActive: true, createdAt: '2024-01-20', vendorId: 'v5', vendorName: 'Himalayan Snacks Pvt Ltd' },
-  { id: 'p11', name: 'Musk Melon', sku: 'FRU-001', price: 150, costPrice: 120, category: 'Snacks & Chips', stock: 8, minStock: 10, unit: 'Kg', isActive: true, createdAt: '2024-03-01', vendorId: 'v8', vendorName: 'Chitwan Fresh Farms' },
-  { id: 'p12', name: 'Dettol Soap', sku: 'PRC-002', price: 120, costPrice: 95, category: 'Personal Care', stock: 60, minStock: 15, unit: 'Pcs', isActive: true, createdAt: '2024-02-10', vendorId: 'v5', vendorName: 'Himalayan Snacks Pvt Ltd' },
-  { id: 'p13', name: 'Red Bull (250ml)', sku: 'BEV-003', price: 180, costPrice: 150, category: 'Beverages', stock: 45, minStock: 10, unit: 'Pcs', isActive: true, createdAt: '2024-02-15', vendorId: 'v2', vendorName: 'CG Foods Nepal' },
-  { id: 'p14', name: 'Momo Wrapper (500g)', sku: 'FRZ-002', price: 80, costPrice: 60, category: 'Frozen Foods', stock: 35, minStock: 10, unit: 'Pcs', isActive: true, createdAt: '2024-03-05', vendorId: 'v8', vendorName: 'Chitwan Fresh Farms' },
-  { id: 'p15', name: 'Turmeric Powder (200g)', sku: 'COK-002', price: 90, costPrice: 70, category: 'Cooking Essentials', stock: 55, minStock: 10, unit: 'Pcs', isActive: true, createdAt: '2024-02-20', vendorId: 'v6', vendorName: 'Nepal Agro Industries' },
-  { id: 'p16', name: 'Eggs (Tray of 30)', sku: 'DRY-002', price: 450, costPrice: 380, category: 'Dairy & Eggs', stock: 18, minStock: 5, unit: 'Tray', isActive: true, createdAt: '2024-01-22', vendorId: 'v1', vendorName: 'Nepal Dairy Corp' },
+  { id: 'p1', name: 'DDC Milk (1L)', sku: 'DRY-001', barcode: '8901234001001', price: 100, costPrice: 85, category: 'Dairy & Eggs', stock: 50, minStock: 10, unit: 'Litre', isActive: true, createdAt: '2024-01-15', vendorId: 'v1', vendorName: 'Nepal Dairy Corp', hasBatchTracking: true },
+  { id: 'p2', name: 'Wai Wai Noodles', sku: 'SNK-001', barcode: '8901234001002', price: 25, costPrice: 20, category: 'Snacks & Chips', stock: 200, minStock: 50, unit: 'Pcs', isActive: true, createdAt: '2024-01-15', vendorId: 'v2', vendorName: 'CG Foods Nepal', hasBatchTracking: false },
+  { id: 'p3', name: 'Basmati Rice (5kg)', sku: 'RCE-001', barcode: '8901234001003', price: 650, costPrice: 580, category: 'Rice & Grains', stock: 30, minStock: 5, unit: 'Kg', isActive: true, createdAt: '2024-01-16', vendorId: 'v6', vendorName: 'Nepal Agro Industries', hasBatchTracking: true },
+  { id: 'p4', name: 'Sunflower Oil (1L)', sku: 'COK-001', barcode: '8901234001004', price: 320, costPrice: 280, category: 'Cooking Essentials', stock: 25, minStock: 8, unit: 'Litre', isActive: true, createdAt: '2024-01-16', vendorId: 'v6', vendorName: 'Nepal Agro Industries', hasBatchTracking: true },
+  { id: 'p5', name: 'Goldstar Shoes', sku: 'PRC-001', barcode: '8901234001005', price: 2500, costPrice: 1800, category: 'Personal Care', stock: 12, minStock: 3, unit: 'Pcs', isActive: true, createdAt: '2024-01-18', vendorId: 'v3', vendorName: 'Goldstar Shoe Pvt Ltd', hasBatchTracking: false },
+  { id: 'p6', name: 'Tokla Tea (500g)', sku: 'BEV-001', barcode: '8901234001006', price: 280, costPrice: 240, category: 'Beverages', stock: 40, minStock: 10, unit: 'Pcs', isActive: true, createdAt: '2024-01-18', vendorId: 'v4', vendorName: 'Tokla Tea Estate', hasBatchTracking: true },
+  { id: 'p7', name: 'Surf Excel (1kg)', sku: 'CLN-001', barcode: '8901234001007', price: 250, costPrice: 210, category: 'Cleaning Products', stock: 3, minStock: 5, unit: 'Pcs', isActive: true, createdAt: '2024-02-01', vendorId: 'v5', vendorName: 'Himalayan Snacks Pvt Ltd', hasBatchTracking: false },
+  { id: 'p8', name: 'Frozen Chicken (1kg)', sku: 'FRZ-001', barcode: '8901234001008', price: 450, costPrice: 380, category: 'Frozen Foods', stock: 2, minStock: 5, unit: 'Kg', isActive: true, createdAt: '2024-02-05', vendorId: 'v8', vendorName: 'Chitwan Fresh Farms', hasBatchTracking: true },
+  { id: 'p9', name: 'Coca Cola (500ml)', sku: 'BEV-002', barcode: '8901234001009', price: 60, costPrice: 48, category: 'Beverages', stock: 150, minStock: 30, unit: 'Pcs', isActive: true, createdAt: '2024-01-20', vendorId: 'v2', vendorName: 'CG Foods Nepal', hasBatchTracking: false },
+  { id: 'p10', name: 'Lay\'s Chips (Large)', sku: 'SNK-002', barcode: '8901234001010', price: 80, costPrice: 65, category: 'Snacks & Chips', stock: 80, minStock: 20, unit: 'Pcs', isActive: true, createdAt: '2024-01-20', vendorId: 'v5', vendorName: 'Himalayan Snacks Pvt Ltd', hasBatchTracking: false },
+  { id: 'p11', name: 'Musk Melon', sku: 'FRU-001', barcode: '8901234001011', price: 150, costPrice: 120, category: 'Snacks & Chips', stock: 8, minStock: 10, unit: 'Kg', isActive: true, createdAt: '2024-03-01', vendorId: 'v8', vendorName: 'Chitwan Fresh Farms', hasBatchTracking: true },
+  { id: 'p12', name: 'Dettol Soap', sku: 'PRC-002', barcode: '8901234001012', price: 120, costPrice: 95, category: 'Personal Care', stock: 60, minStock: 15, unit: 'Pcs', isActive: true, createdAt: '2024-02-10', vendorId: 'v5', vendorName: 'Himalayan Snacks Pvt Ltd', hasBatchTracking: false },
+  { id: 'p13', name: 'Red Bull (250ml)', sku: 'BEV-003', barcode: '8901234001013', price: 180, costPrice: 150, category: 'Beverages', stock: 45, minStock: 10, unit: 'Pcs', isActive: true, createdAt: '2024-02-15', vendorId: 'v2', vendorName: 'CG Foods Nepal', hasBatchTracking: false },
+  { id: 'p14', name: 'Momo Wrapper (500g)', sku: 'FRZ-002', barcode: '8901234001014', price: 80, costPrice: 60, category: 'Frozen Foods', stock: 35, minStock: 10, unit: 'Pcs', isActive: true, createdAt: '2024-03-05', vendorId: 'v8', vendorName: 'Chitwan Fresh Farms', hasBatchTracking: true },
+  { id: 'p15', name: 'Turmeric Powder (200g)', sku: 'COK-002', barcode: '8901234001015', price: 90, costPrice: 70, category: 'Cooking Essentials', stock: 55, minStock: 10, unit: 'Pcs', isActive: true, createdAt: '2024-02-20', vendorId: 'v6', vendorName: 'Nepal Agro Industries', hasBatchTracking: false },
+  { id: 'p16', name: 'Eggs (Tray of 30)', sku: 'DRY-002', barcode: '8901234001016', price: 450, costPrice: 380, category: 'Dairy & Eggs', stock: 18, minStock: 5, unit: 'Tray', isActive: true, createdAt: '2024-01-22', vendorId: 'v1', vendorName: 'Nepal Dairy Corp', hasBatchTracking: true },
 ];
 
 // ---------- Inventory ----------
@@ -227,11 +233,11 @@ export const mockTenantStaff: StaffMember[] = [
 
 // ---------- Customers (used internally by POS for billing) ----------
 export const mockCustomers: Customer[] = [
-  { id: 'c1', name: 'Kumar Hardware', email: 'kumar@hardware.com.np', phone: '+977-9841234567', pan: '301234567', address: 'Putalisadak, Kathmandu', totalPurchases: 47, totalSpent: 245600, lastVisit: '2024-06-15T11:15:00', createdAt: '2024-01-10', isActive: true },
-  { id: 'c2', name: 'Hotel Himalayan', email: 'orders@hotelhimalayan.com', phone: '+977-9851234567', pan: '402345678', address: 'Thamel, Kathmandu', totalPurchases: 32, totalSpent: 189400, lastVisit: '2024-06-14T14:30:00', createdAt: '2024-01-20', isActive: true },
-  { id: 'c3', name: 'Thapa Enterprises', email: 'thapa@enterprises.com.np', phone: '+977-9861234567', pan: '503456789', address: 'Baneshwor, Kathmandu', totalPurchases: 18, totalSpent: 89500, lastVisit: '2024-06-12T11:00:00', createdAt: '2024-02-05', isActive: true },
-  { id: 'c4', name: 'Gurung Bakery', email: 'gurung@bakery.com.np', phone: '+977-9871234567', pan: '604567890', address: 'Lazimpat, Kathmandu', totalPurchases: 56, totalSpent: 124300, lastVisit: '2024-06-15T09:00:00', createdAt: '2023-11-15', isActive: true },
-  { id: 'c5', name: 'Walk-in Customer', email: '', phone: '', pan: '', address: '', totalPurchases: 0, totalSpent: 0, lastVisit: '', createdAt: '2024-01-01', isActive: true },
+  { id: 'c1', name: 'Kumar Hardware', email: 'kumar@hardware.com.np', phone: '+977-9841234567', pan: '301234567', address: 'Putalisadak, Kathmandu', totalPurchases: 47, totalSpent: 245600, lastVisit: '2024-06-15T11:15:00', createdAt: '2024-01-10', isActive: true, loyaltyPoints: 2456, creditBalance: 0, creditLimit: 50000 },
+  { id: 'c2', name: 'Hotel Himalayan', email: 'orders@hotelhimalayan.com', phone: '+977-9851234567', pan: '402345678', address: 'Thamel, Kathmandu', totalPurchases: 32, totalSpent: 189400, lastVisit: '2024-06-14T14:30:00', createdAt: '2024-01-20', isActive: true, loyaltyPoints: 1894, creditBalance: 15000, creditLimit: 100000 },
+  { id: 'c3', name: 'Thapa Enterprises', email: 'thapa@enterprises.com.np', phone: '+977-9861234567', pan: '503456789', address: 'Baneshwor, Kathmandu', totalPurchases: 18, totalSpent: 89500, lastVisit: '2024-06-12T11:00:00', createdAt: '2024-02-05', isActive: true, loyaltyPoints: 895, creditBalance: 5000, creditLimit: 30000 },
+  { id: 'c4', name: 'Gurung Bakery', email: 'gurung@bakery.com.np', phone: '+977-9871234567', pan: '604567890', address: 'Lazimpat, Kathmandu', totalPurchases: 56, totalSpent: 124300, lastVisit: '2024-06-15T09:00:00', createdAt: '2023-11-15', isActive: true, loyaltyPoints: 1243, creditBalance: 0, creditLimit: 25000 },
+  { id: 'c5', name: 'Walk-in Customer', email: '', phone: '', pan: '', address: '', totalPurchases: 0, totalSpent: 0, lastVisit: '', createdAt: '2024-01-01', isActive: true, loyaltyPoints: 0, creditBalance: 0, creditLimit: 0 },
 ];
 
 // ---------- Activity Logs ----------
@@ -367,4 +373,66 @@ export const mockPaymentReceipts: PaymentReceipt[] = [
   { id: 'pr-3', tenantId: 't4', tenantName: 'Pokhara Electronics', amount: 5999, packageId: 'pkg-3', packageName: 'Plan 3', paymentMethod: 'khalti', receiptFile: 'khalti_screenshot_pkr_jun2025.jpg', status: 'pending', uploadedAt: '2025-06-13T16:45:00' },
   { id: 'pr-4', tenantId: 't6', tenantName: 'Lalitpur Fashion', amount: 5999, packageId: 'pkg-3', packageName: 'Plan 3', paymentMethod: 'qr', receiptFile: 'qr_payment_lalitpur_jun2025.png', status: 'rejected', uploadedAt: '2025-06-12T11:20:00', reviewedAt: '2025-06-12T15:00:00', reviewedBy: 'Super Admin', notes: 'Receipt amount does not match the package price. Please upload correct receipt.' },
   { id: 'pr-5', tenantId: 't8', tenantName: 'Biratnagar Hardware', amount: 12999, packageId: 'pkg-4', packageName: 'Plan 4', paymentMethod: 'esewa', receiptFile: 'esewa_brt_may2025.png', status: 'approved', uploadedAt: '2025-05-15T10:00:00', reviewedAt: '2025-05-16T08:30:00', reviewedBy: 'Super Admin' },
+];
+
+// ---------- Purchase Orders ----------
+export const mockPurchaseOrders: PurchaseOrder[] = [
+  { id: 'po-1', orderNumber: 'PO-2024-001', vendorId: 'v1', vendorName: 'Nepal Dairy Corp', items: [{ productId: 'p1', productName: 'DDC Milk (1L)', sku: 'DRY-001', quantity: 100, receivedQty: 100, unitPrice: 85, total: 8500 }, { productId: 'p16', productName: 'Eggs (Tray of 30)', sku: 'DRY-002', quantity: 20, receivedQty: 20, unitPrice: 380, total: 7600 }], subtotal: 16100, vatAmount: 2093, total: 18193, status: 'received', orderDate: '2024-06-10', expectedDate: '2024-06-12', receivedDate: '2024-06-11', notes: 'Weekly dairy order', createdBy: 'Rajesh Sharma' },
+  { id: 'po-2', orderNumber: 'PO-2024-002', vendorId: 'v2', vendorName: 'CG Foods Nepal', items: [{ productId: 'p2', productName: 'Wai Wai Noodles', sku: 'SNK-001', quantity: 500, receivedQty: 500, unitPrice: 20, total: 10000 }, { productId: 'p9', productName: 'Coca Cola (500ml)', sku: 'BEV-002', quantity: 200, receivedQty: 200, unitPrice: 48, total: 9600 }, { productId: 'p13', productName: 'Red Bull (250ml)', sku: 'BEV-003', quantity: 50, receivedQty: 50, unitPrice: 150, total: 7500 }], subtotal: 27100, vatAmount: 3523, total: 30623, status: 'received', orderDate: '2024-06-08', expectedDate: '2024-06-12', receivedDate: '2024-06-12', createdBy: 'Rajesh Sharma' },
+  { id: 'po-3', orderNumber: 'PO-2024-003', vendorId: 'v8', vendorName: 'Chitwan Fresh Farms', items: [{ productId: 'p8', productName: 'Frozen Chicken (1kg)', sku: 'FRZ-001', quantity: 50, receivedQty: 30, unitPrice: 380, total: 19000 }, { productId: 'p14', productName: 'Momo Wrapper (500g)', sku: 'FRZ-002', quantity: 100, receivedQty: 100, unitPrice: 60, total: 6000 }], subtotal: 25000, vatAmount: 3250, total: 28250, status: 'partial', orderDate: '2024-06-13', expectedDate: '2024-06-16', notes: 'Partial delivery expected - remaining chicken on 16th', createdBy: 'Hari Bahadur' },
+  { id: 'po-4', orderNumber: 'PO-2024-004', vendorId: 'v4', vendorName: 'Tokla Tea Estate', items: [{ productId: 'p6', productName: 'Tokla Tea (500g)', sku: 'BEV-001', quantity: 60, receivedQty: 0, unitPrice: 240, total: 14400 }], subtotal: 14400, vatAmount: 1872, total: 16272, status: 'sent', orderDate: '2024-06-15', expectedDate: '2024-06-22', createdBy: 'Rajesh Sharma' },
+  { id: 'po-5', orderNumber: 'PO-2024-005', vendorId: 'v6', vendorName: 'Nepal Agro Industries', items: [{ productId: 'p3', productName: 'Basmati Rice (5kg)', sku: 'RCE-001', quantity: 40, receivedQty: 0, unitPrice: 580, total: 23200 }, { productId: 'p4', productName: 'Sunflower Oil (1L)', sku: 'COK-001', quantity: 30, receivedQty: 0, unitPrice: 280, total: 8400 }], subtotal: 31600, vatAmount: 4108, total: 35708, status: 'draft', orderDate: '2024-06-15', expectedDate: '2024-06-20', createdBy: 'Hari Bahadur' },
+  { id: 'po-6', orderNumber: 'PO-2024-006', vendorId: 'v3', vendorName: 'Goldstar Shoe Pvt Ltd', items: [{ productId: 'p5', productName: 'Goldstar Shoes', sku: 'PRC-001', quantity: 10, receivedQty: 0, unitPrice: 1800, total: 18000 }], subtotal: 18000, vatAmount: 2340, total: 20340, status: 'cancelled', orderDate: '2024-06-05', expectedDate: '2024-06-12', notes: 'Cancelled - found cheaper supplier', createdBy: 'Rajesh Sharma' },
+];
+
+// ---------- Batches ----------
+export const mockBatches: Batch[] = [
+  { id: 'b1', productId: 'p1', productName: 'DDC Milk (1L)', sku: 'DRY-001', batchNumber: 'BATCH-DRY-001-A', quantity: 50, remainingQty: 22, costPrice: 85, mfgDate: '2024-06-10', expiryDate: '2024-06-20', status: 'expiring-soon', receivedDate: '2024-06-10', outletId: 'out-1' },
+  { id: 'b2', productId: 'p1', productName: 'DDC Milk (1L)', sku: 'DRY-001', batchNumber: 'BATCH-DRY-001-B', quantity: 50, remainingQty: 50, costPrice: 85, mfgDate: '2024-06-15', expiryDate: '2024-06-25', status: 'good', receivedDate: '2024-06-15', outletId: 'out-1' },
+  { id: 'b3', productId: 'p3', productName: 'Basmati Rice (5kg)', sku: 'RCE-001', batchNumber: 'BATCH-RCE-001-A', quantity: 30, remainingQty: 18, costPrice: 580, mfgDate: '2024-05-01', expiryDate: '2025-05-01', status: 'good', receivedDate: '2024-06-01', outletId: 'out-1' },
+  { id: 'b4', productId: 'p4', productName: 'Sunflower Oil (1L)', sku: 'COK-001', batchNumber: 'BATCH-COK-001-A', quantity: 25, remainingQty: 25, costPrice: 280, mfgDate: '2024-03-15', expiryDate: '2025-03-15', status: 'good', receivedDate: '2024-06-05', outletId: 'out-1' },
+  { id: 'b5', productId: 'p6', productName: 'Tokla Tea (500g)', sku: 'BEV-001', batchNumber: 'BATCH-BEV-001-A', quantity: 40, remainingQty: 40, costPrice: 240, mfgDate: '2024-01-10', expiryDate: '2025-01-10', status: 'good', receivedDate: '2024-02-01', outletId: 'out-1' },
+  { id: 'b6', productId: 'p8', productName: 'Frozen Chicken (1kg)', sku: 'FRZ-001', batchNumber: 'BATCH-FRZ-001-A', quantity: 20, remainingQty: 0, costPrice: 380, mfgDate: '2024-05-20', expiryDate: '2024-06-10', status: 'expired', receivedDate: '2024-05-25', outletId: 'out-1' },
+  { id: 'b7', productId: 'p8', productName: 'Frozen Chicken (1kg)', sku: 'FRZ-001', batchNumber: 'BATCH-FRZ-001-B', quantity: 30, remainingQty: 15, costPrice: 380, mfgDate: '2024-06-10', expiryDate: '2024-07-10', status: 'good', receivedDate: '2024-06-13', outletId: 'out-1' },
+  { id: 'b8', productId: 'p11', productName: 'Musk Melon', sku: 'FRU-001', batchNumber: 'BATCH-FRU-001-A', quantity: 15, remainingQty: 5, costPrice: 120, mfgDate: '2024-06-12', expiryDate: '2024-06-18', status: 'expiring-soon', receivedDate: '2024-06-13', outletId: 'out-1' },
+  { id: 'b9', productId: 'p14', productName: 'Momo Wrapper (500g)', sku: 'FRZ-002', batchNumber: 'BATCH-FRZ-002-A', quantity: 50, remainingQty: 35, costPrice: 60, mfgDate: '2024-04-01', expiryDate: '2024-10-01', status: 'good', receivedDate: '2024-04-15', outletId: 'out-1' },
+  { id: 'b10', productId: 'p16', productName: 'Eggs (Tray of 30)', sku: 'DRY-002', batchNumber: 'BATCH-DRY-002-A', quantity: 20, remainingQty: 8, costPrice: 380, mfgDate: '2024-06-12', expiryDate: '2024-06-26', status: 'good', receivedDate: '2024-06-13', outletId: 'out-1' },
+];
+
+// ---------- Stock Transfers ----------
+export const mockStockTransfers: StockTransfer[] = [
+  { id: 'st-1', transferNumber: 'TRF-2024-001', fromOutletId: 'out-1', fromOutletName: 'ABC Store - Main Branch', toOutletId: 'out-2', toOutletName: 'ABC Store - Baneshwor', items: [{ productId: 'p2', productName: 'Wai Wai Noodles', sku: 'SNK-001', quantity: 50 }, { productId: 'p9', productName: 'Coca Cola (500ml)', sku: 'BEV-002', quantity: 30 }], status: 'completed', reason: 'Restocking Baneshwor branch', createdAt: '2024-06-14', completedAt: '2024-06-14', createdBy: 'Hari Bahadur', notes: 'Delivered by Ramesh' },
+  { id: 'st-2', transferNumber: 'TRF-2024-002', fromOutletId: 'out-1', fromOutletName: 'ABC Store - Main Branch', toOutletId: 'out-3', toOutletName: 'ABC Store - Lalitpur', items: [{ productId: 'p1', productName: 'DDC Milk (1L)', sku: 'DRY-001', quantity: 20 }, { productId: 'p6', productName: 'Tokla Tea (500g)', sku: 'BEV-001', quantity: 15 }], status: 'in-transit', reason: 'New outlet opening stock', createdAt: '2024-06-15', createdBy: 'Rajesh Sharma' },
+  { id: 'st-3', transferNumber: 'TRF-2024-003', fromOutletId: 'out-2', fromOutletName: 'ABC Store - Baneshwor', toOutletId: 'out-1', toOutletName: 'ABC Store - Main Branch', items: [{ productId: 'p7', productName: 'Surf Excel (1kg)', sku: 'CLN-001', quantity: 10 }], status: 'pending', reason: 'Main branch running low', createdAt: '2024-06-15', createdBy: 'Ramesh Karki' },
+];
+
+// ---------- Notifications ----------
+export const mockNotifications: AppNotification[] = [
+  { id: 'n1', type: 'low_stock', title: 'Low Stock Alert', message: 'Surf Excel (1kg) is below minimum stock. Current: 3, Min: 5', priority: 'high', isRead: false, createdAt: '2024-06-15T10:00:00', actionUrl: 'inventory', entityId: 'p7' },
+  { id: 'n2', type: 'out_of_stock', title: 'Out of Stock', message: 'Frozen Chicken (1kg) is out of stock! Immediate reorder needed.', priority: 'critical', isRead: false, createdAt: '2024-06-15T09:30:00', actionUrl: 'inventory', entityId: 'p8' },
+  { id: 'n3', type: 'expiry_alert', title: 'Expiry Warning', message: 'DDC Milk (1L) batch BATCH-DRY-001-A expires in 5 days (June 20). 22 units remaining.', priority: 'high', isRead: false, createdAt: '2024-06-15T08:00:00', actionUrl: 'inventory', entityId: 'b1' },
+  { id: 'n4', type: 'expiry_alert', title: 'Batch Expired', message: 'Frozen Chicken (1kg) batch BATCH-FRZ-001-A has expired (June 10). Please remove from shelves.', priority: 'critical', isRead: true, createdAt: '2024-06-11T00:00:00', actionUrl: 'inventory', entityId: 'b6' },
+  { id: 'n5', type: 'credit_due', title: 'Credit Payment Due', message: 'Hotel Himalayan has NPR 15,000 credit balance. Payment reminder sent.', priority: 'medium', isRead: false, createdAt: '2024-06-15T07:00:00', actionUrl: 'customers', entityId: 'c2' },
+  { id: 'n6', type: 'purchase_received', title: 'Purchase Received', message: 'PO-2024-002 from CG Foods Nepal has been fully received (3 items).', priority: 'low', isRead: true, createdAt: '2024-06-12T14:00:00', actionUrl: 'purchases', entityId: 'po-2' },
+  { id: 'n7', type: 'transfer_completed', title: 'Stock Transfer Completed', message: 'TRF-2024-001 to ABC Store - Baneshwor completed. 80 units transferred.', priority: 'low', isRead: true, createdAt: '2024-06-14T16:00:00', actionUrl: 'stock-transfer', entityId: 'st-1' },
+  { id: 'n8', type: 'low_stock', title: 'Low Stock Alert', message: 'Musk Melon is below minimum stock. Current: 8, Min: 10', priority: 'medium', isRead: true, createdAt: '2024-06-14T12:00:00', actionUrl: 'inventory', entityId: 'p11' },
+  { id: 'n9', type: 'system', title: 'Daily Backup Complete', message: 'Your data has been backed up successfully. Backup size: 45.2 MB', priority: 'low', isRead: true, createdAt: '2024-06-15T03:00:00' },
+  { id: 'n10', type: 'payment_reminder', title: 'Subscription Reminder', message: 'Your Medium plan subscription renews on July 15, 2024. Ensure payment is ready.', priority: 'medium', isRead: false, createdAt: '2024-06-14T09:00:00', actionUrl: 'tenant-subscription' },
+];
+
+// ---------- Returns & Refunds ----------
+export const mockReturnRefunds: ReturnRefund[] = [
+  { id: 'rr-1', returnNumber: 'RET-2024-001', saleId: 's6', invoiceNumber: 'INV-2024-0006', customerName: 'Walk-in Customer', items: [{ productName: 'Surf Excel (1kg)', quantity: 1, unitPrice: 250, total: 250, reason: 'Wrong item purchased' }], refundAmount: 282.5, refundMethod: 'Cash', status: 'completed', reason: 'Customer returned unused item with original receipt', processedBy: 'Hari Bahadur', createdAt: '2024-06-14T10:00:00', processedAt: '2024-06-14T10:30:00' },
+  { id: 'rr-2', returnNumber: 'RET-2024-002', saleId: 's2', invoiceNumber: 'INV-2024-0002', customerName: 'Kumar Hardware', items: [{ productName: 'Sunflower Oil (1L)', quantity: 1, unitPrice: 320, total: 320, reason: 'Leaking bottle' }], refundAmount: 361.6, refundMethod: 'Card', status: 'approved', reason: 'Product was defective on delivery', processedBy: 'Rajesh Sharma', createdAt: '2024-06-15T14:00:00' },
+  { id: 'rr-3', returnNumber: 'RET-2024-003', saleId: 's5', invoiceNumber: 'INV-2024-0005', customerName: 'Hotel Himalayan', items: [{ productName: 'Frozen Chicken (1kg)', quantity: 2, unitPrice: 450, total: 900, reason: 'Not fresh' }, { productName: 'Eggs (Tray of 30)', quantity: 1, unitPrice: 450, total: 450, reason: 'Broken eggs' }], refundAmount: 1521, refundMethod: 'Khalti', status: 'requested', reason: 'Hotel reported quality issues with food items', processedBy: '', createdAt: '2024-06-15T16:00:00' },
+];
+
+// ---------- Profit & Loss Data ----------
+export const mockProfitLossData: ProfitLossData[] = [
+  { month: '2024-01', revenue: 245000, costOfGoods: 172000, grossProfit: 73000, expenses: 35000, netProfit: 38000 },
+  { month: '2024-02', revenue: 312000, costOfGoods: 215000, grossProfit: 97000, expenses: 38000, netProfit: 59000 },
+  { month: '2024-03', revenue: 287000, costOfGoods: 201000, grossProfit: 86000, expenses: 37000, netProfit: 49000 },
+  { month: '2024-04', revenue: 356000, costOfGoods: 245000, grossProfit: 111000, expenses: 42000, netProfit: 69000 },
+  { month: '2024-05', revenue: 398000, costOfGoods: 268000, grossProfit: 130000, expenses: 45000, netProfit: 85000 },
+  { month: '2024-06', revenue: 423500, costOfGoods: 285000, grossProfit: 138500, expenses: 48000, netProfit: 90500 },
 ];

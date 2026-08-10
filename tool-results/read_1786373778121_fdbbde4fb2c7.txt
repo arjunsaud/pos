@@ -1,0 +1,979 @@
+     1→'use client';
+     2→
+     3→import { useState, useMemo, useCallback } from 'react';
+     4→import { PageHeader } from '@/components/shared/page-header';
+     5→import { StatCard } from '@/components/shared/stat-card';
+     6→import { Card, CardContent } from '@/components/ui/card';
+     7→import { Input } from '@/components/ui/input';
+     8→import { Button } from '@/components/ui/button';
+     9→import { Badge } from '@/components/ui/badge';
+    10→import { Label } from '@/components/ui/label';
+    11→import {
+    12→  Table,
+    13→  TableBody,
+    14→  TableCell,
+    15→  TableHead,
+    16→  TableHeader,
+    17→  TableRow,
+    18→} from '@/components/ui/table';
+    19→import {
+    20→  Dialog,
+    21→  DialogContent,
+    22→  DialogHeader,
+    23→  DialogTitle,
+    24→  DialogFooter,
+    25→  DialogDescription,
+    26→} from '@/components/ui/dialog';
+    27→import {
+    28→  Select,
+    29→  SelectContent,
+    30→  SelectItem,
+    31→  SelectTrigger,
+    32→  SelectValue,
+    33→} from '@/components/ui/select';
+    34→import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+    35→import { ScrollArea } from '@/components/ui/scroll-area';
+    36→import { Separator } from '@/components/ui/separator';
+    37→import {
+    38→  ShoppingCart,
+    39→  Plus,
+    40→  Eye,
+    41→  PackageCheck,
+    42→  XCircle,
+    43→  Download,
+    44→  Search,
+    45→  FileText,
+    46→  Truck,
+    47→  Minus,
+    48→  X,
+    49→  CircleDot,
+    50→  CheckCircle2,
+    51→  Clock,
+    52→} from 'lucide-react';
+    53→import { mockPurchaseOrders, mockVendors, mockProducts } from '@/lib/mock-data';
+    54→import { npr, nprFull, formatDate } from '@/lib/helpers';
+    55→import { toast } from 'sonner';
+    56→import type { PurchaseOrder, PurchaseOrderItem, PurchaseOrderStatus } from '@/lib/types';
+    57→
+    58→// ---------- Helpers ----------
+    59→
+    60→function getStatusBadgeClasses(status: PurchaseOrderStatus): string {
+    61→  switch (status) {
+    62→    case 'draft':
+    63→      return 'bg-gray-100 text-gray-700 dark:bg-gray-800/50 dark:text-gray-400';
+    64→    case 'sent':
+    65→      return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
+    66→    case 'partial':
+    67→      return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400';
+    68→    case 'received':
+    69→      return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400';
+    70→    case 'cancelled':
+    71→      return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+    72→    default:
+    73→      return 'bg-muted text-muted-foreground';
+    74→  }
+    75→}
+    76→
+    77→function getStatusLabel(status: PurchaseOrderStatus): string {
+    78→  return status.charAt(0).toUpperCase() + status.slice(1);
+    79→}
+    80→
+    81→const VIT_RATE = 0.13;
+    82→const ITEMS_PER_PAGE = 10;
+    83→
+    84→// ---------- Types for create form ----------
+    85→
+    86→interface CreateFormItem {
+    87→  productId: string;
+    88→  quantity: number;
+    89→  unitPrice: number;
+    90→}
+    91→
+    92→// ---------- Component ----------
+    93→
+    94→export default function PurchaseManagement() {
+    95→  const [orders, setOrders] = useState<PurchaseOrder[]>(mockPurchaseOrders);
+    96→  const [page, setPage] = useState(1);
+    97→  const [search, setSearch] = useState('');
+    98→  const [statusFilter, setStatusFilter] = useState<string>('all');
+    99→  const [activeTab, setActiveTab] = useState('orders');
+   100→
+   101→  // View dialog
+   102→  const [viewOrder, setViewOrder] = useState<PurchaseOrder | null>(null);
+   103→
+   104→  // Receive dialog
+   105→  const [receiveOrder, setReceiveOrder] = useState<PurchaseOrder | null>(null);
+   106→  const [receiveItems, setReceiveItems] = useState<Record<string, number>>({});
+   107→
+   108→  // Create form state
+   109→  const [createVendorId, setCreateVendorId] = useState('');
+   110→  const [createItems, setCreateItems] = useState<CreateFormItem[]>([]);
+   111→  const [createProductSearch, setCreateProductSearch] = useState('');
+   112→  const [createNotes, setCreateNotes] = useState('');
+   113→  const [createExpectedDate, setCreateExpectedDate] = useState('');
+   114→
+   115→  // ---------- Computed stats ----------
+   116→
+   117→  const stats = useMemo(() => {
+   118→    const totalOrders = orders.length;
+   119→    const pendingOrders = orders.filter((o) => o.status === 'draft' || o.status === 'sent').length;
+   120→    const inTransit = orders.filter((o) => o.status === 'sent' || o.status === 'partial').length;
+   121→    const totalValue = orders.reduce((sum, o) => sum + o.total, 0);
+   122→    return { totalOrders, pendingOrders, inTransit, totalValue };
+   123→  }, [orders]);
+   124→
+   125→  // ---------- Filtering ----------
+   126→
+   127→  const filtered = useMemo(() => {
+   128→    return orders.filter((o) => {
+   129→      const matchesSearch =
+   130→        o.orderNumber.toLowerCase().includes(search.toLowerCase()) ||
+   131→        o.vendorName.toLowerCase().includes(search.toLowerCase());
+   132→      const matchesStatus = statusFilter === 'all' || o.status === statusFilter;
+   133→      return matchesSearch && matchesStatus;
+   134→    });
+   135→  }, [orders, search, statusFilter]);
+   136→
+   137→  const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
+   138→  const paged = filtered.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
+   139→
+   140→  // Reset page on filter change
+   141→  const handleSearchChange = (val: string) => { setSearch(val); setPage(1); };
+   142→  const handleStatusFilterChange = (val: string) => { setStatusFilter(val); setPage(1); };
+   143→
+   144→  // ---------- Create form helpers ----------
+   145→
+   146→  const filteredCreateProducts = useMemo(() => {
+   147→    const addedIds = new Set(createItems.map((i) => i.productId));
+   148→    return mockProducts.filter(
+   149→      (p) =>
+   150→        p.isActive &&
+   151→        !addedIds.has(p.id) &&
+   152→        (p.name.toLowerCase().includes(createProductSearch.toLowerCase()) ||
+   153→          p.sku.toLowerCase().includes(createProductSearch.toLowerCase())),
+   154→    );
+   155→  }, [createProductSearch, createItems]);
+   156→
+   157→  const createSubtotal = useMemo(
+   158→    () => createItems.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0),
+   159→    [createItems],
+   160→  );
+   161→  const createVat = createSubtotal * VIT_RATE;
+   162→  const createTotal = createSubtotal + createVat;
+   163→
+   164→  const resetCreateForm = useCallback(() => {
+   165→    setCreateVendorId('');
+   166→    setCreateItems([]);
+   167→    setCreateProductSearch('');
+   168→    setCreateNotes('');
+   169→    setCreateExpectedDate('');
+   170→  }, []);
+   171→
+   172→  const handleAddItem = useCallback(
+   173→    (productId: string) => {
+   174→      const product = mockProducts.find((p) => p.id === productId);
+   175→      if (!product) return;
+   176→      setCreateItems((prev) => [
+   177→        ...prev,
+   178→        { productId, quantity: 1, unitPrice: product.costPrice },
+   179→      ]);
+   180→      setCreateProductSearch('');
+   181→    },
+   182→    [],
+   183→  );
+   184→
+   185→  const handleCreateOrder = useCallback(() => {
+   186→    if (!createVendorId) {
+   187→      toast.error('Please select a vendor');
+   188→      return;
+   189→    }
+   190→    if (createItems.length === 0) {
+   191→      toast.error('Add at least one item');
+   192→      return;
+   193→    }
+   194→    const vendor = mockVendors.find((v) => v.id === createVendorId);
+   195→    if (!vendor) return;
+   196→
+   197→    const nextNum = String(orders.length + 1).padStart(3, '0');
+   198→    const orderItems: PurchaseOrderItem[] = createItems.map((item) => {
+   199→      const product = mockProducts.find((p) => p.id === item.productId)!;
+   200→      return {
+   201→        productId: item.productId,
+   202→        productName: product.name,
+   203→        sku: product.sku,
+   204→        quantity: item.quantity,
+   205→        receivedQty: 0,
+   206→        unitPrice: item.unitPrice,
+   207→        total: item.quantity * item.unitPrice,
+   208→      };
+   209→    });
+   210→
+   211→    const newOrder: PurchaseOrder = {
+   212→      id: `po-new-${Date.now()}`,
+   213→      orderNumber: `PO-2024-${nextNum}`,
+   214→      vendorId: createVendorId,
+   215→      vendorName: vendor.name,
+   216→      items: orderItems,
+   217→      subtotal: createSubtotal,
+   218→      vatAmount: createVat,
+   219→      total: createTotal,
+   220→      status: 'draft',
+   221→      orderDate: new Date().toISOString().slice(0, 10),
+   222→      expectedDate: createExpectedDate || new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10),
+   223→      notes: createNotes.trim() || undefined,
+   224→      createdBy: 'Admin',
+   225→    };
+   226→
+   227→    setOrders((prev) => [newOrder, ...prev]);
+   228→    resetCreateForm();
+   229→    setActiveTab('orders');
+   230→    toast.success('Purchase order saved as draft');
+   231→  }, [createVendorId, createItems, orders.length, createSubtotal, createVat, createTotal, createNotes, createExpectedDate, resetCreateForm]);
+   232→
+   233→  // ---------- Cancel order ----------
+   234→
+   235→  const handleCancelOrder = useCallback(
+   236→    (order: PurchaseOrder) => {
+   237→      if (order.status !== 'draft' && order.status !== 'sent') {
+   238→        toast.error('Only draft or sent orders can be cancelled');
+   239→        return;
+   240→      }
+   241→      setOrders((prev) =>
+   242→        prev.map((o) => (o.id === order.id ? { ...o, status: 'cancelled' as const } : o)),
+   243→      );
+   244→      setViewOrder(null);
+   245→      toast.success(`Order ${order.orderNumber} has been cancelled`);
+   246→    },
+   247→    [],
+   248→  );
+   249→
+   250→  // ---------- Receive order ----------
+   251→
+   252→  const openReceiveDialog = useCallback((order: PurchaseOrder) => {
+   253→    const initial: Record<string, number> = {};
+   254→    order.items.forEach((item) => {
+   255→      initial[item.productId] = Math.max(0, item.quantity - item.receivedQty);
+   256→    });
+   257→    setReceiveItems(initial);
+   258→    setReceiveOrder(order);
+   259→  }, []);
+   260→
+   261→  const handleReceiveOrder = useCallback(() => {
+   262→    if (!receiveOrder) return;
+   263→    const hasAnyReceive = Object.values(receiveItems).some((qty) => qty > 0);
+   264→    if (!hasAnyReceive) {
+   265→      toast.error('Please enter at least one item quantity to receive');
+   266→      return;
+   267→    }
+   268→
+   269→    setOrders((prev) =>
+   270→      prev.map((o) => {
+   271→        if (o.id !== receiveOrder.id) return o;
+   272→        const updatedItems = o.items.map((item) => {
+   273→          const newReceived = receiveItems[item.productId] || 0;
+   274→          return { ...item, receivedQty: item.receivedQty + newReceived };
+   275→        });
+   276→        const allReceived = updatedItems.every((item) => item.receivedQty >= item.quantity);
+   277→        return {
+   278→          ...o,
+   279→          items: updatedItems,
+   280→          status: (allReceived ? 'received' : 'partial') as PurchaseOrderStatus,
+   281→          receivedDate: allReceived ? new Date().toISOString().slice(0, 10) : o.receivedDate,
+   282→        };
+   283→      }),
+   284→    );
+   285→    setReceiveOrder(null);
+   286→    toast.success('Items received successfully');
+   287→  }, [receiveOrder, receiveItems]);
+   288→
+   289→  // ---------- Export CSV ----------
+   290→
+   291→  const handleExportCSV = useCallback(() => {
+   292→    const headers = ['Order #', 'Vendor', 'Items', 'Status', 'Subtotal (NPR)', 'VAT (NPR)', 'Total (NPR)', 'Order Date', 'Expected Date', 'Created By'];
+   293→    const rows = filtered.map((o) => [
+   294→      o.orderNumber,
+   295→      o.vendorName,
+   296→      o.items.length,
+   297→      o.status,
+   298→      o.subtotal.toFixed(2),
+   299→      o.vatAmount.toFixed(2),
+   300→      o.total.toFixed(2),
+   301→      o.orderDate,
+   302→      o.expectedDate,
+   303→      o.createdBy,
+   304→    ]);
+   305→    const csvContent = [headers, ...rows].map((r) => r.map((c) => `"${c}"`).join(',')).join('\n');
+   306→    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+   307→    const url = URL.createObjectURL(blob);
+   308→    const link = document.createElement('a');
+   309→    link.href = url;
+   310→    link.download = `purchase-orders-${new Date().toISOString().slice(0, 10)}.csv`;
+   311→    link.click();
+   312→    URL.revokeObjectURL(url);
+   313→    toast.success('CSV exported successfully');
+   314→  }, [filtered]);
+   315→
+   316→  // ---------- Status timeline ----------
+   317→
+   318→  const getStatusTimeline = (order: PurchaseOrder) => {
+   319→    const steps: { key: string; label: string; icon: React.ReactNode; done: boolean; active: boolean }[] = [
+   320→      { key: 'draft', label: 'Draft', icon: <FileText className="h-4 w-4" />, done: true, active: order.status === 'draft' },
+   321→      { key: 'sent', label: 'Sent to Vendor', icon: <Truck className="h-4 w-4" />, done: ['sent', 'partial', 'received'].includes(order.status), active: order.status === 'sent' },
+   322→      { key: 'partial', label: 'Partially Received', icon: <PackageCheck className="h-4 w-4" />, done: ['partial', 'received'].includes(order.status), active: order.status === 'partial' },
+   323→      { key: 'received', label: 'Fully Received', icon: <CheckCircle2 className="h-4 w-4" />, done: order.status === 'received', active: order.status === 'received' },
+   324→    ];
+   325→    if (order.status === 'cancelled') {
+   326→      return [{ key: 'cancelled', label: 'Cancelled', icon: <XCircle className="h-4 w-4" />, done: true, active: true }];
+   327→    }
+   328→    return steps;
+   329→  };
+   330→
+   331→  // ---------- Render ----------
+   332→
+   333→  return (
+   334→    <div className="space-y-6">
+   335→      <PageHeader title="Purchase Orders" description="Manage purchase orders from suppliers and vendors">
+   336→        <Button variant="outline" onClick={handleExportCSV}>
+   337→          <Download className="h-4 w-4" /> Export CSV
+   338→        </Button>
+   339→      </PageHeader>
+   340→
+   341→      {/* Summary Cards */}
+   342→      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+   343→        <StatCard
+   344→          title="Total Orders"
+   345→          value={stats.totalOrders}
+   346→          icon={ShoppingCart}
+   347→          description="All purchase orders"
+   348→          borderColor="border-l-emerald-500"
+   349→          iconClassName="bg-emerald-100 dark:bg-emerald-900/30"
+   350→          iconColor="text-emerald-600 dark:text-emerald-400"
+   351→        />
+   352→        <StatCard
+   353→          title="Pending Orders"
+   354→          value={stats.pendingOrders}
+   355→          icon={Clock}
+   356→          description="Draft & sent"
+   357→          borderColor="border-l-amber-500"
+   358→          iconClassName="bg-amber-100 dark:bg-amber-900/30"
+   359→          iconColor="text-amber-600 dark:text-amber-400"
+   360→        />
+   361→        <StatCard
+   362→          title="In Transit"
+   363→          value={stats.inTransit}
+   364→          icon={Truck}
+   365→          description="Sent & partial"
+   366→          borderColor="border-l-blue-500"
+   367→          iconClassName="bg-blue-100 dark:bg-blue-900/30"
+   368→          iconColor="text-blue-600 dark:text-blue-400"
+   369→        />
+   370→        <StatCard
+   371→          title="Total Value"
+   372→          value={`NPR ${npr(stats.totalValue)}`}
+   373→          icon={FileText}
+   374→          description="Across all orders"
+   375→          borderColor="border-l-purple-500"
+   376→          iconClassName="bg-purple-100 dark:bg-purple-900/30"
+   377→          iconColor="text-purple-600 dark:text-purple-400"
+   378→        />
+   379→      </div>
+   380→
+   381→      {/* Tabs */}
+   382→      <Tabs value={activeTab} onValueChange={setActiveTab}>
+   383→        <TabsList>
+   384→          <TabsTrigger value="orders">Orders List</TabsTrigger>
+   385→          <TabsTrigger value="create">
+   386→            <Plus className="h-4 w-4 mr-1" /> Create Order
+   387→          </TabsTrigger>
+   388→        </TabsList>
+   389→
+   390→        {/* ====== ORDERS LIST TAB ====== */}
+   391→        <TabsContent value="orders" className="mt-4 space-y-4">
+   392→          {/* Search & Filter */}
+   393→          <Card className="transition-shadow hover:shadow-md">
+   394→            <CardContent className="p-4">
+   395→              <div className="flex flex-wrap items-end gap-3">
+   396→                <div className="flex-1" style={{ minWidth: '180px' }}>
+   397→                  <Label className="mb-1.5">Search</Label>
+   398→                  <div className="relative">
+   399→                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+   400→                    <Input
+   401→                      className="pl-9"
+   402→                      placeholder="Order # or vendor..."
+   403→                      value={search}
+   404→                      onChange={(e) => handleSearchChange(e.target.value)}
+   405→                    />
+   406→                  </div>
+   407→                </div>
+   408→                <div>
+   409→                  <Label className="mb-1.5">Status</Label>
+   410→                  <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
+   411→                    <SelectTrigger className="w-[150px]">
+   412→                      <SelectValue placeholder="All" />
+   413→                    </SelectTrigger>
+   414→                    <SelectContent>
+   415→                      <SelectItem value="all">All</SelectItem>
+   416→                      <SelectItem value="draft">Draft</SelectItem>
+   417→                      <SelectItem value="sent">Sent</SelectItem>
+   418→                      <SelectItem value="partial">Partial</SelectItem>
+   419→                      <SelectItem value="received">Received</SelectItem>
+   420→                      <SelectItem value="cancelled">Cancelled</SelectItem>
+   421→                    </SelectContent>
+   422→                  </Select>
+   423→                </div>
+   424→              </div>
+   425→            </CardContent>
+   426→          </Card>
+   427→
+   428→          {/* Table */}
+   429→          <Card className="transition-shadow hover:shadow-md">
+   430→            <CardContent className="p-0">
+   431→              <div className="overflow-x-auto">
+   432→                <Table>
+   433→                  <TableHeader>
+   434→                    <TableRow>
+   435→                      <TableHead>Order #</TableHead>
+   436→                      <TableHead>Vendor</TableHead>
+   437→                      <TableHead className="text-center">Items</TableHead>
+   438→                      <TableHead>Status</TableHead>
+   439→                      <TableHead className="text-right">Total</TableHead>
+   440→                      <TableHead>Date</TableHead>
+   441→                      <TableHead className="text-right">Actions</TableHead>
+   442→                    </TableRow>
+   443→                  </TableHeader>
+   444→                  <TableBody>
+   445→                    {paged.length === 0 && (
+   446→                      <TableRow>
+   447→                        <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+   448→                          No purchase orders found.
+   449→                        </TableCell>
+   450→                      </TableRow>
+   451→                    )}
+   452→                    {paged.map((order) => (
+   453→                      <TableRow key={order.id} className="transition-colors hover:bg-muted/50">
+   454→                        <TableCell className="font-medium">{order.orderNumber}</TableCell>
+   455→                        <TableCell>{order.vendorName}</TableCell>
+   456→                        <TableCell className="text-center">
+   457→                          <Badge variant="outline">{order.items.length}</Badge>
+   458→                        </TableCell>
+   459→                        <TableCell>
+   460→                          <Badge className={getStatusBadgeClasses(order.status)} variant="secondary">
+   461→                            {getStatusLabel(order.status)}
+   462→                          </Badge>
+   463→                        </TableCell>
+   464→                        <TableCell className="text-right font-semibold">NPR {npr(order.total)}</TableCell>
+   465→                        <TableCell>{formatDate(order.orderDate)}</TableCell>
+   466→                        <TableCell>
+   467→                          <div className="flex items-center justify-end gap-1">
+   468→                            <Button
+   469→                              variant="ghost"
+   470→                              size="icon"
+   471→                              className="h-8 w-8"
+   472→                              title="View details"
+   473→                              onClick={() => setViewOrder(order)}
+   474→                            >
+   475→                              <Eye className="h-4 w-4" />
+   476→                            </Button>
+   477→                            {(order.status === 'sent' || order.status === 'partial') && (
+   478→                              <Button
+   479→                                variant="ghost"
+   480→                                size="icon"
+   481→                                className="h-8 w-8"
+   482→                                title="Receive items"
+   483→                                onClick={() => openReceiveDialog(order)}
+   484→                              >
+   485→                                <PackageCheck className="h-4 w-4" />
+   486→                              </Button>
+   487→                            )}
+   488→                            {(order.status === 'draft' || order.status === 'sent') && (
+   489→                              <Button
+   490→                                variant="ghost"
+   491→                                size="icon"
+   492→                                className="h-8 w-8 text-red-500 hover:text-red-600"
+   493→                                title="Cancel order"
+   494→                                onClick={() => handleCancelOrder(order)}
+   495→                              >
+   496→                                <XCircle className="h-4 w-4" />
+   497→                              </Button>
+   498→                            )}
+   499→                          </div>
+   500→                        </TableCell>
+   501→                      </TableRow>
+   502→                    ))}
+   503→                  </TableBody>
+   504→                </Table>
+   505→              </div>
+   506→              {/* Pagination */}
+   507→              <div className="flex items-center justify-between border-t pt-4 px-4">
+   508→                <p className="text-sm text-muted-foreground">
+   509→                  Showing {filtered.length > 0 ? (page - 1) * ITEMS_PER_PAGE + 1 : 0}-{Math.min(page * ITEMS_PER_PAGE, filtered.length)} of {filtered.length}
+   510→                </p>
+   511→                <div className="flex items-center gap-2">
+   512→                  <Button
+   513→                    variant="outline"
+   514→                    size="sm"
+   515→                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+   516→                    disabled={page === 1}
+   517→                  >
+   518→                    Previous
+   519→                  </Button>
+   520→                  <span className="text-sm font-medium">
+   521→                    {page} / {totalPages}
+   522→                  </span>
+   523→                  <Button
+   524→                    variant="outline"
+   525→                    size="sm"
+   526→                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+   527→                    disabled={page >= totalPages}
+   528→                  >
+   529→                    Next
+   530→                  </Button>
+   531→                </div>
+   532→              </div>
+   533→            </CardContent>
+   534→          </Card>
+   535→        </TabsContent>
+   536→
+   537→        {/* ====== CREATE ORDER TAB ====== */}
+   538→        <TabsContent value="create" className="mt-4">
+   539→          <Card className="transition-shadow hover:shadow-md">
+   540→            <CardContent className="p-6">
+   541→              <div className="space-y-6">
+   542→                {/* Vendor & Date */}
+   543→                <div className="grid gap-4 sm:grid-cols-2">
+   544→                  <div className="grid gap-2">
+   545→                    <Label>Vendor *</Label>
+   546→                    <Select value={createVendorId} onValueChange={setCreateVendorId}>
+   547→                      <SelectTrigger>
+   548→                        <SelectValue placeholder="Select vendor" />
+   549→                      </SelectTrigger>
+   550→                      <SelectContent>
+   551→                        {mockVendors
+   552→                          .filter((v) => v.status === 'active')
+   553→                          .map((v) => (
+   554→                            <SelectItem key={v.id} value={v.id}>
+   555→                              {v.name}
+   556→                            </SelectItem>
+   557→                          ))}
+   558→                      </SelectContent>
+   559→                    </Select>
+   560→                  </div>
+   561→                  <div className="grid gap-2">
+   562→                    <Label>Expected Delivery Date</Label>
+   563→                    <Input
+   564→                      type="date"
+   565→                      value={createExpectedDate}
+   566→                      onChange={(e) => setCreateExpectedDate(e.target.value)}
+   567→                    />
+   568→                  </div>
+   569→                </div>
+   570→
+   571→                <Separator />
+   572→
+   573→                {/* Product Search & Selection */}
+   574→                <div className="grid gap-2">
+   575→                  <Label>Search Products</Label>
+   576→                  <div className="relative">
+   577→                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+   578→                    <Input
+   579→                      className="pl-9"
+   580→                      placeholder="Search by name or SKU..."
+   581→                      value={createProductSearch}
+   582→                      onChange={(e) => setCreateProductSearch(e.target.value)}
+   583→                    />
+   584→                  </div>
+   585→                  {createProductSearch && filteredCreateProducts.length > 0 && (
+   586→                    <ScrollArea className="max-h-48 rounded-md border">
+   587→                      <div className="p-2 grid gap-1">
+   588→                        {filteredCreateProducts.slice(0, 8).map((p) => (
+   589→                          <button
+   590→                            key={p.id}
+   591→                            type="button"
+   592→                            className="flex items-center justify-between rounded-md px-3 py-2 text-sm hover:bg-accent transition-colors w-full text-left"
+   593→                            onClick={() => handleAddItem(p.id)}
+   594→                          >
+   595→                            <div>
+   596→                              <span className="font-medium">{p.name}</span>
+   597→                              <span className="ml-2 text-xs text-muted-foreground">{p.sku}</span>
+   598→                            </div>
+   599→                            <span className="text-sm text-muted-foreground">Cost: NPR {npr(p.costPrice)}</span>
+   600→                          </button>
+   601→                        ))}
+   602→                      </div>
+   603→                    </ScrollArea>
+   604→                  )}
+   605→                  {createProductSearch && filteredCreateProducts.length === 0 && (
+   606→                    <p className="text-sm text-muted-foreground py-2">No products found.</p>
+   607→                  )}
+   608→                </div>
+   609→
+   610→                {/* Selected Items */}
+   611→                {createItems.length > 0 && (
+   612→                  <div className="grid gap-2">
+   613→                    <Label>Order Items</Label>
+   614→                    <div className="rounded-md border">
+   615→                      <ScrollArea className="max-h-64">
+   616→                        <Table>
+   617→                          <TableHeader>
+   618→                            <TableRow>
+   619→                              <TableHead>Product</TableHead>
+   620→                              <TableHead>SKU</TableHead>
+   621→                              <TableHead className="text-center">Qty</TableHead>
+   622→                              <TableHead className="text-right">Unit Price</TableHead>
+   623→                              <TableHead className="text-right">Total</TableHead>
+   624→                              <TableHead className="w-10"></TableHead>
+   625→                            </TableRow>
+   626→                          </TableHeader>
+   627→                          <TableBody>
+   628→                            {createItems.map((item) => {
+   629→                              const product = mockProducts.find((p) => p.id === item.productId)!;
+   630→                              return (
+   631→                                <TableRow key={item.productId}>
+   632→                                  <TableCell className="font-medium">{product.name}</TableCell>
+   633→                                  <TableCell className="text-muted-foreground">{product.sku}</TableCell>
+   634→                                  <TableCell>
+   635→                                    <div className="flex items-center justify-center gap-1">
+   636→                                      <Button
+   637→                                        type="button"
+   638→                                        variant="outline"
+   639→                                        size="icon"
+   640→                                        className="h-7 w-7"
+   641→                                        onClick={() => {
+   642→                                          if (item.quantity > 1) {
+   643→                                            setCreateItems((prev) =>
+   644→                                              prev.map((i) =>
+   645→                                                i.productId === item.productId ? { ...i, quantity: i.quantity - 1 } : i
+   646→                                              )
+   647→                                            );
+   648→                                          }
+   649→                                        }}
+   650→                                      >
+   651→                                        <Minus className="h-3 w-3" />
+   652→                                      </Button>
+   653→                                      <span className="w-10 text-center text-sm font-medium">{item.quantity}</span>
+   654→                                      <Button
+   655→                                        type="button"
+   656→                                        variant="outline"
+   657→                                        size="icon"
+   658→                                        className="h-7 w-7"
+   659→                                        onClick={() => {
+   660→                                          setCreateItems((prev) =>
+   661→                                            prev.map((i) =>
+   662→                                              i.productId === item.productId ? { ...i, quantity: i.quantity + 1 } : i
+   663→                                            )
+   664→                                          );
+   665→                                        }}
+   666→                                      >
+   667→                                        <Plus className="h-3 w-3" />
+   668→                                      </Button>
+   669→                                    </div>
+   670→                                  </TableCell>
+   671→                                  <TableCell className="text-right">NPR {npr(item.unitPrice)}</TableCell>
+   672→                                  <TableCell className="text-right font-medium">NPR {npr(item.quantity * item.unitPrice)}</TableCell>
+   673→                                  <TableCell>
+   674→                                    <Button
+   675→                                      type="button"
+   676→                                      variant="ghost"
+   677→                                      size="icon"
+   678→                                      className="h-7 w-7 text-red-500 hover:text-red-600"
+   679→                                      onClick={() => {
+   680→                                        setCreateItems((prev) => prev.filter((i) => i.productId !== item.productId));
+   681→                                      }}
+   682→                                    >
+   683→                                      <X className="h-3.5 w-3.5" />
+   684→                                    </Button>
+   685→                                  </TableCell>
+   686→                                </TableRow>
+   687→                              );
+   688→                            })}
+   689→                          </TableBody>
+   690→                        </Table>
+   691→                      </ScrollArea>
+   692→                    </div>
+   693→                  </div>
+   694→                )}
+   695→
+   696→                <Separator />
+   697→
+   698→                {/* Notes */}
+   699→                <div className="grid gap-2">
+   700→                  <Label>Notes (optional)</Label>
+   701→                  <Input
+   702→                    placeholder="Any additional notes..."
+   703→                    value={createNotes}
+   704→                    onChange={(e) => setCreateNotes(e.target.value)}
+   705→                  />
+   706→                </div>
+   707→
+   708→                {/* Totals Summary */}
+   709→                {createItems.length > 0 && (
+   710→                  <div className="rounded-lg border bg-muted/30 p-4 space-y-2 text-sm">
+   711→                    <div className="flex justify-between">
+   712→                      <span className="text-muted-foreground">Subtotal</span>
+   713→                      <span>NPR {npr(createSubtotal)}</span>
+   714→                    </div>
+   715→                    <div className="flex justify-between">
+   716→                      <span className="text-muted-foreground">VAT (13%)</span>
+   717→                      <span>NPR {nprFull(createVat)}</span>
+   718→                    </div>
+   719→                    <Separator />
+   720→                    <div className="flex justify-between text-base font-bold">
+   721→                      <span>Total</span>
+   722→                      <span>NPR {nprFull(createTotal)}</span>
+   723→                    </div>
+   724→                  </div>
+   725→                )}
+   726→
+   727→                {/* Actions */}
+   728→                <div className="flex justify-end gap-3">
+   729→                  <Button variant="outline" onClick={resetCreateForm}>
+   730→                    Reset
+   731→                  </Button>
+   732→                  <Button onClick={handleCreateOrder} disabled={!createVendorId || createItems.length === 0}>
+   733→                    Save as Draft
+   734→                  </Button>
+   735→                </div>
+   736→              </div>
+   737→            </CardContent>
+   738→          </Card>
+   739→        </TabsContent>
+   740→      </Tabs>
+   741→
+   742→      {/* ====== VIEW ORDER DIALOG ====== */}
+   743→      <Dialog open={!!viewOrder} onOpenChange={(open) => !open && setViewOrder(null)}>
+   744→        <DialogContent className="sm:max-w-2xl max-h-[90vh]">
+   745→          <DialogHeader>
+   746→            <DialogTitle className="flex items-center gap-2">
+   747→              <FileText className="h-5 w-5" />
+   748→              {viewOrder?.orderNumber}
+   749→            </DialogTitle>
+   750→            <DialogDescription>Full order details</DialogDescription>
+   751→          </DialogHeader>
+   752→          {viewOrder && (
+   753→            <div className="space-y-4 overflow-y-auto max-h-[calc(90vh-160px)]">
+   754→              {/* Status Timeline */}
+   755→              <div className="rounded-lg border bg-muted/30 p-4">
+   756→                <div className="flex items-center gap-3 flex-wrap">
+   757→                  {getStatusTimeline(viewOrder).map((step, idx, arr) => (
+   758→                    <div key={step.key} className="flex items-center gap-3">
+   759→                      <div className="flex items-center gap-2">
+   760→                        <div
+   761→                          className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors ${
+   762→                            step.done
+   763→                              ? step.active
+   764→                                ? 'bg-primary text-primary-foreground'
+   765→                                : 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400'
+   766→                              : 'bg-muted text-muted-foreground'
+   767→                          }`}
+   768→                        >
+   769→                          {step.icon}
+   770→                        </div>
+   771→                        <span
+   772→                          className={`text-xs font-medium whitespace-nowrap ${
+   773→                            step.active ? 'text-foreground' : step.done ? 'text-foreground' : 'text-muted-foreground'
+   774→                          }`}
+   775→                        >
+   776→                          {step.label}
+   777→                        </span>
+   778→                      </div>
+   779→                      {idx < arr.length - 1 && (
+   780→                        <div
+   781→                          className={`h-0.5 w-6 rounded ${
+   782→                            step.done && arr[idx + 1].done
+   783→                              ? 'bg-emerald-400 dark:bg-emerald-600'
+   784→                              : 'bg-muted-foreground/30'
+   785→                          }`}
+   786→                        />
+   787→                      )}
+   788→                    </div>
+   789→                  ))}
+   790→                </div>
+   791→              </div>
+   792→
+   793→              {/* Order Info */}
+   794→              <div className="grid gap-4 sm:grid-cols-2 text-sm">
+   795→                <div>
+   796→                  <span className="text-muted-foreground">Vendor</span>
+   797→                  <div className="font-medium">{viewOrder.vendorName}</div>
+   798→                </div>
+   799→                <div>
+   800→                  <span className="text-muted-foreground">Status</span>
+   801→                  <div className="mt-0.5">
+   802→                    <Badge className={getStatusBadgeClasses(viewOrder.status)} variant="secondary">
+   803→                      {getStatusLabel(viewOrder.status)}
+   804→                    </Badge>
+   805→                  </div>
+   806→                </div>
+   807→                <div>
+   808→                  <span className="text-muted-foreground">Order Date</span>
+   809→                  <div className="font-medium">{formatDate(viewOrder.orderDate)}</div>
+   810→                </div>
+   811→                <div>
+   812→                  <span className="text-muted-foreground">Expected Delivery</span>
+   813→                  <div className="font-medium">{formatDate(viewOrder.expectedDate)}</div>
+   814→                </div>
+   815→                {viewOrder.receivedDate && (
+   816→                  <div>
+   817→                    <span className="text-muted-foreground">Received Date</span>
+   818→                    <div className="font-medium">{formatDate(viewOrder.receivedDate)}</div>
+   819→                  </div>
+   820→                )}
+   821→                <div>
+   822→                  <span className="text-muted-foreground">Created By</span>
+   823→                  <div className="font-medium">{viewOrder.createdBy}</div>
+   824→                </div>
+   825→                {viewOrder.notes && (
+   826→                  <div className="sm:col-span-2">
+   827→                    <span className="text-muted-foreground">Notes</span>
+   828→                    <div className="font-medium">{viewOrder.notes}</div>
+   829→                  </div>
+   830→                )}
+   831→              </div>
+   832→
+   833→              <Separator />
+   834→
+   835→              {/* Items Table */}
+   836→              <div>
+   837→                <h4 className="text-sm font-semibold mb-2">Order Items</h4>
+   838→                <div className="rounded-md border">
+   839→                  <Table>
+   840→                    <TableHeader>
+   841→                      <TableRow>
+   842→                        <TableHead>Product</TableHead>
+   843→                        <TableHead>SKU</TableHead>
+   844→                        <TableHead className="text-center">Ordered</TableHead>
+   845→                        <TableHead className="text-center">Received</TableHead>
+   846→                        <TableHead className="text-right">Unit Price</TableHead>
+   847→                        <TableHead className="text-right">Total</TableHead>
+   848→                      </TableRow>
+   849→                    </TableHeader>
+   850→                    <TableBody>
+   851→                      {viewOrder.items.map((item) => (
+   852→                        <TableRow key={item.productId}>
+   853→                          <TableCell className="font-medium">{item.productName}</TableCell>
+   854→                          <TableCell className="text-muted-foreground">{item.sku}</TableCell>
+   855→                          <TableCell className="text-center">{item.quantity}</TableCell>
+   856→                          <TableCell className="text-center">
+   857→                            <span
+   858→                              className={
+   859→                                item.receivedQty >= item.quantity
+   860→                                  ? 'text-emerald-600 dark:text-emerald-400 font-medium'
+   861→                                  : item.receivedQty > 0
+   862→                                    ? 'text-amber-600 dark:text-amber-400 font-medium'
+   863→                                    : 'text-muted-foreground'
+   864→                              }
+   865→                            >
+   866→                              {item.receivedQty}
+   867→                            </span>
+   868→                          </TableCell>
+   869→                          <TableCell className="text-right">NPR {npr(item.unitPrice)}</TableCell>
+   870→                          <TableCell className="text-right font-medium">NPR {npr(item.total)}</TableCell>
+   871→                        </TableRow>
+   872→                      ))}
+   873→                    </TableBody>
+   874→                  </Table>
+   875→                </div>
+   876→              </div>
+   877→
+   878→              {/* Totals */}
+   879→              <div className="ml-auto w-64 space-y-1.5 text-sm">
+   880→                <div className="flex justify-between">
+   881→                  <span className="text-muted-foreground">Subtotal</span>
+   882→                  <span>NPR {npr(viewOrder.subtotal)}</span>
+   883→                </div>
+   884→                <div className="flex justify-between">
+   885→                  <span className="text-muted-foreground">VAT (13%)</span>
+   886→                  <span>NPR {nprFull(viewOrder.vatAmount)}</span>
+   887→                </div>
+   888→                <Separator />
+   889→                <div className="flex justify-between text-base font-bold">
+   890→                  <span>Total</span>
+   891→                  <span>NPR {nprFull(viewOrder.total)}</span>
+   892→                </div>
+   893→              </div>
+   894→
+   895→              <DialogFooter className="gap-2">
+   896→                {(viewOrder.status === 'sent' || viewOrder.status === 'partial') && (
+   897→                  <Button onClick={() => { setViewOrder(null); openReceiveDialog(viewOrder); }}>
+   898→                    <PackageCheck className="h-4 w-4" /> Receive Items
+   899→                  </Button>
+   900→                )}
+   901→                {(viewOrder.status === 'draft' || viewOrder.status === 'sent') && (
+   902→                  <Button variant="destructive" onClick={() => handleCancelOrder(viewOrder)}>
+   903→                    <XCircle className="h-4 w-4" /> Cancel Order
+   904→                  </Button>
+   905→                )}
+   906→              </DialogFooter>
+   907→            </div>
+   908→          )}
+   909→        </DialogContent>
+   910→      </Dialog>
+   911→
+   912→      {/* ====== RECEIVE ORDER DIALOG ====== */}
+   913→      <Dialog open={!!receiveOrder} onOpenChange={(open) => !open && setReceiveOrder(null)}>
+   914→        <DialogContent className="sm:max-w-lg max-h-[90vh]">
+   915→          <DialogHeader>
+   916→            <DialogTitle className="flex items-center gap-2">
+   917→              <PackageCheck className="h-5 w-5" />
+   918→              Receive Order
+   919→            </DialogTitle>
+   920→            <DialogDescription>
+   921→              {receiveOrder?.orderNumber} — {receiveOrder?.vendorName}
+   922→            </DialogDescription>
+   923→          </DialogHeader>
+   924→          {receiveOrder && (
+   925→            <div className="space-y-4 overflow-y-auto max-h-[calc(90vh-160px)]">
+   926→              <p className="text-sm text-muted-foreground">
+   927→                Enter the quantity received for each item. Remaining quantities are pre-filled.
+   928→              </p>
+   929→              <div className="space-y-3">
+   930→                {receiveOrder.items.map((item) => {
+   931→                  const remaining = item.quantity - item.receivedQty;
+   932→                  return (
+   933→                    <div key={item.productId} className="rounded-md border p-3 space-y-2">
+   934→                      <div className="flex items-center justify-between">
+   935→                        <div>
+   936→                          <span className="text-sm font-medium">{item.productName}</span>
+   937→                          <span className="ml-2 text-xs text-muted-foreground">{item.sku}</span>
+   938→                        </div>
+   939→                        <Badge variant="outline" className="text-xs">
+   940→                          Remaining: {remaining}
+   941→                        </Badge>
+   942→                      </div>
+   943→                      <div className="flex items-center gap-3">
+   944→                        <Label className="text-xs text-muted-foreground whitespace-nowrap w-16">Received:</Label>
+   945→                        <Input
+   946→                          type="number"
+   947→                          min={0}
+   948→                          max={remaining}
+   949→                          value={receiveItems[item.productId] ?? 0}
+   950→                          onChange={(e) => {
+   951→                            const val = Math.max(0, Math.min(remaining, parseInt(e.target.value) || 0));
+   952→                            setReceiveItems((prev) => ({ ...prev, [item.productId]: val }));
+   953→                          }}
+   954→                          className="w-28"
+   955→                        />
+   956→                        <span className="text-xs text-muted-foreground">
+   957→                          of {item.quantity} ordered ({item.receivedQty} already received)
+   958→                        </span>
+   959→                      </div>
+   960→                    </div>
+   961→                  );
+   962→                })}
+   963→              </div>
+   964→              <DialogFooter>
+   965→                <Button variant="outline" onClick={() => setReceiveOrder(null)}>
+   966→                  Cancel
+   967→                </Button>
+   968→                <Button onClick={handleReceiveOrder}>
+   969→                  <CheckCircle2 className="h-4 w-4" /> Confirm Receipt
+   970→                </Button>
+   971→              </DialogFooter>
+   972→            </div>
+   973→          )}
+   974→        </DialogContent>
+   975→      </Dialog>
+   976→    </div>
+   977→  );
+   978→}
+   979→

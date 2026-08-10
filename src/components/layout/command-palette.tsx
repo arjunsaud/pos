@@ -9,7 +9,8 @@ import { useNavStore, useAuthStore, useTenantSelectorStore } from '@/features/au
 import {
   LayoutDashboard, CreditCard, Activity, FileText, Settings,
   ShoppingCart, Receipt, Package, Warehouse, Tags, BarChart3,
-  UserCog, Store, Search, Zap, FileCheck2, FolderOpen, SlidersHorizontal, Truck, Eye, type LucideIcon,
+  UserCog, Store, Search, Zap, FileCheck2, FolderOpen, SlidersHorizontal, Truck, Eye,
+  Users, BellRing, ArrowLeftRight, type LucideIcon,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -50,10 +51,14 @@ function buildCommands(role: UserRole): CommandItem[] {
       { label: 'Inventory', section: 'inventory', icon: Warehouse, group: 'Pages' },
       { label: 'Categories', section: 'categories', icon: Tags, group: 'Pages' },
       { label: 'Vendors', section: 'vendors', icon: Truck, group: 'Pages' },
+      { label: 'Purchases', section: 'purchases', icon: FileText, group: 'Pages' },
+      { label: 'Stock Transfer', section: 'stock-transfer', icon: ArrowLeftRight, group: 'Pages' },
       { label: 'Sales & Reports', section: 'sales-reports', icon: BarChart3, group: 'Pages' },
+      { label: 'Customers', section: 'customers', icon: Users, group: 'Pages' },
       { label: 'Subscription', section: 'tenant-subscription', icon: CreditCard, group: 'Pages' },
       { label: 'Outlets', section: 'tenant-outlets', icon: Store, group: 'Pages' },
       { label: 'Staff', section: 'tenant-staff', icon: UserCog, group: 'Pages' },
+      { label: 'Notifications', section: 'notifications', icon: BellRing, group: 'Pages' },
       { label: 'Store Profile', section: 'store-profile', icon: Store, group: 'Pages' },
       { label: 'Profile', section: 'tenant-profile', icon: UserCog, group: 'Pages' },
       { label: 'Settings', section: 'tenant-settings', icon: Settings, group: 'Pages' },
@@ -109,11 +114,16 @@ const sectionLabels: Record<string, string> = {
   'categories': 'Categories',
   'vendors': 'Vendors',
   'tenant-subscription': 'Subscription',
+  'purchases': 'Purchases',
+  'stock-transfer': 'Stock Transfer',
+  'customers': 'Customers',
+  'notifications': 'Notifications',
   'tenant-outlets': 'Outlets',
   'tenant-staff': 'Staff',
   'store-profile': 'Store Profile',
   'tenant-profile': 'Profile',
   'tenant-settings': 'Settings',
+  'tenant-support': 'Support',
 };
 
 const sectionIcons: Record<string, LucideIcon> = {
@@ -139,7 +149,10 @@ const sectionIcons: Record<string, LucideIcon> = {
   'sa-tenant-vendors': Truck,
   'tenant-dashboard': LayoutDashboard,
   'pos': ShoppingCart,
-  'customers': UserCog,
+  'customers': Users,
+  'purchases': FileText,
+  'stock-transfer': ArrowLeftRight,
+  'notifications': BellRing,
   'billing': Receipt,
   'products': Package,
   'inventory': Warehouse,

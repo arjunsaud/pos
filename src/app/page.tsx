@@ -53,6 +53,10 @@ import TenantProfile from '@/features/tenant/profile/components/tenant-profile';
 import TenantSettings from '@/features/tenant/settings/components/tenant-settings';
 import TenantOutlets from '@/features/tenant/outlets/components/tenant-outlets';
 import TenantSupport from '@/features/tenant/support/components/tenant-support';
+import PurchaseManagement from '@/features/tenant/purchases/components/purchase-management';
+import StockTransferPage from '@/features/tenant/stock-transfer/components/stock-transfer-page';
+import CustomersPage from '@/features/tenant/customers/components/customers-page';
+import NotificationsPage from '@/features/tenant/notifications/components/notifications-page';
 
 import type { NavSection } from '@/lib/types';
 
@@ -98,6 +102,10 @@ const sectionComponents: Record<NavSection, React.ComponentType> = {
   'tenant-settings': TenantSettings,
   'tenant-outlets': TenantOutlets,
   'tenant-support': TenantSupport,
+  'customers': CustomersPage,
+  'notifications': NotificationsPage,
+  'purchases': PurchaseManagement,
+  'stock-transfer': StockTransferPage,
 };
 
 export default function HomePage() {

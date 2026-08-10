@@ -39,6 +39,10 @@ import {
   MapPin,
   Wallet,
   Headphones,
+  Users,
+  BellRing,
+  FileText,
+  ArrowLeftRight,
   type LucideIcon,
 } from 'lucide-react';
 import { CommandPalette } from '@/components/layout/command-palette';
@@ -144,9 +148,22 @@ const tenantAdminMenu: SidebarGroup[] = [
     ],
   },
   {
+    title: 'Procurement',
+    items: [
+      { label: 'Purchases', section: 'purchases', icon: FileText },
+      { label: 'Stock Transfer', section: 'stock-transfer', icon: ArrowLeftRight },
+    ],
+  },
+  {
     title: 'Analytics',
     items: [
       { label: 'Sales & Reports', section: 'sales-reports', icon: BarChart3 },
+    ],
+  },
+  {
+    title: 'People',
+    items: [
+      { label: 'Customers', section: 'customers', icon: Users },
     ],
   },
   {
@@ -156,6 +173,7 @@ const tenantAdminMenu: SidebarGroup[] = [
       { label: 'Outlets', section: 'tenant-outlets', icon: MapPin },
       { label: 'Store Profile', section: 'store-profile', icon: Store },
       { label: 'Staff', section: 'tenant-staff', icon: UserCog },
+      { label: 'Notifications', section: 'notifications', icon: BellRing },
       { label: 'Support', section: 'tenant-support', icon: Headphones },
       { label: 'Profile', section: 'tenant-profile', icon: UserCircle },
       { label: 'Settings', section: 'tenant-settings', icon: Settings },

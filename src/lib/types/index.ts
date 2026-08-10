@@ -64,6 +64,10 @@ export type NavSection =
   | 'tenant-profile'
   | 'tenant-settings'
   | 'tenant-outlets'
+  | 'customers'
+  | 'notifications'
+  | 'purchases'
+  | 'stock-transfer'
   // Landing Page
   | 'landing-page';
 
@@ -197,6 +201,7 @@ export interface Product {
   id: string;
   name: string;
   sku: string;
+  barcode: string;
   price: number;
   costPrice: number;
   category: string;
@@ -209,6 +214,7 @@ export interface Product {
   vendorId?: string;
   vendorName?: string;
   outletId?: string;
+  hasBatchTracking: boolean;
 }
 
 // ---------- Category ----------
@@ -355,7 +361,7 @@ export interface TenantStats {
   lowStockAlerts: number;
 }
 
-// ---------- Customer (used internally by POS for billing) ----------
+// ---------- Customer ----------
 export interface Customer {
   id: string;
   name: string;
@@ -368,6 +374,9 @@ export interface Customer {
   lastVisit: string;
   createdAt: string;
   isActive: boolean;
+  loyaltyPoints: number;
+  creditBalance: number;
+  creditLimit: number;
 }
 
 // ---------- Held Sale ----------
@@ -480,4 +489,130 @@ export interface PaymentReceipt {
   reviewedAt?: string;
   reviewedBy?: string;
   notes?: string;
+}
+
+// ---------- Purchase Order ----------
+export type PurchaseOrderStatus = 'draft' | 'sent' | 'received' | 'partial' | 'cancelled';
+
+export interface PurchaseOrderItem {
+  productId: string;
+  productName: string;
+  sku: string;
+  quantity: number;
+  receivedQty: number;
+  unitPrice: number;
+  total: number;
+}
+
+export interface PurchaseOrder {
+  id: string;
+  orderNumber: string;
+  vendorId: string;
+  vendorName: string;
+  items: PurchaseOrderItem[];
+  subtotal: number;
+  vatAmount: number;
+  total: number;
+  status: PurchaseOrderStatus;
+  orderDate: string;
+  expectedDate: string;
+  receivedDate?: string;
+  notes?: string;
+  createdBy: string;
+}
+
+// ---------- Batch & Expiry ----------
+export interface Batch {
+  id: string;
+  productId: string;
+  productName: string;
+  sku: string;
+  batchNumber: string;
+  quantity: number;
+  remainingQty: number;
+  costPrice: number;
+  mfgDate: string;
+  expiryDate: string;
+  status: 'good' | 'expiring-soon' | 'expired';
+  receivedDate: string;
+  outletId?: string;
+}
+
+// ---------- Stock Transfer ----------
+export type TransferStatus = 'pending' | 'in-transit' | 'completed' | 'cancelled';
+
+export interface StockTransferItem {
+  productId: string;
+  productName: string;
+  sku: string;
+  quantity: number;
+}
+
+export interface StockTransfer {
+  id: string;
+  transferNumber: string;
+  fromOutletId: string;
+  fromOutletName: string;
+  toOutletId: string;
+  toOutletName: string;
+  items: StockTransferItem[];
+  status: TransferStatus;
+  reason: string;
+  createdAt: string;
+  completedAt?: string;
+  createdBy: string;
+  notes?: string;
+}
+
+// ---------- Notification ----------
+export type NotificationType = 'low_stock' | 'out_of_stock' | 'expiry_alert' | 'payment_reminder' | 'purchase_received' | 'transfer_completed' | 'credit_due' | 'system';
+export type NotificationPriority = 'low' | 'medium' | 'high' | 'critical';
+
+export interface AppNotification {
+  id: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  priority: NotificationPriority;
+  isRead: boolean;
+ createdAt: string;
+  actionUrl?: string;
+  entityId?: string;
+}
+
+// ---------- Return / Refund ----------
+export type ReturnStatus = 'requested' | 'approved' | 'rejected' | 'completed';
+
+export interface ReturnItem {
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+  total: number;
+  reason: string;
+}
+
+export interface ReturnRefund {
+  id: string;
+  returnNumber: string;
+  saleId: string;
+  invoiceNumber: string;
+  customerName: string;
+  items: ReturnItem[];
+  refundAmount: number;
+  refundMethod: string;
+  status: ReturnStatus;
+  reason: string;
+  processedBy: string;
+  createdAt: string;
+  processedAt?: string;
+}
+
+// ---------- Profit & Loss ----------
+export interface ProfitLossData {
+  month: string;
+  revenue: number;
+  costOfGoods: number;
+  grossProfit: number;
+  expenses: number;
+  netProfit: number;
 }

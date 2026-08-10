@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { PageHeader } from '@/components/shared/page-header';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -40,6 +40,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import {
   Plus,
@@ -55,12 +61,18 @@ import {
   Package,
   CheckCircle2,
   XCircle,
+  Eye,
+  CreditCard,
+  TrendingUp,
+  Banknote,
+  Wallet,
+  CircleDollarSign,
 } from 'lucide-react';
-import { mockVendors } from '@/lib/mock-data';
+import { mockVendors, mockPurchaseOrders } from '@/lib/mock-data';
 import { toast } from 'sonner';
-import type { Vendor } from '@/lib/types';
+import type { Vendor, PurchaseOrder } from '@/lib/types';
 import { cn } from '@/lib/utils';
-import { getStatusBadgeClasses, formatDate } from '@/lib/helpers';
+import { getStatusBadgeClasses, formatDate, npr } from '@/lib/helpers';
 
 // ---------- Avatar color palette based on name ----------
 const AVATAR_COLORS = [
@@ -82,6 +94,68 @@ function getAvatarColor(name: string): string {
     hash = name.charCodeAt(i) + ((hash << 5) - hash);
   }
   return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
+
+// ---------- PO Status badge ----------
+function getPOStatusBadgeClasses(status: string): string {
+  switch (status) {
+    case 'received':
+      return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400';
+    case 'sent':
+      return 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400';
+    case 'partial':
+      return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400';
+    case 'draft':
+      return 'bg-gray-100 text-gray-600 dark:bg-gray-800/50 dark:text-gray-400';
+    case 'cancelled':
+      return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+    default:
+      return 'bg-muted text-muted-foreground';
+  }
+}
+
+// ---------- Mock payment generator ----------
+interface VendorPayment {
+  id: string;
+  paymentNumber: string;
+  amount: number;
+  method: 'Bank' | 'Cash' | 'eSewa';
+  date: string;
+  status: 'completed' | 'pending';
+}
+
+function generateMockPayments(vendorId: string, vendorPOs: PurchaseOrder[]): VendorPayment[] {
+  const receivedPOs = vendorPOs.filter(
+    (po) => po.status === 'received' || po.status === 'partial'
+  );
+  if (receivedPOs.length === 0) return [];
+
+  const totalReceivedValue = receivedPOs.reduce((sum, po) => sum + po.total, 0);
+  const methods: Array<'Bank' | 'Cash' | 'eSewa'> = ['Bank', 'Cash', 'eSewa'];
+
+  // Generate 2-3 payments totalling ~70% of received order value
+  const targetPaid = Math.round(totalReceivedValue * 0.7);
+  const paymentCount = Math.min(receivedPOs.length, 3);
+  const payments: VendorPayment[] = [];
+
+  for (let i = 0; i < paymentCount; i++) {
+    const po = receivedPOs[i];
+    const method = methods[i % methods.length];
+    const isLast = i === paymentCount - 1;
+    const previousTotal = payments.reduce((s, p) => s + p.amount, 0);
+    const amount = isLast ? targetPaid - previousTotal : Math.round(targetPaid / paymentCount);
+
+    payments.push({
+      id: `pay-${vendorId}-${i + 1}`,
+      paymentNumber: `PAY-${vendorId.toUpperCase()}-${String(i + 1).padStart(3, '0')}`,
+      amount: Math.max(0, amount),
+      method,
+      date: po.receivedDate || po.orderDate,
+      status: isLast ? 'pending' : 'completed',
+    });
+  }
+
+  return payments;
 }
 
 // ---------- Form ----------
@@ -119,15 +193,25 @@ export default function VendorsPage() {
   const [form, setForm] = useState<VendorForm>(emptyForm);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const [viewVendor, setViewVendor] = useState<Vendor | null>(null);
+  const [viewOrder, setViewOrder] = useState<PurchaseOrder | null>(null);
   const ITEMS_PER_PAGE = 8;
 
-  // ---------- Derived stats ----------
+  // ---------- Summary stats ----------
   const stats = useMemo(() => {
     const total = vendors.length;
     const active = vendors.filter((v) => v.status === 'active').length;
-    const withPan = vendors.filter((v) => v.pan && v.pan.trim() !== '').length;
-    const withVat = vendors.filter((v) => v.vatNumber && v.vatNumber.trim() !== '').length;
-    return { total, active, withPan, withVat };
+    const totalOrdersValue = mockPurchaseOrders.reduce((sum, po) => sum + po.total, 0);
+
+    // Outstanding = sum of received/partial POs * 0.3 (70% paid)
+    const payablePOs = mockPurchaseOrders.filter(
+      (po) => po.status === 'received' || po.status === 'partial'
+    );
+    const totalReceivedValue = payablePOs.reduce((sum, po) => sum + po.total, 0);
+    const totalPaid = Math.round(totalReceivedValue * 0.7);
+    const outstanding = totalReceivedValue - totalPaid;
+
+    return { total, active, totalOrdersValue, outstanding };
   }, [vendors]);
 
   // ---------- Filtered + Paginated ----------
@@ -155,6 +239,30 @@ export default function VendorsPage() {
     setStatusFilter(value);
     setPage(1);
   };
+
+  // ---------- Vendor view data ----------
+  const vendorPOs = useMemo(() => {
+    if (!viewVendor) return [];
+    return mockPurchaseOrders.filter((po) => po.vendorId === viewVendor.id);
+  }, [viewVendor]);
+
+  const vendorPayments = useMemo(() => {
+    if (!viewVendor) return [];
+    return generateMockPayments(viewVendor.id, vendorPOs);
+  }, [viewVendor, vendorPOs]);
+
+  const vendorPaymentStats = useMemo(() => {
+    const receivedPOs = vendorPOs.filter(
+      (po) => po.status === 'received' || po.status === 'partial'
+    );
+    const totalOrdered = vendorPOs.reduce((s, po) => s + po.total, 0);
+    const totalReceivedValue = receivedPOs.reduce((s, po) => s + po.total, 0);
+    const totalPaid = vendorPayments
+      .filter((p) => p.status === 'completed')
+      .reduce((s, p) => s + p.amount, 0);
+    const outstanding = totalReceivedValue - totalPaid;
+    return { totalOrdered, totalReceivedValue, totalPaid, outstanding };
+  }, [vendorPOs, vendorPayments]);
 
   // ---------- CRUD handlers ----------
   const openAdd = () => {
@@ -299,7 +407,7 @@ export default function VendorsPage() {
               <UserCheck className="h-5 w-5 text-emerald-600" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Active</p>
+              <p className="text-sm text-muted-foreground">Active Vendors</p>
               <p className="text-2xl font-bold">{stats.active}</p>
             </div>
           </CardContent>
@@ -310,19 +418,19 @@ export default function VendorsPage() {
               <FileText className="h-5 w-5 text-amber-600" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">With PAN</p>
-              <p className="text-2xl font-bold">{stats.withPan}</p>
+              <p className="text-sm text-muted-foreground">Total Orders Value</p>
+              <p className="text-2xl font-bold">NPR {npr(stats.totalOrdersValue)}</p>
             </div>
           </CardContent>
         </Card>
         <Card className="transition-shadow hover:shadow-md">
           <CardContent className="flex items-center gap-4 p-4">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-purple-500/10">
-              <ShieldCheck className="h-5 w-5 text-purple-600" />
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-rose-500/10">
+              <TrendingUp className="h-5 w-5 text-rose-600" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">With VAT</p>
-              <p className="text-2xl font-bold">{stats.withVat}</p>
+              <p className="text-sm text-muted-foreground">Outstanding Payments</p>
+              <p className="text-2xl font-bold">NPR {npr(stats.outstanding)}</p>
             </div>
           </CardContent>
         </Card>
@@ -473,6 +581,14 @@ export default function VendorsPage() {
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8"
+                            onClick={() => setViewVendor(vendor)}
+                          >
+                            <Eye className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
                             onClick={() => openEdit(vendor)}
                           >
                             <Pencil className="h-3.5 w-3.5" />
@@ -524,6 +640,335 @@ export default function VendorsPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* ========== View Vendor Dialog ========== */}
+      <Dialog open={!!viewVendor} onOpenChange={(open) => !open && setViewVendor(null)}>
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+          {viewVendor && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-3">
+                  <div
+                    className={cn(
+                      'flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white',
+                      getAvatarColor(viewVendor.name)
+                    )}
+                  >
+                    {viewVendor.name.charAt(0).toUpperCase()}
+                  </div>
+                  {viewVendor.name}
+                </DialogTitle>
+                <DialogDescription>
+                  Vendor details, purchase orders & payment tracking
+                </DialogDescription>
+              </DialogHeader>
+
+              <Tabs defaultValue="details" className="mt-2">
+                <TabsList className="w-full">
+                  <TabsTrigger value="details" className="flex-1">
+                    <Building2 className="h-4 w-4" />
+                    <span className="hidden sm:inline">Details</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="orders" className="flex-1">
+                    <FileText className="h-4 w-4" />
+                    <span className="hidden sm:inline">Purchase Orders</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="payments" className="flex-1">
+                    <CreditCard className="h-4 w-4" />
+                    <span className="hidden sm:inline">Payments</span>
+                  </TabsTrigger>
+                </TabsList>
+
+                {/* ---- Details Tab ---- */}
+                <TabsContent value="details">
+                  <div className="grid gap-4 sm:grid-cols-2 mt-2">
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Contact Person</p>
+                        <p className="text-sm font-medium mt-1">{viewVendor.contactPerson}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Email</p>
+                        <p className="text-sm font-medium mt-1">{viewVendor.email}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Phone</p>
+                        <p className="text-sm font-medium mt-1">{viewVendor.phone}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</p>
+                        <Badge className={cn('capitalize mt-1', getStatusBadgeClasses(viewVendor.status))}>
+                          {viewVendor.status}
+                        </Badge>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">PAN</p>
+                        <p className="text-sm font-mono font-medium mt-1">{viewVendor.pan}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">VAT Number</p>
+                        <p className="text-sm font-mono font-medium mt-1">{viewVendor.vatNumber}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Address</p>
+                        <p className="text-sm font-medium mt-1">{viewVendor.address}, {viewVendor.city}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Products Supplied</p>
+                        <p className="text-sm font-medium mt-1">{viewVendor.productCount} items</p>
+                      </div>
+                    </div>
+                  </div>
+                </TabsContent>
+
+                {/* ---- Purchase Orders Tab ---- */}
+                <TabsContent value="orders">
+                  {vendorPOs.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                      <FileText className="h-10 w-10 mb-2 opacity-30" />
+                      <p className="text-sm">No purchase orders for this vendor.</p>
+                    </div>
+                  ) : (
+                    <div className="rounded-md border mt-2">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Order #</TableHead>
+                            <TableHead className="text-center hidden sm:table-cell">Items</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead className="text-right">Total</TableHead>
+                            <TableHead className="hidden sm:table-cell">Date</TableHead>
+                            <TableHead></TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {vendorPOs.map((po) => (
+                            <TableRow key={po.id} className="hover:bg-muted/50">
+                              <TableCell className="font-medium">{po.orderNumber}</TableCell>
+                              <TableCell className="text-center hidden sm:table-cell">
+                                {po.items.length}
+                              </TableCell>
+                              <TableCell>
+                                <Badge
+                                  className={cn('capitalize', getPOStatusBadgeClasses(po.status))}
+                                >
+                                  {po.status}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-right font-medium">
+                                NPR {npr(po.total)}
+                              </TableCell>
+                              <TableCell className="hidden text-sm text-muted-foreground sm:table-cell">
+                                {formatDate(po.orderDate)}
+                              </TableCell>
+                              <TableCell>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 px-2 text-xs"
+                                  onClick={() => setViewOrder(po)}
+                                >
+                                  <Eye className="h-3.5 w-3.5 mr-1" />
+                                  View
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+                </TabsContent>
+
+                {/* ---- Payments Tab ---- */}
+                <TabsContent value="payments">
+                  {vendorPOs.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                      <CreditCard className="h-10 w-10 mb-2 opacity-30" />
+                      <p className="text-sm">No orders or payments for this vendor.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4 mt-2">
+                      {/* Payment Summary Cards */}
+                      <div className="grid grid-cols-3 gap-3">
+                        <Card>
+                          <CardContent className="p-3 text-center">
+                            <CircleDollarSign className="h-5 w-5 mx-auto mb-1 text-amber-500" />
+                            <p className="text-xs text-muted-foreground">Total Ordered</p>
+                            <p className="text-sm font-bold mt-0.5">NPR {npr(vendorPaymentStats.totalOrdered)}</p>
+                          </CardContent>
+                        </Card>
+                        <Card>
+                          <CardContent className="p-3 text-center">
+                            <CheckCircle2 className="h-5 w-5 mx-auto mb-1 text-emerald-500" />
+                            <p className="text-xs text-muted-foreground">Total Paid</p>
+                            <p className="text-sm font-bold mt-0.5">NPR {npr(vendorPaymentStats.totalPaid)}</p>
+                          </CardContent>
+                        </Card>
+                        <Card>
+                          <CardContent className="p-3 text-center">
+                            <TrendingUp className="h-5 w-5 mx-auto mb-1 text-rose-500" />
+                            <p className="text-xs text-muted-foreground">Outstanding</p>
+                            <p className="text-sm font-bold mt-0.5">NPR {npr(vendorPaymentStats.outstanding)}</p>
+                          </CardContent>
+                        </Card>
+                      </div>
+
+                      {/* Recent Payments Table */}
+                      {vendorPayments.length === 0 ? (
+                        <p className="text-sm text-muted-foreground text-center py-6">
+                          No payments recorded yet.
+                        </p>
+                      ) : (
+                        <div className="rounded-md border">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Payment #</TableHead>
+                                <TableHead className="text-right">Amount</TableHead>
+                                <TableHead className="hidden sm:table-cell">Method</TableHead>
+                                <TableHead className="hidden sm:table-cell">Date</TableHead>
+                                <TableHead>Status</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {vendorPayments.map((p) => (
+                                <TableRow key={p.id} className="hover:bg-muted/50">
+                                  <TableCell className="font-medium font-mono text-sm">
+                                    {p.paymentNumber}
+                                  </TableCell>
+                                  <TableCell className="text-right font-medium">
+                                    NPR {npr(p.amount)}
+                                  </TableCell>
+                                  <TableCell className="hidden sm:table-cell">
+                                    <div className="flex items-center gap-1.5">
+                                      {p.method === 'Bank' && <Banknote className="h-3.5 w-3.5 text-muted-foreground" />}
+                                      {p.method === 'Cash' && <Wallet className="h-3.5 w-3.5 text-muted-foreground" />}
+                                      {p.method === 'eSewa' && <CreditCard className="h-3.5 w-3.5 text-muted-foreground" />}
+                                      {p.method}
+                                    </div>
+                                  </TableCell>
+                                  <TableCell className="hidden text-sm text-muted-foreground sm:table-cell">
+                                    {formatDate(p.date)}
+                                  </TableCell>
+                                  <TableCell>
+                                    <Badge
+                                      className={cn('capitalize', getStatusBadgeClasses(p.status))}
+                                    >
+                                      {p.status}
+                                    </Badge>
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </TabsContent>
+              </Tabs>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* ========== Order Detail Dialog ========== */}
+      <Dialog open={!!viewOrder} onOpenChange={(open) => !open && setViewOrder(null)}>
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+          {viewOrder && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  {viewOrder.orderNumber}
+                </DialogTitle>
+                <DialogDescription>
+                  Purchase order for {viewOrder.vendorName}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 mt-2">
+                {/* Order meta */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge className={cn('capitalize', getPOStatusBadgeClasses(viewOrder.status))}>
+                    {viewOrder.status}
+                  </Badge>
+                  <span className="text-sm text-muted-foreground">
+                    Ordered: {formatDate(viewOrder.orderDate)}
+                  </span>
+                  <span className="text-sm text-muted-foreground">
+                    Expected: {formatDate(viewOrder.expectedDate)}
+                  </span>
+                  {viewOrder.receivedDate && (
+                    <span className="text-sm text-muted-foreground">
+                      Received: {formatDate(viewOrder.receivedDate)}
+                    </span>
+                  )}
+                </div>
+
+                {viewOrder.notes && (
+                  <p className="text-sm text-muted-foreground italic">{viewOrder.notes}</p>
+                )}
+
+                {/* Items table */}
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Item</TableHead>
+                        <TableHead className="text-center">Qty</TableHead>
+                        <TableHead className="text-center hidden sm:table-cell">Received</TableHead>
+                        <TableHead className="text-right">Unit Price</TableHead>
+                        <TableHead className="text-right">Total</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {viewOrder.items.map((item, idx) => (
+                        <TableRow key={idx}>
+                          <TableCell>
+                            <div>
+                              <p className="font-medium text-sm">{item.productName}</p>
+                              <p className="text-xs text-muted-foreground">{item.sku}</p>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-center">{item.quantity}</TableCell>
+                          <TableCell className="text-center hidden sm:table-cell">
+                            {item.receivedQty}/{item.quantity}
+                          </TableCell>
+                          <TableCell className="text-right">NPR {npr(item.unitPrice)}</TableCell>
+                          <TableCell className="text-right font-medium">
+                            NPR {npr(item.total)}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {/* Totals */}
+                <div className="flex justify-end">
+                  <div className="w-full max-w-[200px] space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Subtotal</span>
+                      <span>NPR {npr(viewOrder.subtotal)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">VAT</span>
+                      <span>NPR {npr(viewOrder.vatAmount)}</span>
+                    </div>
+                    <div className="flex justify-between border-t pt-1 font-bold">
+                      <span>Total</span>
+                      <span>NPR {npr(viewOrder.total)}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Add/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

@@ -1,0 +1,606 @@
+     1→'use client';
+     2→
+     3→import { useState, useMemo } from 'react';
+     4→import { PageHeader } from '@/components/shared/page-header';
+     5→import { StatCard } from '@/components/shared/stat-card';
+     6→import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+     7→import { Button } from '@/components/ui/button';
+     8→import { Input } from '@/components/ui/input';
+     9→import { Label } from '@/components/ui/label';
+    10→import { Badge } from '@/components/ui/badge';
+    11→import {
+    12→  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+    13→} from '@/components/ui/table';
+    14→import {
+    15→  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+    16→} from '@/components/ui/dialog';
+    17→import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+    18→import {
+    19→  Users, UserPlus, Search, Mail, Phone, MapPin, Hash, Calendar, TrendingUp, Star, MoreHorizontal, Pencil, Trash2, Eye, Download, ShoppingBag,
+    20→} from 'lucide-react';
+    21→import {
+    22→  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+    23→} from '@/components/ui/dropdown-menu';
+    24→import { Area, AreaChart, ResponsiveContainer } from 'recharts';
+    25→import { mockCustomers } from '@/lib/mock-data';
+    26→import { npr, nprFull, formatDateTime, formatDate, getInitials, getStatusBadgeClasses } from '@/lib/helpers';
+    27→import { toast } from 'sonner';
+    28→import type { Customer } from '@/lib/types';
+    29→import { cn } from '@/lib/utils';
+    30→
+    31→const ITEMS_PER_PAGE = 8;
+    32→
+    33→const AVATAR_COLORS = [
+    34→  { bg: 'bg-emerald-100 dark:bg-emerald-900/30', text: 'text-emerald-600 dark:text-emerald-400' },
+    35→  { bg: 'bg-blue-100 dark:bg-blue-900/30', text: 'text-blue-600 dark:text-blue-400' },
+    36→  { bg: 'bg-amber-100 dark:bg-amber-900/30', text: 'text-amber-600 dark:text-amber-400' },
+    37→  { bg: 'bg-purple-100 dark:bg-purple-900/30', text: 'text-purple-600 dark:text-purple-400' },
+    38→  { bg: 'bg-rose-100 dark:bg-rose-900/30', text: 'text-rose-600 dark:text-rose-400' },
+    39→  { bg: 'bg-cyan-100 dark:bg-cyan-900/30', text: 'text-cyan-600 dark:text-cyan-400' },
+    40→  { bg: 'bg-orange-100 dark:bg-orange-900/30', text: 'text-orange-600 dark:text-orange-400' },
+    41→  { bg: 'bg-teal-100 dark:bg-teal-900/30', text: 'text-teal-600 dark:text-teal-400' },
+    42→  { bg: 'bg-pink-100 dark:bg-pink-900/30', text: 'text-pink-600 dark:text-pink-400' },
+    43→  { bg: 'bg-indigo-100 dark:bg-indigo-900/30', text: 'text-indigo-600 dark:text-indigo-400' },
+    44→];
+    45→
+    46→function getAvatarColor(name: string) {
+    47→  const char = name.trim().charAt(0).toUpperCase();
+    48→  const code = char.charCodeAt(0);
+    49→  return AVATAR_COLORS[code % AVATAR_COLORS.length];
+    50→}
+    51→
+    52→function getPaymentMethodColor(method: string): string {
+    53→  switch (method) {
+    54→    case 'Cash': return 'bg-emerald-500';
+    55→    case 'Card': return 'bg-blue-500';
+    56→    case 'eSewa': return 'bg-green-500';
+    57→    case 'Khalti': return 'bg-purple-500';
+    58→    default: return 'bg-gray-400';
+    59→  }
+    60→}
+    61→
+    62→const PAYMENT_METHODS = ['Cash', 'Card', 'eSewa', 'Khalti'];
+    63→const ORDER_STATUSES: Array<'completed' | 'pending' | 'refunded'> = ['completed', 'completed', 'completed', 'completed', 'pending'];
+    64→
+    65→function generateSpendingTrend(totalSpent: number) {
+    66→  const now = new Date();
+    67→  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    68→  const base = totalSpent / 6;
+    69→  return Array.from({ length: 6 }, (_, i) => {
+    70→    const d = new Date(now.getFullYear(), now.getMonth() - 5 + i, 1);
+    71→    const factor = 0.5 + Math.random() * 1.0;
+    72→    return {
+    73→      month: months[d.getMonth()],
+    74→      amount: Math.round(base * factor),
+    75→    };
+    76→  });
+    77→}
+    78→
+    79→function simpleHash(str: string): number {
+    80→  let hash = 0;
+    81→  for (let i = 0; i < str.length; i++) {
+    82→    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+    83→    hash |= 0;
+    84→  }
+    85→  return Math.abs(hash);
+    86→}
+    87→
+    88→function generateMockOrders(customer: Customer) {
+    89→  const statuses = ORDER_STATUSES;
+    90→  const seed = simpleHash(customer.id);
+    91→  const baseDate = new Date(customer.lastVisit);
+    92→  return Array.from({ length: 5 }, (_, i) => {
+    93→    const date = new Date(baseDate);
+    94→    date.setDate(date.getDate() - (i + 1) * Math.floor(3 + (seed % 10)));
+    95→    const itemCount = 1 + ((seed * (i + 1)) % 5);
+    96→    const total = Math.round((customer.totalSpent / Math.max(customer.totalPurchases, 1)) * (0.5 + ((seed * (i + 2)) % 10) / 10) * 100) / 100;
+    97→    const payment = PAYMENT_METHODS[(seed + i) % PAYMENT_METHODS.length];
+    98→    const status = customer.totalPurchases > 0 ? statuses[i] : 'pending';
+    99→    const invNum = `INV-${String(1000 + ((seed + i * 7) % 9000))}`;
+   100→    return { invoiceNumber: invNum, date: date.toISOString(), items: itemCount, total, paymentMethod: payment, status };
+   101→  });
+   102→}
+   103→
+   104→type SortField = 'name' | 'totalSpent' | 'totalPurchases' | 'lastVisit';
+   105→type SortDir = 'asc' | 'desc';
+   106→
+   107→export default function CustomersPage() {
+   108→  const [customers, setCustomers] = useState<Customer[]>(mockCustomers);
+   109→  const [search, setSearch] = useState('');
+   110→  const [page, setPage] = useState(1);
+   111→  const [sortField, setSortField] = useState<SortField>('totalSpent');
+   112→  const [sortDir, setSortDir] = useState<SortDir>('desc');
+   113→  const [dialogOpen, setDialogOpen] = useState(false);
+   114→  const [detailOpen, setDetailOpen] = useState(false);
+   115→  const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
+   116→  const [viewingCustomer, setViewingCustomer] = useState<Customer | null>(null);
+   117→  const [form, setForm] = useState({ name: '', email: '', phone: '', pan: '', address: '' });
+   118→
+   119→  const filtered = useMemo(() => {
+   120→    const q = search.toLowerCase();
+   121→    let result = customers.filter(c =>
+   122→      !q || c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q) || c.phone.includes(q) || c.pan.includes(q)
+   123→    );
+   124→    result.sort((a, b) => {
+   125→      let cmp = 0;
+   126→      if (sortField === 'name') cmp = a.name.localeCompare(b.name);
+   127→      else if (sortField === 'totalSpent') cmp = a.totalSpent - b.totalSpent;
+   128→      else if (sortField === 'totalPurchases') cmp = a.totalPurchases - b.totalPurchases;
+   129→      else if (sortField === 'lastVisit') cmp = a.lastVisit.localeCompare(b.lastVisit);
+   130→      return sortDir === 'asc' ? cmp : -cmp;
+   131→    });
+   132→    return result;
+   133→  }, [customers, search, sortField, sortDir]);
+   134→
+   135→  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+   136→  const paged = filtered.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
+   137→
+   138→  const totalCustomers = customers.length;
+   139→  const activeCustomers = customers.filter(c => c.isActive).length;
+   140→  const totalRevenue = customers.reduce((s, c) => s + c.totalSpent, 0);
+   141→  const avgSpend = totalCustomers > 0 ? Math.round(totalRevenue / totalCustomers) : 0;
+   142→  const maxTotalSpent = Math.max(...customers.map(c => c.totalSpent), 1);
+   143→
+   144→  const handleSort = (field: SortField) => {
+   145→    if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+   146→    else { setSortField(field); setSortDir('desc'); }
+   147→  };
+   148→
+   149→  const openAdd = () => {
+   150→    setEditingCustomer(null);
+   151→    setForm({ name: '', email: '', phone: '', pan: '', address: '' });
+   152→    setDialogOpen(true);
+   153→  };
+   154→
+   155→  const openEdit = (c: Customer) => {
+   156→    setEditingCustomer(c);
+   157→    setForm({ name: c.name, email: c.email, phone: c.phone, pan: c.pan, address: c.address });
+   158→    setDialogOpen(true);
+   159→  };
+   160→
+   161→  const handleSave = () => {
+   162→    if (!form.name.trim() || !form.phone.trim()) {
+   163→      toast.error('Name and phone are required');
+   164→      return;
+   165→    }
+   166→    if (editingCustomer) {
+   167→      setCustomers(prev => prev.map(c =>
+   168→        c.id === editingCustomer.id
+   169→          ? { ...c, ...form, name: form.name.trim(), email: form.email.trim(), phone: form.phone.trim(), pan: form.pan.trim(), address: form.address.trim() }
+   170→          : c
+   171→      ));
+   172→      toast.success('Customer updated');
+   173→    } else {
+   174→      const newCustomer: Customer = {
+   175→        id: `c-${Date.now()}`,
+   176→        name: form.name.trim(),
+   177→        email: form.email.trim(),
+   178→        phone: form.phone.trim(),
+   179→        pan: form.pan.trim(),
+   180→        address: form.address.trim(),
+   181→        totalPurchases: 0,
+   182→        totalSpent: 0,
+   183→        lastVisit: new Date().toISOString(),
+   184→        createdAt: new Date().toISOString().split('T')[0],
+   185→        isActive: true,
+   186→      };
+   187→      setCustomers(prev => [newCustomer, ...prev]);
+   188→      toast.success('Customer added');
+   189→    }
+   190→    setDialogOpen(false);
+   191→  };
+   192→
+   193→  const handleDelete = (id: string) => {
+   194→    setCustomers(prev => prev.filter(c => c.id !== id));
+   195→    toast.success('Customer deleted');
+   196→  };
+   197→
+   198→  const toggleActive = (id: string) => {
+   199→    setCustomers(prev => prev.map(c =>
+   200→      c.id === id ? { ...c, isActive: !c.isActive } : c
+   201→    ));
+   202→    toast.success('Status updated');
+   203→  };
+   204→
+   205→  const sortIcon = (field: SortField) => sortField === field ? (sortDir === 'asc' ? '↑' : '↓') : '↕';
+   206→
+   207→  const exportCSV = () => {
+   208→    const headers = ['Name', 'Email', 'Phone', 'PAN', 'Address', 'Total Purchases', 'Total Spent', 'Last Visit', 'Status'];
+   209→    const rows = filtered.map(c => [
+   210→      c.name,
+   211→      c.email,
+   212→      c.phone,
+   213→      c.pan,
+   214→      c.address,
+   215→      String(c.totalPurchases),
+   216→      npr(c.totalSpent),
+   217→      formatDateTime(c.lastVisit),
+   218→      c.isActive ? 'Active' : 'Inactive',
+   219→    ]);
+   220→    const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
+   221→    const blob = new Blob([csv], { type: 'text/csv' });
+   222→    const url = URL.createObjectURL(blob);
+   223→    const a = document.createElement('a');
+   224→    a.href = url; a.download = 'customers-export.csv'; a.click();
+   225→    URL.revokeObjectURL(url);
+   226→    toast.success('CSV exported successfully');
+   227→  };
+   228→
+   229→  return (
+   230→    <div className="space-y-6">
+   231→      <PageHeader title="Customers" description="Manage your customer database">
+   232→        <Button variant="outline" size="sm" onClick={exportCSV}>
+   233→          <Download className="h-4 w-4" /> Export CSV
+   234→        </Button>
+   235→        <Button onClick={openAdd} className="gap-2">
+   236→          <UserPlus className="h-4 w-4" /> Add Customer
+   237→        </Button>
+   238→      </PageHeader>
+   239→
+   240→      {/* Stats */}
+   241→      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+   242→        <StatCard title="Total Customers" value={totalCustomers} icon={Users} className="border-l-4 border-l-blue-500 dark:border-l-blue-400" />
+   243→        <StatCard title="Active Customers" value={activeCustomers} icon={Star} iconClassName="bg-emerald-100 dark:bg-emerald-900/30" iconColor="text-emerald-600 dark:text-emerald-400" className="border-l-4 border-l-emerald-500 dark:border-l-emerald-400" />
+   244→        <StatCard title="Total Revenue" value={`NPR ${npr(totalRevenue)}`} icon={TrendingUp} iconClassName="bg-purple-100 dark:bg-purple-900/30" iconColor="text-purple-600 dark:text-purple-400" className="border-l-4 border-l-purple-500 dark:border-l-purple-400" />
+   245→        <StatCard title="Avg. Spend" value={`NPR ${npr(avgSpend)}`} icon={Calendar} iconClassName="bg-amber-100 dark:bg-amber-900/30" iconColor="text-amber-600 dark:text-amber-400" className="border-l-4 border-l-amber-500 dark:border-l-amber-400" />
+   246→      </div>
+   247→
+   248→      {/* Table */}
+   249→      <Card>
+   250→        <CardHeader className="pb-3">
+   251→          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+   252→            <CardTitle className="text-base">All Customers</CardTitle>
+   253→            <div className="relative w-full sm:w-72">
+   254→              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+   255→              <Input
+   256→                placeholder="Search by name, email, phone, PAN..."
+   257→                value={search}
+   258→                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+   259→                className="pl-9"
+   260→              />
+   261→            </div>
+   262→          </div>
+   263→        </CardHeader>
+   264→        <CardContent className="p-0">
+   265→          <div className="overflow-x-auto">
+   266→          <Table>
+   267→            <TableHeader>
+   268→              <TableRow>
+   269→                <TableHead className="w-[220px] cursor-pointer select-none" onClick={() => handleSort('name')}>
+   270→                  Customer <span className="ml-1 text-[10px] opacity-50">{sortIcon('name')}</span>
+   271→                </TableHead>
+   272→                <TableHead className="hidden md:table-cell">Phone</TableHead>
+   273→                <TableHead className="hidden lg:table-cell">PAN</TableHead>
+   274→                <TableHead className="text-center cursor-pointer select-none" onClick={() => handleSort('totalPurchases')}>
+   275→                  Purchases <span className="ml-1 text-[10px] opacity-50">{sortIcon('totalPurchases')}</span>
+   276→                </TableHead>
+   277→                <TableHead className="text-right cursor-pointer select-none" onClick={() => handleSort('totalSpent')}>
+   278→                  Total Spent <span className="ml-1 text-[10px] opacity-50">{sortIcon('totalSpent')}</span>
+   279→                </TableHead>
+   280→                <TableHead className="hidden sm:table-cell cursor-pointer select-none" onClick={() => handleSort('lastVisit')}>
+   281→                  Last Visit <span className="ml-1 text-[10px] opacity-50">{sortIcon('lastVisit')}</span>
+   282→                </TableHead>
+   283→                <TableHead className="text-center">Status</TableHead>
+   284→                <TableHead className="w-10"></TableHead>
+   285→              </TableRow>
+   286→            </TableHeader>
+   287→            <TableBody>
+   288→              {paged.length === 0 ? (
+   289→                <TableRow>
+   290→                  <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
+   291→                    No customers found.
+   292→                  </TableCell>
+   293→                </TableRow>
+   294→              ) : (
+   295→                paged.map((customer) => (
+   296→                  <TableRow
+   297→                    key={customer.id}
+   298→                    className="group cursor-pointer transition-colors hover:bg-muted/50"
+   299→                    onClick={() => { setViewingCustomer(customer); setDetailOpen(true); }}
+   300→                  >
+   301→                    <TableCell>
+   302→                      <div className="flex items-center gap-3">
+   303→                        {(() => {
+   304→                          const avatarColor = getAvatarColor(customer.name);
+   305→                          return (
+   306→                            <div className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold', avatarColor.bg, avatarColor.text)}>
+   307→                              {getInitials(customer.name)}
+   308→                            </div>
+   309→                          );
+   310→                        })()}
+   311→                        <div className="min-w-0">
+   312→                          <div className="text-sm font-medium truncate">{customer.name}</div>
+   313→                          <div className="text-xs text-muted-foreground truncate">{customer.email}</div>
+   314→                        </div>
+   315→                      </div>
+   316→                    </TableCell>
+   317→                    <TableCell className="hidden md:table-cell text-sm">{customer.phone}</TableCell>
+   318→                    <TableCell className="hidden lg:table-cell text-sm font-mono">{customer.pan || '—'}</TableCell>
+   319→                    <TableCell className="text-center text-sm">{customer.totalPurchases}</TableCell>
+   320→                    <TableCell className="text-right">
+   321→                      <div className="text-sm font-semibold">NPR {npr(customer.totalSpent)}</div>
+   322→                      <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-muted">
+   323→                        <div
+   324→                          className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400 dark:from-emerald-600 dark:to-emerald-500"
+   325→                          style={{ width: `${Math.max((customer.totalSpent / maxTotalSpent) * 100, customer.totalSpent > 0 ? 2 : 0)}%` }}
+   326→                        />
+   327→                      </div>
+   328→                    </TableCell>
+   329→                    <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">{formatDateTime(customer.lastVisit)}</TableCell>
+   330→                    <TableCell className="text-center">
+   331→                      <Badge variant="secondary" className={cn('text-xs', customer.isActive ? getStatusBadgeClasses('active') : getStatusBadgeClasses('inactive'))}>
+   332→                        {customer.isActive ? 'Active' : 'Inactive'}
+   333→                      </Badge>
+   334→                    </TableCell>
+   335→                    <TableCell>
+   336→                      <DropdownMenu>
+   337→                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+   338→                          <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
+   339→                            <MoreHorizontal className="h-4 w-4" />
+   340→                          </Button>
+   341→                        </DropdownMenuTrigger>
+   342→                        <DropdownMenuContent align="end">
+   343→                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setViewingCustomer(customer); setDetailOpen(true); }}>
+   344→                            <Eye className="mr-2 h-4 w-4" /> View Details
+   345→                          </DropdownMenuItem>
+   346→                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openEdit(customer); }}>
+   347→                            <Pencil className="mr-2 h-4 w-4" /> Edit
+   348→                          </DropdownMenuItem>
+   349→                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); toggleActive(customer.id); }}>
+   350→                            {customer.isActive ? 'Deactivate' : 'Activate'}
+   351→                          </DropdownMenuItem>
+   352→                          <DropdownMenuItem className="text-destructive" onClick={(e) => { e.stopPropagation(); handleDelete(customer.id); }}>
+   353→                            <Trash2 className="mr-2 h-4 w-4" /> Delete
+   354→                          </DropdownMenuItem>
+   355→                        </DropdownMenuContent>
+   356→                      </DropdownMenu>
+   357→                    </TableCell>
+   358→                  </TableRow>
+   359→                ))
+   360→              )}
+   361→            </TableBody>
+   362→          </Table>
+   363→          </div>
+   364→
+   365→          {/* Pagination */}
+   366→          {totalPages > 1 && (
+   367→            <div className="flex items-center justify-between border-t px-4 py-3">
+   368→              <p className="text-sm text-muted-foreground">
+   369→                Showing {(page - 1) * ITEMS_PER_PAGE + 1}–{Math.min(page * ITEMS_PER_PAGE, filtered.length)} of {filtered.length}
+   370→              </p>
+   371→              <div className="flex gap-1">
+   372→                <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>Previous</Button>
+   373→                <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>Next</Button>
+   374→              </div>
+   375→            </div>
+   376→          )}
+   377→        </CardContent>
+   378→      </Card>
+   379→
+   380→      {/* Add/Edit Dialog */}
+   381→      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+   382→        <DialogContent>
+   383→          <DialogHeader>
+   384→            <DialogTitle>{editingCustomer ? 'Edit Customer' : 'Add Customer'}</DialogTitle>
+   385→          </DialogHeader>
+   386→          <div className="grid gap-4 py-2">
+   387→            <div className="grid gap-4 sm:grid-cols-2">
+   388→              <div className="space-y-2">
+   389→                <Label>Name *</Label>
+   390→                <Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Customer name" />
+   391→              </div>
+   392→              <div className="space-y-2">
+   393→                <Label>Phone *</Label>
+   394→                <Input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder="+977-98XXXXXXXX" />
+   395→              </div>
+   396→            </div>
+   397→            <div className="space-y-2">
+   398→              <Label>Email</Label>
+   399→              <Input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="email@example.com" />
+   400→            </div>
+   401→            <div className="grid gap-4 sm:grid-cols-2">
+   402→              <div className="space-y-2">
+   403→                <Label>PAN Number</Label>
+   404→                <Input value={form.pan} onChange={e => setForm(f => ({ ...f, pan: e.target.value }))} placeholder="XXXXXXXXX" />
+   405→              </div>
+   406→              <div className="space-y-2">
+   407→                <Label>Address</Label>
+   408→                <Input value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} placeholder="Area, City" />
+   409→              </div>
+   410→            </div>
+   411→          </div>
+   412→          <DialogFooter>
+   413→            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
+   414→            <Button onClick={handleSave}>{editingCustomer ? 'Save Changes' : 'Add Customer'}</Button>
+   415→          </DialogFooter>
+   416→        </DialogContent>
+   417→      </Dialog>
+   418→
+   419→      {/* Customer Detail Dialog */}
+   420→      <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
+   421→        <DialogContent className="sm:max-w-2xl">
+   422→          <DialogHeader>
+   423→            <DialogTitle>Customer Details</DialogTitle>
+   424→          </DialogHeader>
+   425→          {viewingCustomer && (() => {
+   426→            const avatarColor = getAvatarColor(viewingCustomer.name);
+   427→            const avgOrder = viewingCustomer.totalPurchases > 0 ? Math.round(viewingCustomer.totalSpent / viewingCustomer.totalPurchases) : 0;
+   428→            const spendingTrend = generateSpendingTrend(viewingCustomer.totalSpent);
+   429→            const mockOrders = generateMockOrders(viewingCustomer);
+   430→            return (
+   431→              <Tabs defaultValue="overview" className="w-full">
+   432→                {/* Header section with gradient background */}
+   433→                <div className="bg-gradient-to-b from-muted/30 to-transparent -mx-6 -mt-2 px-6 pt-2 pb-4 rounded-t-lg">
+   434→                  <div className="flex items-center gap-4">
+   435→                    <div className={cn('flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-lg font-bold', avatarColor.bg, avatarColor.text)}>
+   436→                      {getInitials(viewingCustomer.name)}
+   437→                    </div>
+   438→                    <div className="min-w-0 flex-1">
+   439→                      <h3 className="text-lg font-semibold truncate">{viewingCustomer.name}</h3>
+   440→                      <Badge variant="secondary" className={cn('mt-1', viewingCustomer.isActive ? getStatusBadgeClasses('active') : getStatusBadgeClasses('inactive'))}>
+   441→                        {viewingCustomer.isActive ? 'Active' : 'Inactive'}
+   442→                      </Badge>
+   443→                    </div>
+   444→                  </div>
+   445→
+   446→                  {/* Stat cards with colored backgrounds */}
+   447→                  <div className="grid grid-cols-3 gap-3 mt-5">
+   448→                    <div className="rounded-xl border border-emerald-200 dark:border-emerald-800/50 bg-emerald-50 dark:bg-emerald-950/20 p-3 text-center transition-shadow hover:shadow-md">
+   449→                      <p className="text-lg font-bold text-emerald-700 dark:text-emerald-400">{viewingCustomer.totalPurchases}</p>
+   450→                      <p className="text-[11px] text-emerald-600/70 dark:text-emerald-400/70">Purchases</p>
+   451→                    </div>
+   452→                    <div className="rounded-xl border border-purple-200 dark:border-purple-800/50 bg-purple-50 dark:bg-purple-950/20 p-3 text-center transition-shadow hover:shadow-md">
+   453→                      <p className="text-lg font-bold text-purple-700 dark:text-purple-400">NPR {npr(viewingCustomer.totalSpent)}</p>
+   454→                      <p className="text-[11px] text-purple-600/70 dark:text-purple-400/70">Total Spent</p>
+   455→                    </div>
+   456→                    <div className="rounded-xl border border-amber-200 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-950/20 p-3 text-center transition-shadow hover:shadow-md">
+   457→                      <p className="text-lg font-bold text-amber-700 dark:text-amber-400">NPR {npr(avgOrder)}</p>
+   458→                      <p className="text-[11px] text-amber-600/70 dark:text-amber-400/70">Avg. Order</p>
+   459→                    </div>
+   460→                  </div>
+   461→                </div>
+   462→
+   463→                <TabsList className="mt-2 w-full">
+   464→                  <TabsTrigger value="overview" className="flex-1">Overview</TabsTrigger>
+   465→                  <TabsTrigger value="history" className="flex-1">Purchase History</TabsTrigger>
+   466→                </TabsList>
+   467→
+   468→                {/* Overview Tab */}
+   469→                <TabsContent value="overview" className="space-y-4 mt-3">
+   470→                  {/* Contact info grid */}
+   471→                  <div className="grid gap-3 sm:grid-cols-2">
+   472→                    <div className="flex items-center gap-2.5 rounded-lg border p-3">
+   473→                      <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
+   474→                      <div className="min-w-0">
+   475→                        <p className="text-[11px] text-muted-foreground">Email</p>
+   476→                        <p className="text-sm truncate">{viewingCustomer.email || '—'}</p>
+   477→                      </div>
+   478→                    </div>
+   479→                    <div className="flex items-center gap-2.5 rounded-lg border p-3">
+   480→                      <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
+   481→                      <div className="min-w-0">
+   482→                        <p className="text-[11px] text-muted-foreground">Phone</p>
+   483→                        <p className="text-sm">{viewingCustomer.phone}</p>
+   484→                      </div>
+   485→                    </div>
+   486→                    <div className="flex items-center gap-2.5 rounded-lg border p-3">
+   487→                      <Hash className="h-4 w-4 text-muted-foreground shrink-0" />
+   488→                      <div className="min-w-0">
+   489→                        <p className="text-[11px] text-muted-foreground">PAN</p>
+   490→                        <p className="text-sm font-mono">{viewingCustomer.pan || 'Not provided'}</p>
+   491→                      </div>
+   492→                    </div>
+   493→                    <div className="flex items-center gap-2.5 rounded-lg border p-3">
+   494→                      <MapPin className="h-4 w-4 text-muted-foreground shrink-0" />
+   495→                      <div className="min-w-0">
+   496→                        <p className="text-[11px] text-muted-foreground">Address</p>
+   497→                        <p className="text-sm truncate">{viewingCustomer.address || '—'}</p>
+   498→                      </div>
+   499→                    </div>
+   500→                  </div>
+   501→
+   502→                  {/* Spending trend sparkline */}
+   503→                  <div className="rounded-xl border p-4">
+   504→                    <div className="flex items-center justify-between mb-2">
+   505→                      <div className="flex items-center gap-2">
+   506→                        <TrendingUp className="h-4 w-4 text-muted-foreground" />
+   507→                        <span className="text-sm font-medium">Spending Trend</span>
+   508→                      </div>
+   509→                      <span className="text-xs text-muted-foreground">Last 6 months</span>
+   510→                    </div>
+   511→                    <div className="h-[60px] w-full">
+   512→                      <ResponsiveContainer width="100%" height="100%">
+   513→                        <AreaChart data={spendingTrend} margin={{ top: 2, right: 2, bottom: 2, left: 2 }}>
+   514→                          <defs>
+   515→                            <linearGradient id="spendingGradient" x1="0" y1="0" x2="0" y2="1">
+   516→                              <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+   517→                              <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.02} />
+   518→                            </linearGradient>
+   519→                          </defs>
+   520→                          <Area
+   521→                            type="monotone"
+   522→                            dataKey="amount"
+   523→                            stroke="hsl(var(--primary))"
+   524→                            strokeWidth={2}
+   525→                            fill="url(#spendingGradient)"
+   526→                          />
+   527→                        </AreaChart>
+   528→                      </ResponsiveContainer>
+   529→                    </div>
+   530→                  </div>
+   531→
+   532→                  {/* Dates */}
+   533→                  <div className="flex justify-between text-xs text-muted-foreground border-t pt-3">
+   534→                    <span>Customer since: {formatDate(viewingCustomer.createdAt)}</span>
+   535→                    <span>Last visit: {formatDateTime(viewingCustomer.lastVisit)}</span>
+   536→                  </div>
+   537→                </TabsContent>
+   538→
+   539→                {/* Purchase History Tab */}
+   540→                <TabsContent value="history" className="mt-3">
+   541→                  <div className="rounded-xl border overflow-hidden">
+   542→                    <Table>
+   543→                      <TableHeader>
+   544→                        <TableRow>
+   545→                          <TableHead className="text-xs">Invoice #</TableHead>
+   546→                          <TableHead className="text-xs">Date</TableHead>
+   547→                          <TableHead className="text-center text-xs">Items</TableHead>
+   548→                          <TableHead className="text-xs">Payment</TableHead>
+   549→                          <TableHead className="text-xs">Status</TableHead>
+   550→                          <TableHead className="text-right text-xs">Total</TableHead>
+   551→                        </TableRow>
+   552→                      </TableHeader>
+   553→                      <TableBody>
+   554→                        {mockOrders.map((order, idx) => (
+   555→                          <TableRow key={idx} className="transition-colors hover:bg-muted/50">
+   556→                            <TableCell className="text-xs font-mono font-medium">{order.invoiceNumber}</TableCell>
+   557→                            <TableCell className="text-xs text-muted-foreground">{formatDate(order.date)}</TableCell>
+   558→                            <TableCell className="text-center text-xs">{order.items}</TableCell>
+   559→                            <TableCell>
+   560→                              <div className="flex items-center gap-1.5">
+   561→                                <span className={cn('inline-block h-[3px] w-[3px] rounded-full', getPaymentMethodColor(order.paymentMethod))} />
+   562→                                <span className="text-xs">{order.paymentMethod}</span>
+   563→                              </div>
+   564→                            </TableCell>
+   565→                            <TableCell>
+   566→                              <Badge variant="secondary" className={cn('text-[10px]', getStatusBadgeClasses(order.status))}>
+   567→                                {order.status}
+   568→                              </Badge>
+   569→                            </TableCell>
+   570→                            <TableCell className="text-right text-xs font-semibold">NPR {nprFull(order.total)}</TableCell>
+   571→                          </TableRow>
+   572→                        ))}
+   573→                      </TableBody>
+   574→                    </Table>
+   575→                  </div>
+   576→                  <p className="text-[11px] text-muted-foreground mt-2 text-center">
+   577→                    Showing 5 most recent of {viewingCustomer.totalPurchases} total purchases
+   578→                  </p>
+   579→                </TabsContent>
+   580→
+   581→                {/* Action buttons */}
+   582→                <div className="flex justify-between pt-2 border-t">
+   583→                  <div className="flex gap-2">
+   584→                    <Button variant="outline" size="sm" className="gap-1.5" onClick={() => { toast.info('Email compose would open here'); }}>
+   585→                      <Mail className="h-3.5 w-3.5" /> Send Email
+   586→                    </Button>
+   587→                    <Button variant="outline" size="sm" className="gap-1.5" onClick={() => { toast.info('POS would open with this customer pre-selected'); }}>
+   588→                      <ShoppingBag className="h-3.5 w-3.5" /> New Sale
+   589→                    </Button>
+   590→                  </div>
+   591→                  <div className="flex gap-2">
+   592→                    <Button variant="outline" size="sm" onClick={() => { openEdit(viewingCustomer); setDetailOpen(false); }}>
+   593→                      <Pencil className="h-3.5 w-3.5 mr-1" /> Edit
+   594→                    </Button>
+   595→                    <Button variant="outline" size="sm" onClick={() => setDetailOpen(false)}>Close</Button>
+   596→                  </div>
+   597→                </div>
+   598→              </Tabs>
+   599→            );
+   600→          })()}
+   601→        </DialogContent>
+   602→      </Dialog>
+   603→    </div>
+   604→  );
+   605→}
+   606→
