@@ -239,16 +239,6 @@ export default function LandingPage({ onSignIn }: { onSignIn: () => void }) {
   const [appliedPromo, setAppliedPromo] = useState('');
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('yearly');
   const [pageView, setPageView] = useState<PageView>('landing');
-
-  // Registration state
-  const [showRegister, setShowRegister] = useState(false);
-  const [regName, setRegName] = useState('');
-  const [regEmail, setRegEmail] = useState('');
-  const [regPhone, setRegPhone] = useState('');
-  const [regStore, setRegStore] = useState('');
-  const [regPassword, setRegPassword] = useState('');
-  const [regReferral, setRegReferral] = useState('');
-
   // Trial expired popup
   const [showTrialPopup, setShowTrialPopup] = useState(false);
 
@@ -267,12 +257,6 @@ export default function LandingPage({ onSignIn }: { onSignIn: () => void }) {
     if (promoCode.trim()) {
       setAppliedPromo(promoCode.trim().toUpperCase());
     }
-  };
-
-  const handleRegister = () => {
-    if (!regName || !regEmail || !regStore || !regPassword) return;
-    setShowRegister(false);
-    onSignIn();
   };
 
   // Navigate to legal pages
@@ -309,7 +293,7 @@ export default function LandingPage({ onSignIn }: { onSignIn: () => void }) {
               <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
             </Button>
             <Button variant="outline" className="hidden sm:flex" onClick={onSignIn}>Sign In</Button>
-            <Button className="hidden sm:flex" onClick={() => setShowRegister(true)}>Get Started</Button>
+            <Button className="hidden sm:flex" onClick={onSignIn}>Get Started</Button>
             <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setMobileMenu(!mobileMenu)}>
               {mobileMenu ? <XIcon className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
@@ -324,7 +308,7 @@ export default function LandingPage({ onSignIn }: { onSignIn: () => void }) {
             <Separator />
             <div className="flex gap-2">
               <Button variant="outline" className="flex-1" onClick={() => { setMobileMenu(false); onSignIn(); }}>Sign In</Button>
-              <Button className="flex-1" onClick={() => { setMobileMenu(false); setShowRegister(true); }}>Get Started</Button>
+              <Button className="flex-1" onClick={() => { setMobileMenu(false); onSignIn(); }}>Get Started</Button>
             </div>
           </div>
         )}
@@ -351,7 +335,7 @@ export default function LandingPage({ onSignIn }: { onSignIn: () => void }) {
                 Multi-tenant Point of Sale, Inventory Management & Billing System designed specifically for Nepali businesses. Built-in VAT, PAN support, and more.
               </p>
               <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-                <Button size="lg" className="text-base px-8 h-12" onClick={() => setShowRegister(true)}>
+                <Button size="lg" className="text-base px-8 h-12" onClick={onSignIn}>
                   Get Started Free <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
                 <Button size="lg" variant="outline" className="text-base px-8 h-12" onClick={() => setShowTrialPopup(true)}>
@@ -505,7 +489,7 @@ export default function LandingPage({ onSignIn }: { onSignIn: () => void }) {
                           <li className="flex justify-between"><span className="text-muted-foreground">Support</span><span className="font-medium capitalize">{plan.support}</span></li>
                         </ul>
 
-                        <ul className="space-y-2 flex-1 mb-6 max-h-72 overflow-y-auto pr-1">
+                        <ul className="space-y-2 flex-1 mb-6">
                           {featureToggles.map((ft) => {
                             const enabled = plan[ft.key] as boolean;
                             return (
@@ -520,7 +504,7 @@ export default function LandingPage({ onSignIn }: { onSignIn: () => void }) {
                           })}
                         </ul>
 
-                        <Button className="w-full" variant={plan.popular ? 'default' : 'outline'} onClick={() => setShowRegister(true)}>
+                        <Button className="w-full" variant={plan.popular ? 'default' : 'outline'} onClick={onSignIn}>
                           Get Started <ChevronRight className="ml-1 h-4 w-4" />
                         </Button>
                       </CardContent>
@@ -547,7 +531,7 @@ export default function LandingPage({ onSignIn }: { onSignIn: () => void }) {
                       <li className="flex justify-between"><span className="text-muted-foreground">Analytics</span><span className="font-medium capitalize">Custom</span></li>
                       <li className="flex justify-between"><span className="text-muted-foreground">Support</span><span className="font-medium capitalize">Dedicated</span></li>
                     </ul>
-                    <ul className="space-y-2 flex-1 mb-6 max-h-72 overflow-y-auto pr-1">
+                    <ul className="space-y-2 flex-1 mb-6">
                       {featureToggles.map((ft) => (
                         <li key={ft.key} className="flex items-center gap-2 text-sm">
                           <Check className="h-4 w-4 text-emerald-500 shrink-0" />
@@ -586,7 +570,7 @@ export default function LandingPage({ onSignIn }: { onSignIn: () => void }) {
                       <p className="text-sm text-muted-foreground">Start with basic POS features free for 7 days. No credit card needed. Upgrade anytime.</p>
                     </div>
                   </div>
-                  <Button onClick={() => setShowRegister(true)}>
+                  <Button onClick={onSignIn}>
                     Start Free Trial <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </CardContent>
@@ -684,7 +668,7 @@ export default function LandingPage({ onSignIn }: { onSignIn: () => void }) {
                 <Card><CardContent className="p-6 text-center"><p className="text-3xl font-extrabold text-primary">Unlimited</p><p className="text-sm text-muted-foreground mt-1">Referrals allowed</p></CardContent></Card>
                 <Card><CardContent className="p-6 text-center"><p className="text-3xl font-extrabold text-primary">Instant</p><p className="text-sm text-muted-foreground mt-1">Reward application</p></CardContent></Card>
               </div>
-              <Button size="lg" className="mt-10 text-base px-8 h-12" onClick={() => setShowRegister(true)}>
+              <Button size="lg" className="mt-10 text-base px-8 h-12" onClick={onSignIn}>
                 Start Referring <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </motion.div>
@@ -752,74 +736,6 @@ export default function LandingPage({ onSignIn }: { onSignIn: () => void }) {
           Chat with us!
         </span>
       </a>
-
-      {/* ============================================================ */}
-      {/*  REGISTRATION DIALOG                                          */}
-      {/* ============================================================ */}
-      <Dialog open={showRegister} onOpenChange={setShowRegister}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                <UserPlus className="h-4 w-4" />
-              </div>
-              Create Your Account
-            </DialogTitle>
-            <DialogDescription>Start your 7-day free trial. No credit card required.</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 pt-2">
-            <div className="rounded-lg border border-emerald-200 dark:border-emerald-800/50 bg-emerald-50 dark:bg-emerald-900/20 p-3">
-              <div className="flex items-start gap-2">
-                <Crown className="h-4 w-4 text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0" />
-                <div className="text-xs text-emerald-700 dark:text-emerald-300">
-                  <p className="font-medium">Free Plan — 7-Day Trial</p>
-                  <p className="mt-0.5 opacity-80">Get started with basic POS features. Upgrade anytime to unlock more.</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="reg-store">Store / Business Name *</Label>
-              <Input id="reg-store" placeholder="e.g. ABC Store" value={regStore} onChange={e => setRegStore(e.target.value)} />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="reg-name">Full Name *</Label>
-              <Input id="reg-name" placeholder="Your full name" value={regName} onChange={e => setRegName(e.target.value)} />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="grid gap-2">
-                <Label htmlFor="reg-email">Email *</Label>
-                <Input id="reg-email" type="email" placeholder="you@email.com" value={regEmail} onChange={e => setRegEmail(e.target.value)} />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="reg-phone">Phone</Label>
-                <Input id="reg-phone" placeholder="+977-98..." value={regPhone} onChange={e => setRegPhone(e.target.value)} />
-              </div>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="reg-password">Password *</Label>
-              <Input id="reg-password" type="password" placeholder="Min 8 characters" value={regPassword} onChange={e => setRegPassword(e.target.value)} />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="reg-referral">Referral Code (optional)</Label>
-              <Input id="reg-referral" placeholder="Enter referral code" value={regReferral} onChange={e => setRegReferral(e.target.value)} className="font-mono" />
-            </div>
-
-            <div className="flex flex-col gap-2 pt-2">
-              <Button className="w-full" disabled={!regName || !regEmail || !regStore || !regPassword} onClick={handleRegister}>
-                Create Account & Start Free Trial
-              </Button>
-              <p className="text-center text-xs text-muted-foreground">
-                By signing up, you agree to our{' '}
-                <button onClick={() => { setShowRegister(false); setTimeout(() => setPageView('terms'), 200); }} className="underline hover:text-foreground">Terms of Service</button>
-                {' '}and{' '}
-                <button onClick={() => { setShowRegister(false); setTimeout(() => setPageView('privacy'), 200); }} className="underline hover:text-foreground">Privacy Policy</button>.
-              </p>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
       {/* ============================================================ */}
       {/*  TRIAL EXPIRED POPUP                                          */}
       {/* ============================================================ */}
@@ -861,7 +777,7 @@ export default function LandingPage({ onSignIn }: { onSignIn: () => void }) {
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-bold">NPR {nprFull(plan.price)}<span className="text-xs font-normal text-muted-foreground">/mo</span></p>
-                    <Button size="sm" className="h-6 text-[10px] px-2 mt-1" onClick={() => { setShowTrialPopup(false); setShowRegister(true); }}>Choose</Button>
+                    <Button size="sm" className="h-6 text-[10px] px-2 mt-1" onClick={() => { setShowTrialPopup(false); onSignIn(); }}>Choose</Button>
                   </div>
                 </div>
               ))}

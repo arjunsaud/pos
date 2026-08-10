@@ -1,0 +1,882 @@
+     1→'use client';
+     2→
+     3→import { useState } from 'react';
+     4→import { Button } from '@/components/ui/button';
+     5→import {
+     6→  Card,
+     7→  CardContent,
+     8→  CardHeader,
+     9→  CardTitle,
+    10→  CardDescription,
+    11→} from '@/components/ui/card';
+    12→import { Badge } from '@/components/ui/badge';
+    13→import { Input } from '@/components/ui/input';
+    14→import { Label } from '@/components/ui/label';
+    15→import { Separator } from '@/components/ui/separator';
+    16→import {
+    17→  Accordion,
+    18→  AccordionContent,
+    19→  AccordionItem,
+    20→  AccordionTrigger,
+    21→} from '@/components/ui/accordion';
+    22→import {
+    23→  Dialog,
+    24→  DialogContent,
+    25→  DialogHeader,
+    26→  DialogTitle,
+    27→  DialogDescription,
+    28→} from '@/components/ui/dialog';
+    29→import { useTheme } from 'next-themes';
+    30→import { motion, AnimatePresence } from 'framer-motion';
+    31→import { cn } from '@/lib/utils';
+    32→import { nprFull } from '@/lib/helpers';
+    33→import { mockPackages } from '@/lib/mock-data';
+    34→import { useLegalContentStore } from '@/features/auth/store';
+    35→import {
+    36→  Monitor,
+    37→  ShoppingCart,
+    38→  Warehouse,
+    39→  Receipt,
+    40→  Globe,
+    41→  BarChart3,
+    42→  Shield,
+    43→  Users,
+    44→  Gift,
+    45→  Check,
+    46→  X,
+    47→  Moon,
+    48→  Sun,
+    49→  Menu,
+    50→  X as XIcon,
+    51→  Zap,
+    52→  ArrowRight,
+    53→  ArrowLeft,
+    54→  Star,
+    55→  ChevronRight,
+    56→  TrendingUp,
+    57→  Headphones,
+    58→  UserPlus,
+    59→  Store,
+    60→  Package,
+    61→  Quote,
+    62→  MessageCircle,
+    63→  Clock,
+    64→  Crown,
+    65→  Sparkles,
+    66→  AlertTriangle,
+    67→  FileText,
+    68→  Phone,
+    69→  Mail,
+    70→  MapPin,
+    71→  Barcode,
+    72→  Truck,
+    73→  Printer,
+    74→  GraduationCap,
+    75→  HardDrive,
+    76→  Building2,
+    77→  Database,
+    78→} from 'lucide-react';
+    79→
+    80→/* ------------------------------------------------------------------ */
+    81→/*  Static data                                                        */
+    82→/* ------------------------------------------------------------------ */
+    83→
+    84→const ANNUAL_DISCOUNT = 20;
+    85→const WA_URL = 'https://wa.me/9779800000000?text=Hi%20POS%20Nepal%2C%20I%27m%20interested%20in%20your%20POS%20system.';
+    86→const WA_CUSTOM_URL = 'https://wa.me/9779800000000?text=Hi%20POS%20Nepal%2C%20I%27m%20interested%20in%20a%20custom%20plan.';
+    87→
+    88→type PageView = 'landing' | 'terms' | 'privacy';
+    89→
+    90→const features = [
+    91→  { icon: ShoppingCart, title: 'Fast POS', desc: 'Lightning-fast point of sale with barcode scanning, cart management, and instant receipts.', color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-100 dark:bg-emerald-900/30' },
+    92→  { icon: Warehouse, title: 'Inventory Management', desc: 'Track stock levels in real-time, get low-stock alerts, and manage movements across outlets.', color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-100 dark:bg-amber-900/30' },
+    93→  { icon: Receipt, title: 'Billing & VAT', desc: 'Automatic 13% VAT calculation, PAN support, and professional invoice generation for Nepal.', color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-100 dark:bg-purple-900/30' },
+    94→  { icon: Globe, title: 'Multi-Tenant', desc: 'Manage multiple stores or outlets from a single platform with fully isolated data.', color: 'text-sky-600 dark:text-sky-400', bg: 'bg-sky-100 dark:bg-sky-900/30' },
+    95→  { icon: BarChart3, title: 'Analytics & Reports', desc: 'Comprehensive sales, inventory, and VAT reports with Nepal fiscal year support.', color: 'text-rose-600 dark:text-rose-400', bg: 'bg-rose-100 dark:bg-rose-900/30' },
+    96→  { icon: Shield, title: 'Secure & Reliable', desc: 'Enterprise-grade security with 2FA, encrypted data, and 99.9% uptime SLA.', color: 'text-teal-600 dark:text-teal-400', bg: 'bg-teal-100 dark:bg-teal-900/30' },
+    97→];
+    98→
+    99→const steps = [
+   100→  { icon: UserPlus, title: 'Sign Up & Choose Plan', desc: 'Create your account in seconds and select the plan that fits your business.' },
+   101→  { icon: Store, title: 'Set Up Your Store', desc: 'Add your products, configure outlets, and customize your POS settings.' },
+   102→  { icon: ShoppingCart, title: 'Start Selling', desc: 'Ring up sales, manage inventory, and generate invoices with built-in VAT.' },
+   103→  { icon: BarChart3, title: 'Grow & Scale', desc: 'Track analytics, manage multiple outlets, and scale your operations.' },
+   104→];
+   105→
+   106→const testimonials = [
+   107→  { quote: 'POS Nepal completely transformed how we manage our store. The VAT integration alone saves us hours every month. Best investment we made.', name: 'Rajesh Sharma', role: 'Owner, ABC Store - Kathmandu', stars: 5 },
+   108→  { quote: 'The inventory tracking is incredibly accurate. We went from weekly stocktakes to real-time visibility. Our shrinkage dropped by 40% in the first quarter.', name: 'Bikash Thapa', role: 'Manager, Kathmandu Grocers', stars: 5 },
+   109→  { quote: 'As an electronics retailer, we needed a system that could handle thousands of SKUs. POS Nepal handles it effortlessly with blazing-fast performance.', name: 'Anita Gurung', role: 'Director, Pokhara Electronics', stars: 5 },
+   110→];
+   111→
+   112→const faqs = [
+   113→  { q: 'What is POS Nepal?', a: 'POS Nepal is a comprehensive multi-tenant Point of Sale, Inventory Management, and Billing System designed specifically for Nepali businesses. It includes built-in VAT calculation, PAN support, and multi-store management.' },
+   114→  { q: 'How does multi-tenant work?', a: 'Multi-tenancy allows you to manage multiple stores or business outlets from a single platform. Each tenant has fully isolated data, ensuring privacy and security while enabling centralized oversight.' },
+   115→  { q: 'What payment methods are supported?', a: 'POS Nepal supports cash, bank transfers, mobile wallets (eSewa, Khalti, IME Pay), and card payments through our integrated payment gateway (available on eligible plans).' },
+   116→  { q: 'Can I upgrade my plan later?', a: 'Absolutely! You can upgrade or downgrade your plan at any time. When you upgrade, the new features are available immediately and billing is prorated for the remainder of your cycle.' },
+   117→  { q: 'Is there a free trial?', a: 'Yes! Every new account comes with a 7-day free trial on the Free Plan with access to basic features. No credit card is required to start. Upgrade anytime during or after the trial.' },
+   118→];
+   119→
+   120→const featureToggles: { key: keyof (typeof mockPackages)[number]; label: string; icon?: typeof Check }[] = [
+   121→  { key: 'billing', label: 'Billing' },
+   122→  { key: 'receipt', label: 'Receipt' },
+   123→  { key: 'export', label: 'Export' },
+   124→  { key: 'inventory', label: 'Inventory' },
+   125→  { key: 'skuManagement', label: 'SKU Management' },
+   126→  { key: 'pos', label: 'POS' },
+   127→  { key: 'paymentGateway', label: 'Payment Gateway' },
+   128→  { key: 'multipleOutlets', label: 'Multiple Outlets' },
+   129→  { key: 'vendors', label: 'Vendors' },
+   130→  { key: 'invoicePrinting', label: 'Invoice Printing' },
+   131→  { key: 'trainingAndSupport', label: 'Training & Support' },
+   132→  { key: 'customDomain', label: 'Custom Domain' },
+   133→  { key: 'dailyBackup', label: 'Daily Backup' },
+   134→];
+   135→
+   136→const navLinks = [
+   137→  { label: 'Features', href: '#features' },
+   138→  { label: 'How It Works', href: '#how-it-works' },
+   139→  { label: 'Pricing', href: '#pricing' },
+   140→  { label: 'Testimonials', href: '#testimonials' },
+   141→  { label: 'FAQ', href: '#faq' },
+   142→];
+   143→
+   144→/* ------------------------------------------------------------------ */
+   145→/*  Helper: Render markdown-like content from store                     */
+   146→/* ------------------------------------------------------------------ */
+   147→function RenderMarkdown({ content }: { content: string }) {
+   148→  const lines = content.split('\n');
+   149→  const elements: React.ReactNode[] = [];
+   150→  let key = 0;
+   151→
+   152→  for (const line of lines) {
+   153→    const trimmed = line.trim();
+   154→    if (!trimmed) {
+   155→      elements.push(<div key={key++} className="h-2" />);
+   156→      continue;
+   157→    }
+   158→    if (trimmed.startsWith('### ')) {
+   159→      elements.push(<h3 key={key++} className="text-base font-semibold mt-4">{trimmed.slice(4)}</h3>);
+   160→    } else if (trimmed.startsWith('## ')) {
+   161→      elements.push(<h2 key={key++} className="text-lg font-semibold mt-4">{trimmed.slice(3)}</h2>);
+   162→    } else if (trimmed.startsWith('# ')) {
+   163→      elements.push(<h1 key={key++} className="text-xl font-bold mt-2">{trimmed.slice(2)}</h1>);
+   164→    } else if (trimmed.startsWith('- ')) {
+   165→      const boldMatch = trimmed.match(/^- (\*\*(.+?)\*\*:)?(.*)$/);
+   166→      const label = boldMatch?.[2];
+   167→      const rest = boldMatch?.[3] || trimmed.slice(2);
+   168→      elements.push(
+   169→        <li key={key++} className="text-sm text-muted-foreground ml-4 list-disc">
+   170→          {label && <strong className="text-foreground font-medium">{label}:</strong>}
+   171→          <span dangerouslySetInnerHTML={{ __html: rest.replace(/\*\*(.+?)\*\*/g, '<strong class="font-medium text-foreground">$1</strong>') }} />
+   172→        </li>
+   173→      );
+   174→    } else {
+   175→      elements.push(
+   176→        <p key={key++} className="text-sm text-muted-foreground leading-relaxed" dangerouslySetInnerHTML={{ __html: trimmed.replace(/\*\*(.+?)\*\*/g, '<strong class="font-medium text-foreground">$1</strong>') }} />
+   177→      );
+   178→    }
+   179→  }
+   180→
+   181→  return <div className="space-y-1">{elements}</div>;
+   182→}
+   183→
+   184→/* ------------------------------------------------------------------ */
+   185→/*  Legal Page (Full Page)                                              */
+   186→/* ------------------------------------------------------------------ */
+   187→function LegalPage({ title, icon: Icon, content, onBack }: { title: string; icon: typeof FileText; content: string; onBack: () => void }) {
+   188→  return (
+   189→    <div className="min-h-screen flex flex-col bg-background text-foreground">
+   190→      {/* Header */}
+   191→      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+   192→        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center gap-4">
+   193→          <Button variant="ghost" size="sm" onClick={onBack} className="gap-2">
+   194→            <ArrowLeft className="h-4 w-4" />
+   195→            Back
+   196→          </Button>
+   197→          <Separator orientation="vertical" className="h-6" />
+   198→          <div className="flex items-center gap-2.5">
+   199→            <Icon className="h-5 w-5 text-primary" />
+   200→            <span className="font-semibold">{title}</span>
+   201→          </div>
+   202→        </div>
+   203→      </header>
+   204→
+   205→      {/* Content */}
+   206→      <main className="flex-1">
+   207→        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+   208→          <motion.div
+   209→            initial={{ opacity: 0, y: 12 }}
+   210→            animate={{ opacity: 1, y: 0 }}
+   211→            transition={{ duration: 0.3 }}
+   212→            className="prose-sm max-w-none"
+   213→          >
+   214→            <div className="rounded-xl border bg-card p-6 sm:p-10">
+   215→              <RenderMarkdown content={content} />
+   216→            </div>
+   217→          </motion.div>
+   218→        </div>
+   219→      </main>
+   220→
+   221→      {/* Footer */}
+   222→      <footer className="border-t bg-muted/30">
+   223→        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+   224→          <p className="text-center text-sm text-muted-foreground">&copy; 2025 POS Nepal &middot; All rights reserved</p>
+   225→        </div>
+   226→      </footer>
+   227→    </div>
+   228→  );
+   229→}
+   230→
+   231→/* ------------------------------------------------------------------ */
+   232→/*  Component                                                          */
+   233→/* ------------------------------------------------------------------ */
+   234→
+   235→export default function LandingPage({ onSignIn }: { onSignIn: () => void }) {
+   236→  const { setTheme, resolvedTheme } = useTheme();
+   237→  const [mobileMenu, setMobileMenu] = useState(false);
+   238→  const [promoCode, setPromoCode] = useState('');
+   239→  const [appliedPromo, setAppliedPromo] = useState('');
+   240→  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('yearly');
+   241→  const [pageView, setPageView] = useState<PageView>('landing');
+   242→
+   243→  // Registration state
+   244→  const [showRegister, setShowRegister] = useState(false);
+   245→  const [regName, setRegName] = useState('');
+   246→  const [regEmail, setRegEmail] = useState('');
+   247→  const [regPhone, setRegPhone] = useState('');
+   248→  const [regStore, setRegStore] = useState('');
+   249→  const [regPassword, setRegPassword] = useState('');
+   250→  const [regReferral, setRegReferral] = useState('');
+   251→
+   252→  // Trial expired popup
+   253→  const [showTrialPopup, setShowTrialPopup] = useState(false);
+   254→
+   255→  // Legal content from store
+   256→  const { termsContent, privacyContent } = useLegalContentStore();
+   257→
+   258→  const getPrice = (monthlyPrice: number) => {
+   259→    if (billingCycle === 'yearly') {
+   260→      const discounted = Math.round(monthlyPrice * (1 - ANNUAL_DISCOUNT / 100));
+   261→      return { monthly: discounted, yearly: discounted * 12 };
+   262→    }
+   263→    return { monthly: monthlyPrice, yearly: monthlyPrice * 12 };
+   264→  };
+   265→
+   266→  const handleApplyPromo = () => {
+   267→    if (promoCode.trim()) {
+   268→      setAppliedPromo(promoCode.trim().toUpperCase());
+   269→    }
+   270→  };
+   271→
+   272→  const handleRegister = () => {
+   273→    if (!regName || !regEmail || !regStore || !regPassword) return;
+   274→    setShowRegister(false);
+   275→    onSignIn();
+   276→  };
+   277→
+   278→  // Navigate to legal pages
+   279→  if (pageView === 'terms') {
+   280→    return <LegalPage title="Terms & Conditions" icon={FileText} content={termsContent} onBack={() => setPageView('landing')} />;
+   281→  }
+   282→  if (pageView === 'privacy') {
+   283→    return <LegalPage title="Privacy Policy" icon={Shield} content={privacyContent} onBack={() => setPageView('landing')} />;
+   284→  }
+   285→
+   286→  return (
+   287→    <div className="min-h-screen flex flex-col bg-background text-foreground">
+   288→      {/* ============================================================ */}
+   289→      {/*  NAVBAR                                                      */}
+   290→      {/* ============================================================ */}
+   291→      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+   292→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+   293→          <div className="flex items-center gap-2.5">
+   294→            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+   295→              <Monitor className="h-5 w-5" />
+   296→            </div>
+   297→            <span className="text-lg font-bold">POS Nepal</span>
+   298→          </div>
+   299→
+   300→          <nav className="hidden lg:flex items-center gap-6 text-sm font-medium text-muted-foreground">
+   301→            {navLinks.map((link) => (
+   302→              <a key={link.href} href={link.href} className="hover:text-foreground transition-colors">{link.label}</a>
+   303→            ))}
+   304→          </nav>
+   305→
+   306→          <div className="flex items-center gap-2">
+   307→            <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}>
+   308→              <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+   309→              <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+   310→            </Button>
+   311→            <Button variant="outline" className="hidden sm:flex" onClick={onSignIn}>Sign In</Button>
+   312→            <Button className="hidden sm:flex" onClick={() => setShowRegister(true)}>Get Started</Button>
+   313→            <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setMobileMenu(!mobileMenu)}>
+   314→              {mobileMenu ? <XIcon className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+   315→            </Button>
+   316→          </div>
+   317→        </div>
+   318→
+   319→        {mobileMenu && (
+   320→          <div className="lg:hidden border-t px-4 py-4 space-y-3">
+   321→            {navLinks.map((link) => (
+   322→              <a key={link.href} href={link.href} className="block text-sm font-medium" onClick={() => setMobileMenu(false)}>{link.label}</a>
+   323→            ))}
+   324→            <Separator />
+   325→            <div className="flex gap-2">
+   326→              <Button variant="outline" className="flex-1" onClick={() => { setMobileMenu(false); onSignIn(); }}>Sign In</Button>
+   327→              <Button className="flex-1" onClick={() => { setMobileMenu(false); setShowRegister(true); }}>Get Started</Button>
+   328→            </div>
+   329→          </div>
+   330→        )}
+   331→      </header>
+   332→
+   333→      <main className="flex-1">
+   334→        {/* ============================================================ */}
+   335→        {/*  HERO                                                        */}
+   336→        {/* ============================================================ */}
+   337→        <section className="relative overflow-hidden">
+   338→          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5" />
+   339→          <div className="absolute -top-40 -right-40 h-[500px] w-[500px] rounded-full bg-primary/10 blur-3xl" />
+   340→          <div className="absolute -bottom-40 -left-40 h-[400px] w-[400px] rounded-full bg-primary/5 blur-3xl" />
+   341→
+   342→          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-32 text-center">
+   343→            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+   344→              <Badge variant="secondary" className="mb-6 px-4 py-1.5 text-sm">
+   345→                <Zap className="h-3.5 w-3.5 mr-1.5" /> Trusted by 500+ businesses across Nepal
+   346→              </Badge>
+   347→              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight max-w-4xl mx-auto leading-tight">
+   348→                Streamline Your Business with{' '}<span className="text-primary">POS Nepal</span>
+   349→              </h1>
+   350→              <p className="mt-6 text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+   351→                Multi-tenant Point of Sale, Inventory Management & Billing System designed specifically for Nepali businesses. Built-in VAT, PAN support, and more.
+   352→              </p>
+   353→              <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+   354→                <Button size="lg" className="text-base px-8 h-12" onClick={() => setShowRegister(true)}>
+   355→                  Get Started Free <ArrowRight className="ml-2 h-4 w-4" />
+   356→                </Button>
+   357→                <Button size="lg" variant="outline" className="text-base px-8 h-12" onClick={() => setShowTrialPopup(true)}>
+   358→                  <Clock className="mr-2 h-4 w-4" /> View Demo
+   359→                </Button>
+   360→              </div>
+   361→              <div className="mt-12 flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground">
+   362→                <span className="flex items-center gap-1.5"><Check className="h-4 w-4 text-emerald-500" /> 7-day free trial</span>
+   363→                <span className="flex items-center gap-1.5"><Check className="h-4 w-4 text-emerald-500" /> No credit card required</span>
+   364→                <span className="flex items-center gap-1.5"><Check className="h-4 w-4 text-emerald-500" /> Cancel anytime</span>
+   365→              </div>
+   366→            </motion.div>
+   367→          </div>
+   368→        </section>
+   369→
+   370→        {/* ============================================================ */}
+   371→        {/*  FEATURES                                                    */}
+   372→        {/* ============================================================ */}
+   373→        <section id="features" className="py-20 bg-muted/30">
+   374→          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   375→            <motion.div className="text-center mb-14" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.4 }}>
+   376→              <h2 className="text-3xl sm:text-4xl font-bold">Everything You Need</h2>
+   377→              <p className="mt-3 text-lg text-muted-foreground max-w-2xl mx-auto">Powerful features to manage your retail business efficiently</p>
+   378→            </motion.div>
+   379→            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+   380→              {features.map((f, i) => (
+   381→                <motion.div key={f.title} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1, duration: 0.4 }}>
+   382→                  <Card className="h-full transition-shadow hover:shadow-lg">
+   383→                    <CardContent className="p-6">
+   384→                      <div className={cn('h-12 w-12 rounded-xl flex items-center justify-center mb-4', f.bg)}>
+   385→                        <f.icon className={cn('h-6 w-6', f.color)} />
+   386→                      </div>
+   387→                      <h3 className="text-lg font-semibold mb-2">{f.title}</h3>
+   388→                      <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
+   389→                    </CardContent>
+   390→                  </Card>
+   391→                </motion.div>
+   392→              ))}
+   393→            </div>
+   394→          </div>
+   395→        </section>
+   396→
+   397→        {/* ============================================================ */}
+   398→        {/*  HOW IT WORKS                                                */}
+   399→        {/* ============================================================ */}
+   400→        <section id="how-it-works" className="py-20">
+   401→          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   402→            <motion.div className="text-center mb-14" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.4 }}>
+   403→              <h2 className="text-3xl sm:text-4xl font-bold">How It Works</h2>
+   404→              <p className="mt-3 text-lg text-muted-foreground max-w-2xl mx-auto">Get up and running in four simple steps</p>
+   405→            </motion.div>
+   406→            <div className="relative">
+   407→              <div className="hidden md:block absolute top-12 left-[calc(12.5%+1.5rem)] right-[calc(12.5%+1.5rem)] h-0.5 bg-border" />
+   408→              <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+   409→                {steps.map((step, i) => (
+   410→                  <motion.div key={step.title} className="flex flex-col items-center text-center" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.15, duration: 0.4 }}>
+   411→                    <div className="relative z-10 flex h-24 w-24 items-center justify-center rounded-full bg-background border-2 border-primary shadow-sm">
+   412→                      <step.icon className="h-10 w-10 text-primary" />
+   413→                    </div>
+   414→                    <span className="mt-4 inline-flex items-center justify-center h-6 w-6 rounded-full bg-primary text-primary-foreground text-xs font-bold">{i + 1}</span>
+   415→                    <h3 className="mt-3 text-base font-semibold">{step.title}</h3>
+   416→                    <p className="mt-2 text-sm text-muted-foreground max-w-[220px]">{step.desc}</p>
+   417→                  </motion.div>
+   418→                ))}
+   419→              </div>
+   420→            </div>
+   421→          </div>
+   422→        </section>
+   423→
+   424→        {/* ============================================================ */}
+   425→        {/*  PRICING                                                     */}
+   426→        {/* ============================================================ */}
+   427→        <section id="pricing" className="py-20 bg-muted/30">
+   428→          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   429→            <motion.div className="text-center mb-14" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.4 }}>
+   430→              <h2 className="text-3xl sm:text-4xl font-bold">Simple, Transparent Pricing</h2>
+   431→              <p className="mt-3 text-lg text-muted-foreground">Choose the plan that fits your business</p>
+   432→
+   433→              {/* Billing Toggle */}
+   434→              <div className="mt-8 flex items-center justify-center gap-3">
+   435→                <span className={cn('text-sm font-medium', billingCycle === 'monthly' ? 'text-foreground' : 'text-muted-foreground')}>Monthly</span>
+   436→                <button
+   437→                  onClick={() => setBillingCycle(billingCycle === 'monthly' ? 'yearly' : 'monthly')}
+   438→                  className={cn(
+   439→                    'relative h-7 w-12 rounded-full transition-colors duration-200',
+   440→                    billingCycle === 'yearly' ? 'bg-primary' : 'bg-muted'
+   441→                  )}
+   442→                >
+   443→                  <motion.div
+   444→                    className="absolute top-0.5 h-6 w-6 rounded-full bg-white shadow-sm"
+   445→                    animate={{ left: billingCycle === 'yearly' ? '22px' : '2px' }}
+   446→                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+   447→                  />
+   448→                </button>
+   449→                <span className={cn('text-sm font-medium', billingCycle === 'yearly' ? 'text-foreground' : 'text-muted-foreground')}>Annually</span>
+   450→                {billingCycle === 'yearly' && (
+   451→                  <Badge className="bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 border-rose-200 dark:border-rose-800/50 text-xs px-2 py-0.5">
+   452→                    <Sparkles className="h-3 w-3 mr-1" /> Save {ANNUAL_DISCOUNT}%
+   453→                  </Badge>
+   454→                )}
+   455→              </div>
+   456→
+   457→              {billingCycle === 'yearly' && (
+   458→                <motion.p
+   459→                  initial={{ opacity: 0, y: -5 }}
+   460→                  animate={{ opacity: 1, y: 0 }}
+   461→                  className="mt-3 text-sm text-rose-600 dark:text-rose-400 font-medium"
+   462→                >
+   463→                  🎉 Limited Time Offer: Get {ANNUAL_DISCOUNT}% off on annual plans!
+   464→                </motion.p>
+   465→              )}
+   466→            </motion.div>
+   467→
+   468→            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+   469→              {mockPackages.map((plan, i) => {
+   470→                const price = getPrice(plan.price);
+   471→                const isYearly = billingCycle === 'yearly';
+   472→                return (
+   473→                  <motion.div key={plan.id} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1, duration: 0.4 }}>
+   474→                    <Card className={cn('relative h-full flex flex-col transition-shadow hover:shadow-lg', plan.popular && 'border-primary shadow-md ring-1 ring-primary/20')}>
+   475→                      {plan.popular && (
+   476→                        <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+   477→                          <Badge className="px-3 py-1"><Star className="h-3 w-3 mr-1" /> Most Popular</Badge>
+   478→                        </div>
+   479→                      )}
+   480→
+   481→                      <CardHeader className="text-center pb-2">
+   482→                        <CardTitle className="text-xl">{plan.name}</CardTitle>
+   483→                        <div className="mt-4">
+   484→                          {isYearly && (
+   485→                            <div className="flex items-center justify-center gap-2 mb-1">
+   486→                              <span className="text-sm text-muted-foreground line-through">NPR {nprFull(plan.price * 12)}</span>
+   487→                              <Badge className="bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 border-rose-200 dark:border-rose-800/50 text-[10px] px-1.5 py-0">-{ANNUAL_DISCOUNT}%</Badge>
+   488→                            </div>
+   489→                          )}
+   490→                          <span className="text-sm text-muted-foreground">NPR </span>
+   491→                          <span className="text-4xl font-extrabold">{nprFull(isYearly ? price.monthly : plan.price)}</span>
+   492→                          <span className="text-muted-foreground">/{isYearly ? 'mo' : 'month'}</span>
+   493→                          {isYearly && (
+   494→                            <p className="text-xs text-muted-foreground mt-1">Billed NPR {nprFull(price.yearly)}/year</p>
+   495→                          )}
+   496→                        </div>
+   497→                      </CardHeader>
+   498→
+   499→                      <CardContent className="flex-1 flex flex-col pt-0">
+   500→                        <ul className="space-y-1.5 text-sm mb-4 pb-4 border-b">
+   501→                          <li className="flex justify-between"><span className="text-muted-foreground">Max Products</span><span className="font-medium">{plan.maxProducts.toLocaleString()}</span></li>
+   502→                          <li className="flex justify-between"><span className="text-muted-foreground">Staff Accounts</span><span className="font-medium">{plan.maxStaff}</span></li>
+   503→                          <li className="flex justify-between"><span className="text-muted-foreground">Outlets</span><span className="font-medium">{plan.maxOutlets}</span></li>
+   504→                          <li className="flex justify-between"><span className="text-muted-foreground">Analytics</span><span className="font-medium capitalize">{plan.analytics}</span></li>
+   505→                          <li className="flex justify-between"><span className="text-muted-foreground">Support</span><span className="font-medium capitalize">{plan.support}</span></li>
+   506→                        </ul>
+   507→
+   508→                        <ul className="space-y-2 flex-1 mb-6 max-h-72 overflow-y-auto pr-1">
+   509→                          {featureToggles.map((ft) => {
+   510→                            const enabled = plan[ft.key] as boolean;
+   511→                            return (
+   512→                              <li key={ft.key} className="flex items-center gap-2 text-sm">
+   513→                                {enabled
+   514→                                  ? <Check className="h-4 w-4 text-emerald-500 shrink-0" />
+   515→                                  : <X className="h-4 w-4 text-muted-foreground/40 shrink-0" />
+   516→                                }
+   517→                                <span className={cn(!enabled && 'text-muted-foreground/60')}>{ft.label}</span>
+   518→                              </li>
+   519→                            );
+   520→                          })}
+   521→                        </ul>
+   522→
+   523→                        <Button className="w-full" variant={plan.popular ? 'default' : 'outline'} onClick={() => setShowRegister(true)}>
+   524→                          Get Started <ChevronRight className="ml-1 h-4 w-4" />
+   525→                        </Button>
+   526→                      </CardContent>
+   527→                    </Card>
+   528→                  </motion.div>
+   529→                );
+   530→              })}
+   531→
+   532→              {/* Custom Plan Card */}
+   533→              <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.3, duration: 0.4 }}>
+   534→                <Card className="relative h-full flex flex-col transition-shadow hover:shadow-lg border-dashed border-2">
+   535→                  <CardHeader className="text-center pb-2">
+   536→                    <CardTitle className="text-xl">Custom</CardTitle>
+   537→                    <div className="mt-4">
+   538→                      <span className="text-4xl font-extrabold">Let&apos;s Talk</span>
+   539→                    </div>
+   540→                    <p className="text-sm text-muted-foreground mt-2">Tailored to your business needs</p>
+   541→                  </CardHeader>
+   542→                  <CardContent className="flex-1 flex flex-col pt-0">
+   543→                    <ul className="space-y-1.5 text-sm mb-4 pb-4 border-b">
+   544→                      <li className="flex justify-between"><span className="text-muted-foreground">Products</span><span className="font-medium">Unlimited</span></li>
+   545→                      <li className="flex justify-between"><span className="text-muted-foreground">Staff Accounts</span><span className="font-medium">Unlimited</span></li>
+   546→                      <li className="flex justify-between"><span className="text-muted-foreground">Outlets</span><span className="font-medium">Unlimited</span></li>
+   547→                      <li className="flex justify-between"><span className="text-muted-foreground">Analytics</span><span className="font-medium capitalize">Custom</span></li>
+   548→                      <li className="flex justify-between"><span className="text-muted-foreground">Support</span><span className="font-medium capitalize">Dedicated</span></li>
+   549→                    </ul>
+   550→                    <ul className="space-y-2 flex-1 mb-6 max-h-72 overflow-y-auto pr-1">
+   551→                      {featureToggles.map((ft) => (
+   552→                        <li key={ft.key} className="flex items-center gap-2 text-sm">
+   553→                          <Check className="h-4 w-4 text-emerald-500 shrink-0" />
+   554→                          <span>{ft.label}</span>
+   555→                        </li>
+   556→                      ))}
+   557→                      <li className="flex items-center gap-2 text-sm">
+   558→                        <Check className="h-4 w-4 text-emerald-500 shrink-0" />
+   559→                        <span>Custom Integrations</span>
+   560→                      </li>
+   561→                      <li className="flex items-center gap-2 text-sm">
+   562→                        <Check className="h-4 w-4 text-emerald-500 shrink-0" />
+   563→                        <span>SLA Guarantee</span>
+   564→                      </li>
+   565→                    </ul>
+   566→                    <Button className="w-full" variant="outline" asChild>
+   567→                      <a href={WA_CUSTOM_URL} target="_blank" rel="noopener noreferrer">
+   568→                        Contact Us <ArrowRight className="ml-1 h-4 w-4" />
+   569→                      </a>
+   570→                    </Button>
+   571→                  </CardContent>
+   572→                </Card>
+   573→              </motion.div>
+   574→            </div>
+   575→
+   576→            {/* Free Plan Banner */}
+   577→            <div className="mt-10">
+   578→              <Card className="border-dashed border-2 border-primary/30 bg-primary/5">
+   579→                <CardContent className="p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+   580→                  <div className="flex items-center gap-4">
+   581→                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+   582→                      <Crown className="h-6 w-6 text-primary" />
+   583→                    </div>
+   584→                    <div>
+   585→                      <h3 className="font-semibold">Free Plan — 7-Day Trial</h3>
+   586→                      <p className="text-sm text-muted-foreground">Start with basic POS features free for 7 days. No credit card needed. Upgrade anytime.</p>
+   587→                    </div>
+   588→                  </div>
+   589→                  <Button onClick={() => setShowRegister(true)}>
+   590→                    Start Free Trial <ArrowRight className="ml-2 h-4 w-4" />
+   591→                  </Button>
+   592→                </CardContent>
+   593→              </Card>
+   594→            </div>
+   595→
+   596→            {/* Promo Code */}
+   597→            <div className="mt-6 max-w-md mx-auto">
+   598→              <div className="flex gap-2">
+   599→                <Input placeholder="Enter promo code..." value={promoCode} onChange={(e) => { setPromoCode(e.target.value); setAppliedPromo(''); }} className="h-10 font-mono" onKeyDown={(e) => e.key === 'Enter' && handleApplyPromo()} />
+   600→                <Button variant="outline" onClick={handleApplyPromo}>Apply</Button>
+   601→              </div>
+   602→              {appliedPromo && (
+   603→                <motion.p initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} className="mt-2 text-sm text-emerald-600 dark:text-emerald-400 font-medium">
+   604→                  <Gift className="h-3.5 w-3.5 inline mr-1" /> Code &quot;{appliedPromo}&quot; applied! Discount will be reflected at checkout.
+   605→                </motion.p>
+   606→              )}
+   607→            </div>
+   608→          </div>
+   609→        </section>
+   610→
+   611→        {/* ============================================================ */}
+   612→        {/*  TESTIMONIALS                                                */}
+   613→        {/* ============================================================ */}
+   614→        <section id="testimonials" className="py-20">
+   615→          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   616→            <motion.div className="text-center mb-14" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.4 }}>
+   617→              <h2 className="text-3xl sm:text-4xl font-bold">Loved by Businesses Across Nepal</h2>
+   618→              <p className="mt-3 text-lg text-muted-foreground max-w-2xl mx-auto">See what our customers have to say about POS Nepal</p>
+   619→            </motion.div>
+   620→            <div className="grid gap-6 md:grid-cols-3">
+   621→              {testimonials.map((t, i) => (
+   622→                <motion.div key={t.name} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1, duration: 0.4 }}>
+   623→                  <Card className="h-full">
+   624→                    <CardContent className="p-6 flex flex-col">
+   625→                      <div className="flex gap-0.5 mb-4">
+   626→                        {Array.from({ length: t.stars }).map((_, si) => (
+   627→                          <Star key={si} className="h-4 w-4 fill-amber-400 text-amber-400" />
+   628→                        ))}
+   629→                      </div>
+   630→                      <blockquote className="flex-1 text-sm leading-relaxed text-muted-foreground">
+   631→                        <Quote className="h-4 w-4 text-primary/30 mb-2 block" />
+   632→                        &ldquo;{t.quote}&rdquo;
+   633→                      </blockquote>
+   634→                      <Separator className="my-4" />
+   635→                      <div>
+   636→                        <p className="text-sm font-semibold">{t.name}</p>
+   637→                        <p className="text-xs text-muted-foreground">{t.role}</p>
+   638→                      </div>
+   639→                    </CardContent>
+   640→                  </Card>
+   641→                </motion.div>
+   642→              ))}
+   643→            </div>
+   644→          </div>
+   645→        </section>
+   646→
+   647→        {/* ============================================================ */}
+   648→        {/*  FAQ                                                         */}
+   649→        {/* ============================================================ */}
+   650→        <section id="faq" className="py-20 bg-muted/30">
+   651→          <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+   652→            <motion.div className="text-center mb-14" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.4 }}>
+   653→              <h2 className="text-3xl sm:text-4xl font-bold">Frequently Asked Questions</h2>
+   654→              <p className="mt-3 text-lg text-muted-foreground">Got questions? We&apos;ve got answers.</p>
+   655→            </motion.div>
+   656→            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.4 }}>
+   657→              <Accordion type="single" collapsible className="w-full">
+   658→                {faqs.map((faq, i) => (
+   659→                  <AccordionItem key={i} value={`faq-${i}`}>
+   660→                    <AccordionTrigger className="text-left">{faq.q}</AccordionTrigger>
+   661→                    <AccordionContent className="text-muted-foreground">{faq.a}</AccordionContent>
+   662→                  </AccordionItem>
+   663→                ))}
+   664→              </Accordion>
+   665→            </motion.div>
+   666→          </div>
+   667→        </section>
+   668→
+   669→        {/* ============================================================ */}
+   670→        {/*  REFERRAL CTA                                                */}
+   671→        {/* ============================================================ */}
+   672→        <section id="referral" className="py-20">
+   673→          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+   674→            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.4 }}>
+   675→              <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 mb-6">
+   676→                <Gift className="h-8 w-8 text-primary" />
+   677→              </div>
+   678→              <h2 className="text-3xl sm:text-4xl font-bold">Refer a Friend, Earn Rewards</h2>
+   679→              <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
+   680→                Share your unique referral link with other businesses. When they sign up, you both get a discount on your subscription.
+   681→              </p>
+   682→              <div className="mt-10 grid sm:grid-cols-3 gap-6">
+   683→                <Card><CardContent className="p-6 text-center"><p className="text-3xl font-extrabold text-primary">20%</p><p className="text-sm text-muted-foreground mt-1">Discount per referral</p></CardContent></Card>
+   684→                <Card><CardContent className="p-6 text-center"><p className="text-3xl font-extrabold text-primary">Unlimited</p><p className="text-sm text-muted-foreground mt-1">Referrals allowed</p></CardContent></Card>
+   685→                <Card><CardContent className="p-6 text-center"><p className="text-3xl font-extrabold text-primary">Instant</p><p className="text-sm text-muted-foreground mt-1">Reward application</p></CardContent></Card>
+   686→              </div>
+   687→              <Button size="lg" className="mt-10 text-base px-8 h-12" onClick={() => setShowRegister(true)}>
+   688→                Start Referring <ArrowRight className="ml-2 h-4 w-4" />
+   689→              </Button>
+   690→            </motion.div>
+   691→          </div>
+   692→        </section>
+   693→      </main>
+   694→
+   695→      {/* ============================================================ */}
+   696→      {/*  FOOTER                                                      */}
+   697→      {/* ============================================================ */}
+   698→      <footer className="border-t bg-muted/30">
+   699→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+   700→          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+   701→            <div>
+   702→              <div className="flex items-center gap-2.5 mb-4">
+   703→                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground"><Monitor className="h-4 w-4" /></div>
+   704→                <span className="font-bold">POS Nepal</span>
+   705→              </div>
+   706→              <p className="text-sm text-muted-foreground leading-relaxed">Multi-tenant POS, Inventory & Billing System built for Nepali businesses.</p>
+   707→            </div>
+   708→            <div>
+   709→              <h4 className="font-semibold mb-3">Product</h4>
+   710→              <ul className="space-y-2 text-sm text-muted-foreground">
+   711→                <li><a href="#features" className="hover:text-foreground transition-colors">Features</a></li>
+   712→                <li><a href="#pricing" className="hover:text-foreground transition-colors">Pricing</a></li>
+   713→                <li><a href="#how-it-works" className="hover:text-foreground transition-colors">How It Works</a></li>
+   714→                <li><a href="#referral" className="hover:text-foreground transition-colors">Referral Program</a></li>
+   715→              </ul>
+   716→            </div>
+   717→            <div>
+   718→              <h4 className="font-semibold mb-3">Support</h4>
+   719→              <ul className="space-y-2 text-sm text-muted-foreground">
+   720→                <li className="flex items-center gap-1.5"><Headphones className="h-3.5 w-3.5" /> 24/7 Support</li>
+   721→                <li className="flex items-center gap-1.5"><TrendingUp className="h-3.5 w-3.5" /> Help Center</li>
+   722→              </ul>
+   723→            </div>
+   724→            <div>
+   725→              <h4 className="font-semibold mb-3">Contact</h4>
+   726→              <ul className="space-y-2 text-sm text-muted-foreground">
+   727→                <li className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5 shrink-0" /> Kathmandu, Nepal</li>
+   728→                <li className="flex items-center gap-1.5"><Mail className="h-3.5 w-3.5 shrink-0" /> info@posnepal.com</li>
+   729→                <li className="flex items-center gap-1.5"><Phone className="h-3.5 w-3.5 shrink-0" /> +977-9800000000</li>
+   730→              </ul>
+   731→              <div className="mt-4 pt-4 border-t">
+   732→                <button onClick={() => setPageView('privacy')} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
+   733→                  <Shield className="h-3.5 w-3.5" /> Privacy Policy
+   734→                </button>
+   735→              </div>
+   736→            </div>
+   737→          </div>
+   738→          <Separator className="my-8" />
+   739→          <p className="text-center text-sm text-muted-foreground">&copy; 2025 POS Nepal &middot; All rights reserved</p>
+   740→        </div>
+   741→      </footer>
+   742→
+   743→      <a
+   744→        href={WA_URL}
+   745→        target="_blank"
+   746→        rel="noopener noreferrer"
+   747→        className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-lg hover:bg-[#20BD5A] hover:shadow-xl transition-all duration-200 hover:scale-110 group"
+   748→        aria-label="Chat on WhatsApp"
+   749→      >
+   750→        <MessageCircle className="h-6 w-6" />
+   751→        <span className="absolute right-full mr-3 whitespace-nowrap rounded-lg bg-foreground text-background px-3 py-1.5 text-sm font-medium shadow-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+   752→          Chat with us!
+   753→        </span>
+   754→      </a>
+   755→
+   756→      {/* ============================================================ */}
+   757→      {/*  REGISTRATION DIALOG                                          */}
+   758→      {/* ============================================================ */}
+   759→      <Dialog open={showRegister} onOpenChange={setShowRegister}>
+   760→        <DialogContent className="sm:max-w-md">
+   761→          <DialogHeader>
+   762→            <DialogTitle className="flex items-center gap-2">
+   763→              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+   764→                <UserPlus className="h-4 w-4" />
+   765→              </div>
+   766→              Create Your Account
+   767→            </DialogTitle>
+   768→            <DialogDescription>Start your 7-day free trial. No credit card required.</DialogDescription>
+   769→          </DialogHeader>
+   770→          <div className="space-y-4 pt-2">
+   771→            <div className="rounded-lg border border-emerald-200 dark:border-emerald-800/50 bg-emerald-50 dark:bg-emerald-900/20 p-3">
+   772→              <div className="flex items-start gap-2">
+   773→                <Crown className="h-4 w-4 text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0" />
+   774→                <div className="text-xs text-emerald-700 dark:text-emerald-300">
+   775→                  <p className="font-medium">Free Plan — 7-Day Trial</p>
+   776→                  <p className="mt-0.5 opacity-80">Get started with basic POS features. Upgrade anytime to unlock more.</p>
+   777→                </div>
+   778→              </div>
+   779→            </div>
+   780→
+   781→            <div className="grid gap-2">
+   782→              <Label htmlFor="reg-store">Store / Business Name *</Label>
+   783→              <Input id="reg-store" placeholder="e.g. ABC Store" value={regStore} onChange={e => setRegStore(e.target.value)} />
+   784→            </div>
+   785→            <div className="grid gap-2">
+   786→              <Label htmlFor="reg-name">Full Name *</Label>
+   787→              <Input id="reg-name" placeholder="Your full name" value={regName} onChange={e => setRegName(e.target.value)} />
+   788→            </div>
+   789→            <div className="grid grid-cols-2 gap-3">
+   790→              <div className="grid gap-2">
+   791→                <Label htmlFor="reg-email">Email *</Label>
+   792→                <Input id="reg-email" type="email" placeholder="you@email.com" value={regEmail} onChange={e => setRegEmail(e.target.value)} />
+   793→              </div>
+   794→              <div className="grid gap-2">
+   795→                <Label htmlFor="reg-phone">Phone</Label>
+   796→                <Input id="reg-phone" placeholder="+977-98..." value={regPhone} onChange={e => setRegPhone(e.target.value)} />
+   797→              </div>
+   798→            </div>
+   799→            <div className="grid gap-2">
+   800→              <Label htmlFor="reg-password">Password *</Label>
+   801→              <Input id="reg-password" type="password" placeholder="Min 8 characters" value={regPassword} onChange={e => setRegPassword(e.target.value)} />
+   802→            </div>
+   803→            <div className="grid gap-2">
+   804→              <Label htmlFor="reg-referral">Referral Code (optional)</Label>
+   805→              <Input id="reg-referral" placeholder="Enter referral code" value={regReferral} onChange={e => setRegReferral(e.target.value)} className="font-mono" />
+   806→            </div>
+   807→
+   808→            <div className="flex flex-col gap-2 pt-2">
+   809→              <Button className="w-full" disabled={!regName || !regEmail || !regStore || !regPassword} onClick={handleRegister}>
+   810→                Create Account & Start Free Trial
+   811→              </Button>
+   812→              <p className="text-center text-xs text-muted-foreground">
+   813→                By signing up, you agree to our{' '}
+   814→                <button onClick={() => { setShowRegister(false); setTimeout(() => setPageView('terms'), 200); }} className="underline hover:text-foreground">Terms of Service</button>
+   815→                {' '}and{' '}
+   816→                <button onClick={() => { setShowRegister(false); setTimeout(() => setPageView('privacy'), 200); }} className="underline hover:text-foreground">Privacy Policy</button>.
+   817→              </p>
+   818→            </div>
+   819→          </div>
+   820→        </DialogContent>
+   821→      </Dialog>
+   822→
+   823→      {/* ============================================================ */}
+   824→      {/*  TRIAL EXPIRED POPUP                                          */}
+   825→      {/* ============================================================ */}
+   826→      <Dialog open={showTrialPopup} onOpenChange={setShowTrialPopup}>
+   827→        <DialogContent className="sm:max-w-lg">
+   828→          <DialogHeader>
+   829→            <DialogTitle className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+   830→              <AlertTriangle className="h-5 w-5" />
+   831→              Trial Period Ending Soon
+   832→            </DialogTitle>
+   833→            <DialogDescription>Your 7-day free trial is about to expire. Upgrade now to keep your data and continue using POS Nepal.</DialogDescription>
+   834→          </DialogHeader>
+   835→          <div className="space-y-4 pt-2">
+   836→            {/* Trial Progress */}
+   837→            <div className="rounded-lg border border-amber-200 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-900/20 p-4">
+   838→              <div className="flex items-center justify-between mb-2">
+   839→                <span className="text-sm font-medium">Free Trial</span>
+   840→                <span className="text-sm text-amber-600 dark:text-amber-400 font-medium">5 of 7 days used</span>
+   841→              </div>
+   842→              <div className="h-2 w-full rounded-full bg-amber-200 dark:bg-amber-900/50 overflow-hidden">
+   843→                <div className="h-full w-[71%] rounded-full bg-amber-500" />
+   844→              </div>
+   845→              <p className="text-xs text-muted-foreground mt-2">Upgrade before your trial ends to avoid any interruption.</p>
+   846→            </div>
+   847→
+   848→            {/* Quick Plans */}
+   849→            <div className="space-y-2">
+   850→              <h4 className="text-sm font-medium">Choose a plan to continue:</h4>
+   851→              {mockPackages.map((plan) => (
+   852→                <div key={plan.id} className="flex items-center justify-between rounded-lg border p-3 hover:bg-muted/50 transition-colors cursor-pointer">
+   853→                  <div className="flex items-center gap-3">
+   854→                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+   855→                      <Store className="h-4 w-4 text-primary" />
+   856→                    </div>
+   857→                    <div>
+   858→                      <p className="text-sm font-medium">{plan.name}</p>
+   859→                      <p className="text-xs text-muted-foreground">Up to {plan.maxProducts.toLocaleString()} products &middot; {plan.maxStaff} staff</p>
+   860→                    </div>
+   861→                  </div>
+   862→                  <div className="text-right">
+   863→                    <p className="text-sm font-bold">NPR {nprFull(plan.price)}<span className="text-xs font-normal text-muted-foreground">/mo</span></p>
+   864→                    <Button size="sm" className="h-6 text-[10px] px-2 mt-1" onClick={() => { setShowTrialPopup(false); setShowRegister(true); }}>Choose</Button>
+   865→                  </div>
+   866→                </div>
+   867→              ))}
+   868→            </div>
+   869→
+   870→            <div className="flex gap-2 pt-2">
+   871→              <Button variant="outline" className="flex-1" onClick={() => setShowTrialPopup(false)}>Remind Me Later</Button>
+   872→              <Button className="flex-1" onClick={() => { setShowTrialPopup(false); document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' }); }}>
+   873→                View All Plans <ArrowRight className="ml-1 h-4 w-4" />
+   874→              </Button>
+   875→            </div>
+   876→          </div>
+   877→        </DialogContent>
+   878→      </Dialog>
+   879→    </div>
+   880→  );
+   881→}
+   882→
