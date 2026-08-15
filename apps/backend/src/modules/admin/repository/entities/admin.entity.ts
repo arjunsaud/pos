@@ -135,6 +135,14 @@ export class AdminEntity extends DatabaseMongoObjectIdEntityAbstract {
     default: [],
   })
   permissions?: string[];
+
+  @Prop({
+    required: true,
+    default: false,
+    index: true,
+    type: Boolean,
+  })
+  twoFactorEnabled: boolean;
 }
 
 export const AdminSchema = SchemaFactory.createForClass(AdminEntity);

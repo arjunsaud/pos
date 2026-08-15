@@ -47,6 +47,7 @@ export const platformSidebarData: SidebarNavItem[] = [
       { title: 'Packages', href: PATHS.packages, items: [], icon: CreditCard },
       { title: 'Documents', href: PATHS.documents, items: [], icon: FolderOpen },
       { title: 'Contracts', href: PATHS.contracts, items: [], icon: FileCheck2 },
+      { title: 'Templates', href: PATHS.templates, items: [], icon: FileText },
       { title: 'Promotions', href: PATHS.promotions, items: [], icon: Tag },
       { title: 'Referrals', href: PATHS.referrals, items: [], icon: Gift },
     ],
@@ -164,6 +165,12 @@ export const staffSidebarData: SidebarNavItem[] = [
     title: 'History',
     items: [
       { title: 'Sales History', href: PATHS.salesReports, items: [], icon: BarChart3 },
+    ],
+  },
+  {
+    title: 'Account',
+    items: [
+      { title: 'Settings', href: PATHS.settings, items: [], icon: Settings },
     ],
   },
 ];

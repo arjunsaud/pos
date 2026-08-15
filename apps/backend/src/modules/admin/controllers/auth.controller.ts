@@ -49,6 +49,7 @@ import {
 import { AdminChangePasswordDto } from '../dtos/admin.change-password.dto';
 import { AdminLoginDto } from '../dtos/admin.login.dto';
 import { AdminUpdateNameDto } from '../dtos/admin.update-name.dto';
+import { AuthOtpDto, AuthTwoFaActionDto, AuthTwoFaConfirmDto } from 'src/common/auth/dtos/auth.two-factor.dto';
 import { ForgetPasswordDto } from '../dtos/forget-password ';
 import { OTPResetPasswordDto } from '../dtos/otp-reset-password';
 import { IAdminDoc } from '../interfaces/admin.interface';
@@ -112,6 +113,87 @@ export class AuthController {
 
     await this.adminService.resetPasswordAttempt(admin);
 
+    const checkPasswordExpired: boolean =
+      await this.authService.checkPasswordExpired(admin.passwordExpired);
+
+    if (checkPasswordExpired) {
+      throw new ForbiddenException({
+        statusCode: ENUM_ADMIN_STATUS_CODE_ERROR.ADMIN_PASSWORD_EXPIRED_ERROR,
+        message: 'admin.error.passwordExpired',
+      });
+    }
+
+    if (admin.twoFactorEnabled) {
+      await this.adminService.sendTwoFactorOtp(admin.email);
+      return {
+        data: {
+          requiresTwoFactor: true,
+          email: admin.email,
+        },
+      };
+    }
+
+    return this.issueAdminTokens(admin);
+  }
+
+  @ResponseSingle('admin.login.2fa')
+  @HttpCode(HttpStatus.OK)
+  @Post('/login/2fa')
+  async loginTwoFactor(@Body() { email, otp }: AuthOtpDto): Promise<IResponse> {
+    if (!email) {
+      throw new BadRequestException({
+        statusCode: ENUM_ADMIN_STATUS_CODE_ERROR.ADMIN_NOT_FOUND_ERROR,
+        message: 'admin.error.notFound',
+      });
+    }
+    const admin: AdminDoc = await this.adminService.findOneByEmail(email);
+    if (!admin || !admin.twoFactorEnabled) {
+      throw new NotFoundException({
+        statusCode: ENUM_ADMIN_STATUS_CODE_ERROR.ADMIN_NOT_FOUND_ERROR,
+        message: 'admin.error.notFound',
+      });
+    }
+    await this.adminService.verifyTwoFactorOtp(email, otp);
+    return this.issueAdminTokens(admin);
+  }
+
+  @ResponseSingle('admin.2fa.challenge')
+  @AdminProtected()
+  @AuthJwtAccessProtected()
+  @Post('/2fa/challenge')
+  async twoFactorChallenge(
+    @GetAdmin() admin: AdminDoc,
+    @Body() { action }: AuthTwoFaActionDto,
+  ): Promise<IResponse> {
+    if (action === 'enable' && admin.twoFactorEnabled) {
+      throw new BadRequestException({
+        message: 'admin.error.twoFactorAlreadyEnabled',
+      });
+    }
+    if (action === 'disable' && !admin.twoFactorEnabled) {
+      throw new BadRequestException({
+        message: 'admin.error.twoFactorAlreadyDisabled',
+      });
+    }
+    await this.adminService.sendTwoFactorOtp(admin.email);
+    return { data: { sent: true, email: admin.email, action } };
+  }
+
+  @ResponseSingle('admin.2fa.confirm')
+  @AdminProtected()
+  @AuthJwtAccessProtected()
+  @Post('/2fa/confirm')
+  async twoFactorConfirm(
+    @GetAdmin() admin: AdminDoc,
+    @Body() body: AuthTwoFaConfirmDto,
+  ): Promise<IResponse> {
+    await this.adminService.verifyTwoFactorOtp(admin.email, body.otp);
+    const enabled = body.action === 'enable';
+    await this.adminService.setTwoFactorEnabled(admin, enabled);
+    return { data: { twoFactorEnabled: enabled } };
+  }
+
+  private async issueAdminTokens(admin: AdminDoc): Promise<IResponse> {
     const payload: AdminEntity =
       await this.adminService.payloadSerialization(admin);
     const tokenType: string = await this.authService.getTokenType();
@@ -150,16 +232,6 @@ export class AuthController {
     const refreshToken: string = await this.authService.createRefreshToken(
       payloadHashedRefreshToken,
     );
-
-    const checkPasswordExpired: boolean =
-      await this.authService.checkPasswordExpired(admin.passwordExpired);
-
-    if (checkPasswordExpired) {
-      throw new ForbiddenException({
-        statusCode: ENUM_ADMIN_STATUS_CODE_ERROR.ADMIN_PASSWORD_EXPIRED_ERROR,
-        message: 'admin.error.passwordExpired',
-      });
-    }
 
     return {
       data: {

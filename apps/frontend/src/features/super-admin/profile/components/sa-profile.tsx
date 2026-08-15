@@ -15,10 +15,13 @@ import { useCurrentProfile } from '@/hooks/use-api-data';
 import { getInitials, formatDate } from '@/lib/helpers';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { TwoFactorSettings } from '@/components/shared/two-factor-settings';
+import { useAuthStore } from '@/features/auth/store';
 import type { UserProfile } from '@/lib/types';
 
 export default function SAProfile() {
   const mockSuperAdminProfile = useCurrentProfile().data ?? { id: "", name: "", email: "", phone: "", role: "super-admin" as const, joinedAt: "" };
+  const { user } = useAuthStore();
 
   const [editing, setEditing] = useState(false);
   const [profile, setProfile] = useState<UserProfile>({ ...mockSuperAdminProfile });
@@ -35,10 +38,7 @@ export default function SAProfile() {
   const [showNewPwd, setShowNewPwd] = useState(false);
   const [showConfirmPwd, setShowConfirmPwd] = useState(false);
 
-  // 2FA state
-  const [twoFAEnabled, setTwoFAEnabled] = useState(false);
-
-  const handleSave = () => { setEditing(false); toast.success('Profile updated successfully'); };
+  // Password change state
 
   // Password strength check
   const getPasswordStrength = (pwd: string) => {
@@ -66,17 +66,10 @@ export default function SAProfile() {
     setCurrentPassword('');
     setNewPassword('');
     setConfirmPassword('');
-    toast.success('Password changed successfully (mock)');
+    toast.success('Password changed successfully');
   };
 
-  const handle2FAToggle = (enabled: boolean) => {
-    if (enabled) {
-      toast.success('2FA enabled. In production, a QR code would be shown for authenticator app setup.');
-    } else {
-      toast.info('2FA disabled. Your account is less secure now.');
-    }
-    setTwoFAEnabled(enabled);
-  };
+  const handleSave = () => { setEditing(false); toast.success('Profile updated successfully'); };
 
   return (
     <div className="space-y-6">
@@ -99,8 +92,8 @@ export default function SAProfile() {
               <div className="flex justify-between"><span className="text-muted-foreground">Joined</span><span className="font-medium">{formatDate(profile.joinedAt)}</span></div>
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">2FA</span>
-                <Badge variant={twoFAEnabled ? 'default' : 'outline'} className={cn('text-[10px] px-1.5', twoFAEnabled && 'bg-emerald-500 hover:bg-emerald-600')}>
-                  {twoFAEnabled ? <><CheckCircle2 className="h-3 w-3 mr-1" />Enabled</> : 'Disabled'}
+                <Badge variant={user?.twoFactorEnabled ? 'default' : 'outline'} className={cn('text-[10px] px-1.5', user?.twoFactorEnabled && 'bg-emerald-500 hover:bg-emerald-600')}>
+                  {user?.twoFactorEnabled ? <><CheckCircle2 className="h-3 w-3 mr-1" />Enabled</> : 'Disabled'}
                 </Badge>
               </div>
             </div>
@@ -276,118 +269,11 @@ export default function SAProfile() {
           </CardContent>
         </Card>
 
-        {/* Two-Factor Authentication Card */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className={cn(
-                'flex h-10 w-10 items-center justify-center rounded-lg',
-                twoFAEnabled
-                  ? 'bg-emerald-100 dark:bg-emerald-900/30'
-                  : 'bg-muted'
-              )}>
-                {twoFAEnabled
-                  ? <ShieldCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-                  : <Smartphone className="h-5 w-5 text-muted-foreground" />
-                }
-              </div>
-              <div className="flex-1">
-                <CardTitle className="text-base">Two-Factor Authentication</CardTitle>
-                <CardDescription>Add an extra layer of security to your account</CardDescription>
-              </div>
-              <Switch
-                checked={twoFAEnabled}
-                onCheckedChange={handle2FAToggle}
-              />
-            </div>
-          </CardHeader>
-          <CardContent>
-            {twoFAEnabled ? (
-              <div className="space-y-4">
-                <div className="rounded-lg border border-emerald-200 dark:border-emerald-800/50 bg-emerald-50 dark:bg-emerald-900/20 p-4">
-                  <div className="flex items-start gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0" />
-                    <div>
-                      <p className="text-sm font-medium text-emerald-800 dark:text-emerald-300">2FA is Enabled</p>
-                      <p className="text-xs text-emerald-700/70 dark:text-emerald-400/70 mt-1">
-                        Your account is protected with two-factor authentication. You will be asked for a verification code when signing in.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
-                  <h4 className="text-sm font-medium flex items-center gap-2">
-                    <Smartphone className="h-4 w-4" />
-                    Authenticator App
-                  </h4>
-                  <div className="space-y-2 text-xs text-muted-foreground">
-                    <p>Use an authenticator app like Google Authenticator or Authy to generate verification codes.</p>
-                    <div className="flex items-center gap-2 rounded-md bg-background p-2.5 border">
-                      <div className="h-12 w-12 rounded bg-muted flex items-center justify-center">
-                        <KeyRound className="h-6 w-6 text-muted-foreground" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-foreground text-xs">QR Code (Mock)</p>
-                        <p className="text-[10px]">Scan with authenticator app</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="backup-code" className="text-xs">Backup Recovery Codes</Label>
-                    <div className="grid grid-cols-2 gap-1.5">
-                      {['ABCD-1234', 'EFGH-5678', 'IJKL-9012', 'MNOP-3456'].map((code) => (
-                        <div key={code} className="rounded bg-background border px-2.5 py-1.5 text-xs font-mono text-muted-foreground text-center">
-                          {code}
-                        </div>
-                      ))}
-                    </div>
-                    <p className="text-[10px] text-muted-foreground">Store these codes safely. Each can only be used once.</p>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="rounded-lg border border-amber-200 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-900/20 p-4">
-                  <div className="flex items-start gap-3">
-                    <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
-                    <div>
-                      <p className="text-sm font-medium text-amber-800 dark:text-amber-300">2FA is Not Enabled</p>
-                      <p className="text-xs text-amber-700/70 dark:text-amber-400/70 mt-1">
-                        We strongly recommend enabling two-factor authentication for your super admin account to prevent unauthorized access.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <h4 className="text-sm font-medium">How 2FA protects you:</h4>
-                  <ul className="space-y-2">
-                    {[
-                      { icon: Shield, text: 'Requires a verification code in addition to your password' },
-                      { icon: Smartphone, text: 'Codes are generated by your authenticator app' },
-                      { icon: KeyRound, text: 'Backup codes available if you lose your device' },
-                    ].map(({ icon: Icon, text }) => (
-                      <li key={text} className="flex items-start gap-2.5 text-sm text-muted-foreground">
-                        <Icon className="h-4 w-4 mt-0.5 shrink-0 text-muted-foreground/70" />
-                        {text}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => handle2FAToggle(true)}
-                >
-                  <ShieldCheck className="h-4 w-4 mr-2" />
-                  Enable Two-Factor Authentication
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <TwoFactorSettings
+          enabled={Boolean(user?.twoFactorEnabled)}
+          isAdmin
+          onChanged={() => undefined}
+        />
       </div>
     </div>
   );

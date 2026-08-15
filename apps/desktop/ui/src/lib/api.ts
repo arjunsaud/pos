@@ -95,5 +95,9 @@ export function num(row: Record<string, unknown>, ...keys: string[]): number {
 
 export async function listResource(path: string): Promise<Record<string, unknown>[]> {
   const data = await apiRequest<unknown>(`${path}/list`, { query: { perPage: 100 } });
-  return Array.isArray(data) ? (data as Record<string, unknown>[]) : [];
+  if (Array.isArray(data)) return data as Record<string, unknown>[];
+  if (data && typeof data === 'object' && Array.isArray((data as { data?: unknown }).data)) {
+    return (data as { data: Record<string, unknown>[] }).data;
+  }
+  return [];
 }

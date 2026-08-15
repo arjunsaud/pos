@@ -23,6 +23,7 @@ import { npr, nprFull, formatDateTime } from '@/lib/helpers';
 import { apiPaths, apiRequest } from '@/lib/api';
 import { useAuthStore } from '@/features/auth/store';
 import { SHORTCUTS, matchesShortcut } from '@posnepal/shared';
+import { printSaleDocument } from '@/lib/print/print-document';
 
 const PAYMENT_METHODS = [
   { id: 'cash', label: 'Cash', icon: Banknote, color: 'text-emerald-600 dark:text-emerald-400' },
@@ -231,58 +232,35 @@ export default function POSTerminal() {
     }
   };
 
-  const handlePrintReceipt = useCallback(() => {
+  const handlePrintReceipt = useCallback(async (type: 'receipt' | 'invoice' = 'receipt') => {
     if (!lastSale) return;
-    const receiptEl = document.getElementById('pos-receipt');
-    if (!receiptEl) return;
-    const printWin = window.open('', '_blank', 'width=400,height=600');
-    if (!printWin) return;
-    const cashierName = user?.name || 'Admin';
-    printWin.document.write(`<!DOCTYPE html><html><head><title>Receipt</title>
-      <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Courier New', monospace; font-size: 12px; padding: 20px; max-width: 320px; margin: 0 auto; }
-        .center { text-align: center; }
-        .bold { font-weight: bold; }
-        .muted { color: #666; }
-        .row { display: flex; justify-content: space-between; padding: 2px 0; }
-        .dashed { border-top: 1px dashed #999; margin: 8px 0; }
-        .item { display: flex; justify-content: space-between; padding: 3px 0; }
-        .item-detail { color: #666; font-size: 11px; }
-        .total { font-size: 14px; font-weight: bold; padding: 4px 0; }
-        .footer { text-align: center; margin-top: 12px; color: #666; font-size: 11px; }
-        .receipt-num { font-size: 11px; }
-        @media print { body { padding: 10px; } }
-      </style></head><body>
-      <div class="center">
-        <p class="bold" style="font-size:16px;">ABC Store</p>
-        <p class="muted">Kathmandu, Nepal &middot; PAN: 309876543</p>
-        <p class="muted">Tel: +977-9801234567</p>
-      </div>
-      <div class="dashed"></div>
-      <div class="row"><span class="muted">Receipt #</span><span>${String(receiptNumber).padStart(6, '0')}</span></div>
-      <div class="row"><span class="muted">Cashier</span><span>${cashierName}</span></div>
-      <div class="row"><span class="muted">Customer</span><span>${selectedCustomer ? selectedCustomer.name : 'Walk-in Customer'}</span></div>
-      ${selectedCustomer?.pan ? `<div class="row"><span class="muted">PAN</span><span>${selectedCustomer.pan}</span></div>` : ''}
-      <div class="row"><span class="muted">${formatDateTime(lastSale.time)}</span><span>${lastSale.method}</span></div>
-      <div class="dashed"></div>
-      ${lastSale.items.map(item => `
-        <div class="item"><span>${item.product.name}</span><span>NPR ${npr(item.product.price * item.quantity)}</span></div>
-        <div class="item-detail">${item.quantity} &times; NPR ${npr(item.product.price)}</div>
-      `).join('')}
-      <div class="dashed"></div>
-      <div class="row"><span class="muted">Subtotal</span><span>NPR ${npr(lastSale.subtotal)}</span></div>
-      ${lastSale.discount > 0 ? `<div class="row"><span>Discount</span><span>- NPR ${npr(lastSale.discount)}</span></div>` : ''}
-      <div class="row"><span class="muted">VAT (13%)</span><span>NPR ${nprFull(lastSale.vat)}</span></div>
-      <div class="dashed"></div>
-      <div class="row total"><span>TOTAL</span><span>NPR ${nprFull(lastSale.total)}</span></div>
-      <div class="dashed"></div>
-      <p class="footer">Thank you for shopping with us!</p>
-      </body></html>`);
-    printWin.document.close();
-    printWin.focus();
-    printWin.print();
-    printWin.close();
+    await printSaleDocument(
+      type,
+      {
+        invoiceNumber: String(receiptNumber).padStart(6, '0'),
+        items: lastSale.items.map((item) => ({
+          name: item.product.name,
+          quantity: item.quantity,
+          price: item.product.price,
+        })),
+        subtotal: lastSale.subtotal,
+        discount: lastSale.discount,
+        vat: lastSale.vat,
+        total: lastSale.total,
+        paymentMethod: lastSale.method,
+        customerName: selectedCustomer?.name,
+        customerPan: selectedCustomer?.pan,
+        date: lastSale.time,
+        cashier: user?.name || 'Admin',
+      },
+      {
+        name: user?.tenantName || 'Store',
+        address: 'Kathmandu, Nepal',
+        pan: '309876543',
+        phone: '',
+        footer: 'Thank you for shopping with us!',
+      },
+    );
   }, [lastSale, receiptNumber, user, selectedCustomer]);
 
   // Keyboard shortcuts (shared with the desktop app)
@@ -1110,9 +1088,13 @@ export default function POSTerminal() {
                 </div>
               </div>
               <div className="flex gap-2">
-                <Button className="flex-1 gap-2" variant="outline" onClick={handlePrintReceipt}>
+                <Button className="flex-1 gap-2" variant="outline" onClick={() => void handlePrintReceipt('receipt')}>
                   <Printer className="h-4 w-4" />
-                  Print Receipt
+                  Print receipt
+                </Button>
+                <Button className="flex-1 gap-2" variant="outline" onClick={() => void handlePrintReceipt('invoice')}>
+                  <Printer className="h-4 w-4" />
+                  Print invoice
                 </Button>
                 <Button className="flex-1" onClick={() => setReceiptOpen(false)}>
                   Close

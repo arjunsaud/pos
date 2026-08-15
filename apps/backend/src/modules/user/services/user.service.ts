@@ -24,7 +24,9 @@ import { USER_STATUS } from 'src/common/enum/user.status.enum';
 import { HelperNumberService } from 'src/common/helper/services/helper.number.service';
 import { HelperStringService } from 'src/common/helper/services/helper.string.service';
 import { MailQueueService } from 'src/common/mail-queue/mail.queue.service';
+import { OtpType } from '@posnepal/shared';
 import { UserCreateDto } from 'src/modules/user/dtos/user.create.dto';
+import { VerificationService } from 'src/modules/verification/verification.service';
 import { UserUpdateNameDto } from 'src/modules/user/dtos/user.update-name.dto';
 import { UserUpdatePasswordAttemptDto } from 'src/modules/user/dtos/user.update-password-attempt.dto';
 import { UserUpdateUsernameDto } from 'src/modules/user/dtos/user.update-username.dto';
@@ -53,6 +55,7 @@ export class UserService implements IUserService {
     private readonly configService: ConfigService,
     protected readonly helperService: HelperNumberService,
     protected readonly mailerQueueService: MailQueueService,
+    protected readonly verificationService: VerificationService,
   ) {
     this.uploadPath = this.configService.get<string>('user.uploadPath', '');
 
@@ -383,6 +386,36 @@ export class UserService implements IUserService {
     });
 
     return { data: 'Code sent to email successfully' };
+  }
+
+  async sendTwoFactorOtp(email: string) {
+    const created = await this.verificationService.createOTP({
+      type: OtpType.TWOFA,
+      email,
+    });
+    this.mailerQueueService.addJobForgetPassword({
+      to: email,
+      subject: 'Your POS Nepal 2FA code',
+      code: created.otp,
+    });
+    return { data: 'Code sent to email successfully' };
+  }
+
+  async verifyTwoFactorOtp(email: string, otp: string) {
+    return this.verificationService.verifyEmailOTP({
+      type: OtpType.TWOFA,
+      email,
+      otp,
+    });
+  }
+
+  async setTwoFactorEnabled(
+    repository: UserDoc,
+    enabled: boolean,
+    options?: IDatabaseSaveOptions,
+  ): Promise<UserDoc> {
+    repository.twoFactorEnabled = enabled;
+    return this.userRepository.save(repository, options);
   }
 
   async verifyPasswordResetToken(

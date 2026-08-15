@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { formatNpr, SHORTCUTS } from '@posnepal/shared';
 import { apiRequest, listResource, num, str } from '../lib/api';
+import { printSale } from '../lib/print';
 import type { CartItem, DesktopUser, ProductRow } from '../lib/types';
 
 function toProduct(row: Record<string, unknown>): ProductRow {
@@ -66,11 +67,17 @@ export function PosScreen({
     if (cart.length === 0 || checking.current) return;
     checking.current = true;
     try {
+      const invoiceNumber = `INV-${Date.now()}`;
+      const snapshot = cart.map((item) => ({
+        name: item.product.name,
+        quantity: item.quantity,
+        price: item.product.price,
+      }));
       await apiRequest('/v1/user/sale/create', {
         method: 'POST',
         body: {
           tenantId: user.tenantId || '',
-          invoiceNumber: `INV-${Date.now()}`,
+          invoiceNumber,
           items: cart.map((item) => ({
             productId: item.product.id,
             productName: item.product.name,
@@ -88,7 +95,21 @@ export function PosScreen({
         },
       });
       setCart([]);
-      setMessage('Sale completed');
+      setMessage('Sale completed — printing receipt');
+      void printSale(
+        'receipt',
+        {
+          invoiceNumber,
+          items: snapshot,
+          subtotal,
+          discount: 0,
+          vat,
+          total,
+          paymentMethod: method,
+          cashier: user.name,
+        },
+        user.tenantName || 'Store',
+      );
     } catch {
       setMessage('Sale failed');
     } finally {

@@ -47,6 +47,7 @@ export function mapUserFromProfile(
     ) || undefined,
     tenantId: asString(profile.tenantId) || undefined,
     tenantName: asString(profile.tenantName) || undefined,
+    twoFactorEnabled: Boolean(profile.twoFactorEnabled),
   };
 }
 

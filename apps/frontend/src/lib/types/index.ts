@@ -19,6 +19,7 @@ export interface User {
   avatar?: string;
   tenantId?: string;
   tenantName?: string;
+  twoFactorEnabled?: boolean;
 }
 
 // ---------- Navigation ----------
@@ -35,6 +36,7 @@ export type NavSection =
   | 'sa-promotions'
   | 'sa-referrals'
   | 'sa-profile'
+  | 'sa-templates'
   // Super Admin - Tenant View (when a tenant is selected)
   | 'sa-tenant-overview'
   | 'sa-tenant-billing'

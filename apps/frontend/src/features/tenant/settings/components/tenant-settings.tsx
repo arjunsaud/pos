@@ -11,9 +11,11 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Shield, Lock, Bell, Eye, EyeOff, Save, Store, Globe, Clock, Link2, Copy, AlertCircle, CheckCircle2, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { toast } from 'sonner';
+import { TwoFactorSettings } from '@/components/shared/two-factor-settings';
+import { useAuthStore } from '@/features/auth/store';
 
 export default function TenantSettings() {
+  const user = useAuthStore((s) => s.user);
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -21,7 +23,6 @@ export default function TenantSettings() {
   const [newPw, setNewPw] = useState('');
   const [confirmPw, setConfirmPw] = useState('');
 
-  const [twoFA, setTwoFA] = useState(false);
   const [notif, setNotif] = useState({ order: true, stock: true, weekly: true, sms: false });
 
   const [bizName, setBizName] = useState('ABC Store');
@@ -38,11 +39,6 @@ export default function TenantSettings() {
     if (newPw !== confirmPw) { toast.error('New passwords do not match'); return; }
     toast.success('Password changed successfully');
     setCurrentPw(''); setNewPw(''); setConfirmPw('');
-  };
-
-  const handleToggle2FA = () => {
-    setTwoFA(!twoFA);
-    toast.success(twoFA ? 'Two-factor authentication disabled' : 'Two-factor authentication enabled');
   };
 
   const handleSaveBiz = () => toast.success('Business settings saved');
@@ -101,21 +97,7 @@ export default function TenantSettings() {
       </Card>
 
       {/* Two-Factor Auth */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2"><Shield className="h-5 w-5" /> Two-Factor Authentication</CardTitle>
-          <CardDescription>Add an extra layer of security to your account</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <p className="text-sm font-medium">Enable 2FA</p>
-              <p className="text-sm text-muted-foreground">Receive a verification code when signing in</p>
-            </div>
-            <Switch checked={twoFA} onCheckedChange={handleToggle2FA} />
-          </div>
-        </CardContent>
-      </Card>
+      <TwoFactorSettings enabled={Boolean(user?.twoFactorEnabled)} />
 
       {/* Business Settings */}
       <Card>

@@ -1,5 +1,24 @@
 export type DesktopRole = 'tenant-admin' | 'staff';
-export type DesktopPage = 'dashboard' | 'pos' | 'products' | 'inventory' | 'sales';
+export type DesktopPage =
+  | 'dashboard'
+  | 'pos'
+  | 'billing'
+  | 'products'
+  | 'inventory'
+  | 'categories'
+  | 'vendors'
+  | 'purchases'
+  | 'stock-transfer'
+  | 'sales'
+  | 'customers'
+  | 'outlets'
+  | 'staff'
+  | 'notifications'
+  | 'support'
+  | 'subscription'
+  | 'store-profile'
+  | 'profile'
+  | 'settings';
 
 export interface DesktopUser {
   id: string;

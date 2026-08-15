@@ -79,9 +79,9 @@ kbd {
 .app { height: 100%; display: grid; grid-template-columns: 232px 1fr; }
 .sidebar {
   background: #121920; border-right: 1px solid var(--line);
-  display: flex; flex-direction: column; padding: 16px 12px;
+  display: flex; flex-direction: column; padding: 16px 12px; min-height: 0;
 }
-.nav { display: grid; gap: 4px; margin-top: 16px; }
+.nav { display: grid; gap: 4px; margin-top: 16px; overflow: auto; flex: 1; }
 .nav button {
   text-align: left; border: 0; background: transparent;
   border-radius: 8px; padding: 10px 12px; color: var(--muted);

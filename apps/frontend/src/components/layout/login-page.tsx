@@ -71,7 +71,7 @@ interface LoginPageProps {
 
 export function LoginPage({ onBack }: LoginPageProps) {
   const router = useRouter();
-  const { login, register, hydrated, isAuthenticated, user } = useAuthStore();
+  const { login, register, completeTwoFactorLogin, hydrated, isAuthenticated, user } = useAuthStore();
   const desktop = isDesktopClient();
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(
     desktop ? 'tenant-admin' : null,
@@ -82,6 +82,11 @@ export function LoginPage({ onBack }: LoginPageProps) {
   const [email, setEmail] = useState(desktop ? '' : 'admin@posnepal.com');
   const [password, setPassword] = useState(desktop ? '' : 'Test@123');
   const [submitting, setSubmitting] = useState(false);
+  const [otp, setOtp] = useState('');
+  const [challenge, setChallenge] = useState<{
+    email: string;
+    kind: 'admin' | 'user';
+  } | null>(null);
 
   useEffect(() => {
     if (hydrated && isAuthenticated && user) {
@@ -110,7 +115,25 @@ export function LoginPage({ onBack }: LoginPageProps) {
     if (!selectedRole || !email || !password) return;
     setSubmitting(true);
     try {
-      const user = await login(email, password, selectedRole);
+      const result = await login(email, password, selectedRole);
+      if ('requiresTwoFactor' in result) {
+        setChallenge({ email: result.email, kind: result.kind });
+        toast.success('Enter the 2FA code sent to your email');
+        return;
+      }
+      router.replace(homePath(result.role));
+    } catch (error) {
+      handleError(error);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (!challenge || !otp) return;
+    setSubmitting(true);
+    try {
+      const user = await completeTwoFactorLogin(challenge.email, otp, challenge.kind);
       router.replace(homePath(user.role));
     } catch (error) {
       handleError(error);
@@ -124,14 +147,18 @@ export function LoginPage({ onBack }: LoginPageProps) {
     setSubmitting(true);
     try {
       const digits = regPhone.replace(/\D/g, '').slice(-10);
-      const user = await register({
+      const result = await register({
         fullName: regName,
         email: regEmail,
         password: regPassword,
         tenantName: regStore,
         mobileNumber: digits.length === 10 ? digits : undefined,
       });
-      router.replace(homePath(user.role));
+      if ('requiresTwoFactor' in result) {
+        toast.success('Enter the 2FA code sent to your email');
+        return;
+      }
+      router.replace(homePath(result.role));
     } catch (error) {
       handleError(error);
     } finally {
@@ -282,6 +309,34 @@ export function LoginPage({ onBack }: LoginPageProps) {
                       </CardDescription>
                     </div>
 
+                    {challenge ? (
+                      <div className="space-y-3">
+                        <p className="text-sm text-muted-foreground">
+                          We sent a 2FA code to {challenge.email}.
+                        </p>
+                        <div className="space-y-2">
+                          <Label htmlFor="otp">Verification code</Label>
+                          <Input
+                            id="otp"
+                            inputMode="numeric"
+                            value={otp}
+                            onChange={(e) => setOtp(e.target.value)}
+                            placeholder="6-digit code"
+                          />
+                        </div>
+                        <Button
+                          className="w-full"
+                          disabled={submitting || otp.length < 4}
+                          onClick={() => void handleVerifyOtp()}
+                        >
+                          {submitting ? 'Verifying…' : 'Verify and sign in'}
+                        </Button>
+                        <Button variant="ghost" className="w-full" onClick={() => { setChallenge(null); setOtp(''); }}>
+                          Back
+                        </Button>
+                      </div>
+                    ) : (
+                    <>
                     <div className="space-y-2">
                       <Label htmlFor="email">Email</Label>
                       <Input id="email" type="email" placeholder="you@store.com" value={email} onChange={(e) => setEmail(e.target.value)} className="dark:border-border/60" />
@@ -358,6 +413,8 @@ export function LoginPage({ onBack }: LoginPageProps) {
                         {selectedRole && <ArrowRight className="h-4 w-4" />}
                       </Button>
                     </motion.div>
+                    </>
+                    )}
                   </motion.div>
                 )}
 

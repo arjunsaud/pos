@@ -42,7 +42,7 @@ import { useSales, useProducts, useReturnRefunds } from '@/hooks/use-api-data';
 import { toast } from 'sonner';
 import type { Sale, ReturnRefund, ReturnStatus } from '@/lib/types';
 import { npr, nprFull, getStatusBadgeClasses } from '@/lib/helpers';
-import { useAuthStore } from '@/features/auth/store';
+import { printSaleDocument } from '@/lib/print/print-document';
 
 const fmtDate = (d: string) => new Date(d).toLocaleDateString('en-GB');
 
@@ -219,46 +219,36 @@ export default function BillingPage() {
   }), [returns]);
 
   // --- Print handler ---
-  const handlePrint = useCallback(() => {
-    if (printRef.current) {
-      const printContents = printRef.current.innerHTML;
-      const printWindow = window.open('', '_blank');
-      if (printWindow) {
-        printWindow.document.write(`
-          <html>
-            <head>
-              <title>Invoice ${printSale?.invoiceNumber || ''}</title>
-              <style>
-                body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; color: #111; }
-                .invoice-container { max-width: 700px; margin: 0 auto; }
-                .store-header { text-align: center; margin-bottom: 24px; }
-                .store-name { font-size: 24px; font-weight: 700; }
-                .store-info { font-size: 13px; color: #555; margin-top: 2px; }
-                .invoice-meta { display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 14px; }
-                .invoice-meta div { line-height: 1.6; }
-                .meta-label { font-weight: 600; }
-                table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 14px; }
-                th, td { border: 1px solid #ddd; padding: 8px 12px; text-align: left; }
-                th { background: #f5f5f5; font-weight: 600; }
-                .text-right { text-align: right; }
-                .text-center { text-align: center; }
-                .totals { width: 260px; margin-left: auto; margin-bottom: 20px; font-size: 14px; }
-                .totals .row { display: flex; justify-content: space-between; padding: 3px 0; }
-                .totals .grand { border-top: 2px solid #111; padding-top: 6px; font-weight: 700; font-size: 16px; }
-                .footer { text-align: center; margin-top: 32px; padding-top: 16px; border-top: 1px dashed #aaa; font-size: 14px; color: #555; }
-                .payment-info { font-size: 13px; color: #666; margin-top: 8px; }
-                hr { border: none; border-top: 1px solid #eee; margin: 16px 0; }
-              </style>
-            </head>
-            <body>${printContents}</body>
-          </html>
-        `);
-        printWindow.document.close();
-        printWindow.focus();
-        printWindow.print();
-      }
-    }
-  }, [printSale]);
+  const handlePrint = useCallback(async (type: 'invoice' | 'receipt' = 'invoice') => {
+    if (!printSale) return;
+    await printSaleDocument(
+      type,
+      {
+        invoiceNumber: printSale.invoiceNumber,
+        items: printSale.items.map((item) => ({
+          name: item.productName,
+          quantity: item.quantity,
+          price: item.unitPrice,
+        })),
+        subtotal: printSale.subtotal,
+        discount: printSale.discount,
+        vat: printSale.vatAmount,
+        total: printSale.total,
+        paymentMethod: printSale.paymentMethod,
+        customerName: printSale.customerName,
+        customerPan: printSale.customerPAN,
+        date: printSale.date,
+        cashier: printSale.staffName || user?.name || '',
+      },
+      {
+        name: storeInfo.name,
+        address: STORE_ADDRESS,
+        pan: STORE_PAN,
+        phone: storeInfo.phone,
+        footer: 'Thank you for your business.',
+      },
+    );
+  }, [printSale, storeInfo.name, storeInfo.phone, user?.name]);
 
   // --- Process return handler ---
   const handleProcessReturn = useCallback(() => {
@@ -796,8 +786,11 @@ export default function BillingPage() {
 
               <DialogFooter>
                 <Button variant="outline" onClick={() => setPrintSale(null)}>Cancel</Button>
-                <Button onClick={handlePrint}>
-                  <Printer className="h-4 w-4" /> Print
+                <Button variant="outline" onClick={() => void handlePrint('receipt')}>
+                  <Printer className="h-4 w-4" /> Print receipt
+                </Button>
+                <Button onClick={() => void handlePrint('invoice')}>
+                  <Printer className="h-4 w-4" /> Print invoice
                 </Button>
               </DialogFooter>
             </div>

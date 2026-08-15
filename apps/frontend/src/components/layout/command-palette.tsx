@@ -40,6 +40,7 @@ function buildCommands(role: UserRole): CommandItem[] {
       { label: 'Packages', section: 'sa-packages', icon: CreditCard, group: 'Pages' },
       { label: 'Documents', section: 'sa-documents', icon: FolderOpen, group: 'Pages' },
       { label: 'Contracts', section: 'sa-contracts', icon: FileCheck2, group: 'Pages' },
+      { label: 'Templates', section: 'sa-templates', icon: FileText, group: 'Pages' },
       { label: 'Promotions', section: 'sa-promotions', icon: Zap, group: 'Pages' },
       { label: 'Referrals', section: 'sa-referrals', icon: Zap, group: 'Pages' },
       { label: 'Activity Logs', section: 'activity-logs', icon: Activity, group: 'Pages' },
@@ -67,7 +68,6 @@ function buildCommands(role: UserRole): CommandItem[] {
       { label: 'Profile', section: 'tenant-profile', icon: UserCog, group: 'Pages' },
       { label: 'Settings', section: 'tenant-settings', icon: Settings, group: 'Pages' },
     );
-    actions.push(
       { label: 'New Sale', section: 'pos', icon: ShoppingCart, group: 'Actions', isAction: true, toastMessage: 'Opening POS...' },
       { label: 'Create Invoice', section: 'billing', icon: Receipt, group: 'Actions', isAction: true, toastMessage: 'Opening Billing...' },
       { label: 'Add Product', section: 'products', icon: Package, group: 'Actions', isAction: true, toastMessage: 'Opening Products...' },
@@ -77,6 +77,7 @@ function buildCommands(role: UserRole): CommandItem[] {
     pages.push(
       { label: 'POS', section: 'pos', icon: ShoppingCart, group: 'Pages' },
       { label: 'Sales History', section: 'sales-reports', icon: BarChart3, group: 'Pages' },
+      { label: 'Settings', section: 'tenant-settings', icon: Settings, group: 'Pages' },
     );
     actions.push(
       { label: 'New Sale', section: 'pos', icon: ShoppingCart, group: 'Actions', isAction: true, toastMessage: 'Opening POS...' },
@@ -99,6 +100,7 @@ const sectionLabels: Record<string, string> = {
   'activity-logs': 'Activity Logs',
   'super-admin-settings': 'Settings',
   'sa-profile': 'Profile',
+  'sa-templates': 'Templates',
   'sa-tenant-overview': 'Tenant Overview',
   'sa-tenant-billing': 'Tenant Billing',
   'sa-tenant-products': 'Tenant Products',

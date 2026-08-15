@@ -2,9 +2,12 @@ export const apiPaths = {
   admin: {
     auth: {
       login: '/v1/admin/auth/login',
+      login2fa: '/v1/admin/auth/login/2fa',
       refresh: '/v1/admin/auth/refresh',
       profile: '/v1/admin/auth/profile',
       updateProfile: '/v1/admin/auth/profile/update',
+      twoFaChallenge: '/v1/admin/auth/2fa/challenge',
+      twoFaConfirm: '/v1/admin/auth/2fa/confirm',
     },
     dashboard: '/v1/admin/dashboard',
     tenant: '/v1/admin/tenant',
@@ -20,6 +23,7 @@ export const apiPaths = {
     paymentReceipt: '/v1/admin/payment-receipt',
     supportTicket: '/v1/admin/support-ticket',
     content: '/v1/admin/content',
+    template: '/v1/admin/template',
     report: '/v1/admin/report',
     contract: '/v1/admin/contract',
     product: '/v1/admin/product',
@@ -40,10 +44,13 @@ export const apiPaths = {
   user: {
     auth: {
       login: '/v1/user/auth/login',
+      login2fa: '/v1/user/auth/login/2fa',
       refresh: '/v1/user/auth/refresh',
       register: '/v1/user/auth/register',
       profile: '/v1/user/auth/profile',
       updateProfile: '/v1/user/auth/profile/update',
+      twoFaChallenge: '/v1/user/auth/2fa/challenge',
+      twoFaConfirm: '/v1/user/auth/2fa/confirm',
     },
     dashboard: '/v1/user/dashboard',
     outlet: '/v1/user/outlet',
@@ -68,5 +75,6 @@ export const apiPaths = {
     publicPackages: '/v1/user/package/public',
     stockMovement: '/v1/user/stock-movement',
     feature: '/v1/user/feature',
+    template: '/v1/user/template',
   },
 } as const;

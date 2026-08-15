@@ -29,6 +29,7 @@ export const PATHS = {
   promotions: '/promotions',
   referrals: '/referrals',
   payment: '/payment',
+  templates: '/templates',
   supportTickets: '/support-tickets',
   activityLogs: '/activity-logs',
 } as const;
@@ -60,6 +61,7 @@ const sectionPath: Partial<Record<NavSection, string>> = {
   'sa-promotions': PATHS.promotions,
   'sa-referrals': PATHS.referrals,
   'sa-profile': PATHS.profile,
+  'sa-templates': PATHS.templates,
   'sa-payment': PATHS.payment,
   'sa-support-tickets': PATHS.supportTickets,
   pos: PATHS.pos,

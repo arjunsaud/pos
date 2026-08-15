@@ -62,6 +62,8 @@ import { SubscriptionModule } from 'src/modules/subscription/subscription.module
 import { AdminSubscriptionController } from 'src/modules/subscription/controllers/admin.subscription.controller';
 import { SupportTicketModule } from 'src/modules/support-ticket/support-ticket.module';
 import { AdminSupportTicketController } from 'src/modules/support-ticket/controllers/admin.support-ticket.controller';
+import { TemplateModule } from 'src/modules/template/template.module';
+import { AdminTemplateController } from 'src/modules/template/controllers/admin.template.controller';
 import { TenantModule } from 'src/modules/tenant/tenant.module';
 import { AdminTenantController } from 'src/modules/tenant/controllers/admin.tenant.controller';
 import { UploadModule } from 'src/modules/upload/upload.module';
@@ -108,6 +110,7 @@ import { AdminVendorController } from 'src/modules/vendor/controllers/admin.vend
     AdminContentController,
     AdminContractController,
     AdminReportController,
+    AdminTemplateController,
   ],
   providers: [],
   exports: [],
@@ -148,6 +151,7 @@ import { AdminVendorController } from 'src/modules/vendor/controllers/admin.vend
     ContentModule,
     ContractModule,
     ReportModule,
+    TemplateModule,
   ],
 })
 export class RoutesAdminModule {}

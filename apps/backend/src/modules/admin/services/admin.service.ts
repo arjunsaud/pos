@@ -36,6 +36,8 @@ import {
 } from 'src/modules/admin/repository/entities/admin.entity';
 import { AdminRepository } from 'src/modules/admin/repository/repositories/admin.repository';
 import { MailQueueService } from 'src/common/mail-queue/mail.queue.service';
+import { OtpType } from '@posnepal/shared';
+import { VerificationService } from 'src/modules/verification/verification.service';
 
 @Injectable()
 export class AdminService implements IAdminService {
@@ -50,6 +52,7 @@ export class AdminService implements IAdminService {
     private readonly configService: ConfigService,
     protected readonly helperService: HelperNumberService,
     protected readonly mailerQueueService: MailQueueService,
+    protected readonly verificationService: VerificationService,
   ) {
     this.uploadPath = this.configService.get<string>('admin.uploadPath', '');
 
@@ -347,6 +350,36 @@ export class AdminService implements IAdminService {
     });
 
     return { data: 'Code sent to email successfully' };
+  }
+
+  async sendTwoFactorOtp(email: string) {
+    const created = await this.verificationService.createOTP({
+      type: OtpType.TWOFA,
+      email,
+    });
+    this.mailerQueueService.addJobForgetPassword({
+      to: email,
+      subject: 'Your POS Nepal 2FA code',
+      code: created.otp,
+    });
+    return { data: 'Code sent to email successfully' };
+  }
+
+  async verifyTwoFactorOtp(email: string, otp: string) {
+    return this.verificationService.verifyEmailOTP({
+      type: OtpType.TWOFA,
+      email,
+      otp,
+    });
+  }
+
+  async setTwoFactorEnabled(
+    repository: AdminDoc,
+    enabled: boolean,
+    options?: IDatabaseSaveOptions,
+  ): Promise<AdminDoc> {
+    repository.twoFactorEnabled = enabled;
+    return this.adminRepository.save(repository, options);
   }
 
   async verifyPasswordResetToken(

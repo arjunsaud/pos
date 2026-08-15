@@ -53,6 +53,8 @@ import { SubscriptionModule } from 'src/modules/subscription/subscription.module
 import { UserSubscriptionController } from 'src/modules/subscription/controllers/user.subscription.controller';
 import { SupportTicketModule } from 'src/modules/support-ticket/support-ticket.module';
 import { UserSupportTicketController } from 'src/modules/support-ticket/controllers/user.support-ticket.controller';
+import { TemplateModule } from 'src/modules/template/template.module';
+import { UserTemplateController } from 'src/modules/template/controllers/user.template.controller';
 import { UploadModule } from 'src/modules/upload/upload.module';
 import { UserUploadController } from 'src/modules/upload/user.upload.controller';
 import { UserModule } from 'src/modules/user/user.module';
@@ -94,6 +96,7 @@ import { UserVendorController } from 'src/modules/vendor/controllers/user.vendor
     UserReturnRefundController,
     UserContentController,
     UserReportController,
+    UserTemplateController,
   ],
   imports: [
     UserModule,
@@ -128,6 +131,7 @@ import { UserVendorController } from 'src/modules/vendor/controllers/user.vendor
     ReturnRefundModule,
     ContentModule,
     ReportModule,
+    TemplateModule,
   ],
 })
 export class RoutesUserModule {}

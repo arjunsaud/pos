@@ -30,6 +30,7 @@ const PROTECTED_PREFIXES = [
   '/payment',
   '/support-tickets',
   '/activity-logs',
+  '/templates',
 ];
 
 export function middleware(request: NextRequest) {

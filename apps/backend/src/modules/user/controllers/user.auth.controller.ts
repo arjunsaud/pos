@@ -48,6 +48,7 @@ import {
 import { UserChangePasswordDto } from 'src/modules/user/dtos/user.change-password.dto';
 import { UserLoginDto } from 'src/modules/user/dtos/user.login.dto';
 import { UserUpdateNameDto } from 'src/modules/user/dtos/user.update-name.dto';
+import { AuthOtpDto, AuthTwoFaActionDto, AuthTwoFaConfirmDto } from 'src/common/auth/dtos/auth.two-factor.dto';
 import { IUserDoc } from 'src/modules/user/interfaces/user.interface';
 import {
   UserDoc,
@@ -182,6 +183,77 @@ export class UserAuthController {
 
     await this.userService.resetPasswordAttempt(user);
 
+    if (user.twoFactorEnabled) {
+      await this.userService.sendTwoFactorOtp(user.email);
+      return {
+        data: {
+          requiresTwoFactor: true,
+          email: user.email,
+        },
+      };
+    }
+
+    return this.issueTenantTokens(user);
+  }
+
+  @ResponseSingle('user.login.2fa')
+  @HttpCode(HttpStatus.OK)
+  @Post('/login/2fa')
+  async loginTwoFactor(@Body() { email, otp }: AuthOtpDto): Promise<IResponse> {
+    if (!email) {
+      throw new BadRequestException({
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: 'user.error.emailRequired',
+      });
+    }
+    const user: UserDoc = await this.userService.findOneByEmail(email);
+    if (!user || !user.twoFactorEnabled) {
+      throw new NotFoundException({
+        statusCode: HttpStatus.NOT_FOUND,
+        message: 'user.error.notFound',
+      });
+    }
+    await this.userService.verifyTwoFactorOtp(email, otp);
+    return this.issueTenantTokens(user);
+  }
+
+  @ResponseSingle('user.2fa.challenge')
+  @UserProtected()
+  @AuthJwtAccessProtected()
+  @Post('/2fa/challenge')
+  async twoFactorChallenge(
+    @GetUser() user: UserDoc,
+    @Body() { action }: AuthTwoFaActionDto,
+  ): Promise<IResponse> {
+    if (action === 'enable' && user.twoFactorEnabled) {
+      throw new BadRequestException({
+        message: 'user.error.twoFactorAlreadyEnabled',
+      });
+    }
+    if (action === 'disable' && !user.twoFactorEnabled) {
+      throw new BadRequestException({
+        message: 'user.error.twoFactorAlreadyDisabled',
+      });
+    }
+    await this.userService.sendTwoFactorOtp(user.email);
+    return { data: { sent: true, email: user.email, action } };
+  }
+
+  @ResponseSingle('user.2fa.confirm')
+  @UserProtected()
+  @AuthJwtAccessProtected()
+  @Post('/2fa/confirm')
+  async twoFactorConfirm(
+    @GetUser() user: UserDoc,
+    @Body() body: AuthTwoFaConfirmDto,
+  ): Promise<IResponse> {
+    await this.userService.verifyTwoFactorOtp(user.email, body.otp);
+    const enabled = body.action === 'enable';
+    await this.userService.setTwoFactorEnabled(user, enabled);
+    return { data: { twoFactorEnabled: enabled } };
+  }
+
+  private async issueTenantTokens(user: UserDoc): Promise<IResponse> {
     const payload: UserDoc = await this.userService.payloadSerializationId({
       _id: user?._id,
     });

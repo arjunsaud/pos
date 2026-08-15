@@ -31,6 +31,11 @@ interface AuthState {
     email: string,
     password: string,
     role: UserRole,
+  ) => Promise<User | { requiresTwoFactor: true; email: string; kind: 'admin' | 'user' }>;
+  completeTwoFactorLogin: (
+    email: string,
+    otp: string,
+    kind: 'admin' | 'user',
   ) => Promise<User>;
   register: (payload: RegisterPayload) => Promise<User>;
   restoreSession: () => Promise<void>;
@@ -58,9 +63,41 @@ export const useAuthStore = create<AuthState>((set) => ({
       isDesktopClient() || role !== 'super-admin' ? 'user' : 'admin';
     const loginPath =
       kind === 'admin' ? apiPaths.admin.auth.login : apiPaths.user.auth.login;
-    const tokens = await apiRequest<{ accessToken: string }>(loginPath, {
+    const tokens = await apiRequest<{
+      accessToken?: string;
+      requiresTwoFactor?: boolean;
+      email?: string;
+    }>(loginPath, {
       method: 'POST',
       body: { email, password },
+      auth: false,
+    });
+    if (tokens.requiresTwoFactor) {
+      return {
+        requiresTwoFactor: true as const,
+        email: tokens.email || email,
+        kind,
+      };
+    }
+    if (!tokens.accessToken) {
+      throw new ApiError(400, { message: 'Sign in failed' }, 'Sign in failed');
+    }
+    setAccessToken(tokens.accessToken, kind);
+    setAuthKind(kind);
+    const user = await fetchProfile(kind);
+    if (isDesktopClient() && user.role === 'super-admin') {
+      setAccessToken(null);
+      setAuthKind(null);
+      throw new ApiError(403, { message: DESKTOP_ADMIN_BLOCKED }, DESKTOP_ADMIN_BLOCKED);
+    }
+    set({ user, isAuthenticated: true, hydrated: true });
+    return user;
+  },
+  completeTwoFactorLogin: async (email, otp, kind) => {
+    const path = kind === 'admin' ? apiPaths.admin.auth.login2fa : apiPaths.user.auth.login2fa;
+    const tokens = await apiRequest<{ accessToken: string }>(path, {
+      method: 'POST',
+      body: { email, otp },
       auth: false,
     });
     setAccessToken(tokens.accessToken, kind);
