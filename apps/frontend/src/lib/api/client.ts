@@ -179,3 +179,53 @@ export async function apiRequest<T>(
 
   return unwrapData<T>(payload);
 }
+
+export async function apiUpload<T>(
+  path: string,
+  formData: FormData,
+  options: {
+    query?: Record<string, string | number | boolean | undefined>;
+    auth?: boolean;
+  } = {},
+): Promise<T> {
+  const { query, auth = true } = options;
+  const url = new URL(`${API_BASE_URL}${path}`);
+
+  if (query) {
+    Object.entries(query).forEach(([key, value]) => {
+      if (value !== undefined && value !== '') {
+        url.searchParams.set(key, String(value));
+      }
+    });
+  }
+
+  const headers: Record<string, string> = {
+    Accept: 'application/json',
+  };
+
+  if (auth) {
+    const token = getAccessToken();
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+  }
+
+  const response = await fetch(url.toString(), {
+    method: 'POST',
+    headers,
+    body: formData,
+  });
+
+  const payload = await response.json().catch(() => null);
+
+  if (response.status === 401 && typeof window !== 'undefined') {
+    auth.logout();
+    window.dispatchEvent(new Event('posnepal:unauthorized'));
+  }
+
+  if (!response.ok) {
+    throw new ApiError(response.status, payload);
+  }
+
+  return unwrapData<T>(payload);
+}

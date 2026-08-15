@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+  UnsupportedMediaTypeException,
+} from '@nestjs/common';
 import { ClientSession } from 'mongoose';
 import {
   IDatabaseCreateOptions,
@@ -8,6 +13,9 @@ import {
   IDatabaseManyOptions,
   IDatabaseSaveOptions,
 } from 'src/common/database/interfaces/database.interface';
+import { ENUM_FILE_STATUS_CODE_ERROR } from 'src/common/file/constants/file.status-code.constant';
+import { IFile } from 'src/common/file/interfaces/file.interface';
+import { HelperFileService } from 'src/common/helper/services/helper.file.service';
 import { ProductCreateDto } from '../dtos/product.create.dto';
 import { ProductUpdateDto } from '../dtos/product.update.dto';
 import {
@@ -15,10 +23,19 @@ import {
   ProductEntity,
 } from '../repository/entities/product.entity';
 import { ProductRepository } from '../repository/repositories/product.repository';
+import {
+  isSpreadsheetFile,
+  mapImportRow,
+  PRODUCT_IMPORT_MAX_ROWS,
+  ProductImportResult,
+} from '../utils/product-import.util';
 
 @Injectable()
 export class ProductService {
-  constructor(private readonly _productRepo: ProductRepository) {}
+  constructor(
+    private readonly _productRepo: ProductRepository,
+    private readonly helperFileService: HelperFileService,
+  ) {}
 
   async findAll(
     find?: Record<string, any>,
@@ -131,6 +148,120 @@ export class ProductService {
     options?: IDatabaseManyOptions<ClientSession>,
   ) {
     return await this._productRepo.deleteMany(find, options);
+  }
+
+  async importFromFile(
+    file: IFile,
+    tenantId: string,
+  ): Promise<ProductImportResult> {
+    if (!tenantId) {
+      throw new BadRequestException({
+        message: 'product.error.tenantIdRequired',
+      });
+    }
+    if (!file?.buffer || !isSpreadsheetFile(file.originalname, file.mimetype)) {
+      throw new UnsupportedMediaTypeException({
+        statusCode: ENUM_FILE_STATUS_CODE_ERROR.FILE_EXTENSION_ERROR,
+        message: 'file.error.mimeInvalid',
+      });
+    }
+
+    let sheets: Record<string, unknown>[][];
+    try {
+      sheets = this.helperFileService.readExcelFromBuffer(file.buffer) as Record<
+        string,
+        unknown
+      >[][];
+    } catch {
+      throw new BadRequestException({
+        message: 'product.error.importInvalid',
+      });
+    }
+    const rows = sheets[0] || [];
+    if (!rows.length) {
+      throw new BadRequestException({
+        message: 'product.error.importEmpty',
+      });
+    }
+    if (rows.length > PRODUCT_IMPORT_MAX_ROWS) {
+      throw new BadRequestException({
+        message: 'product.error.importTooLarge',
+      });
+    }
+
+    return this.importFromRows(rows, tenantId);
+  }
+
+  async importFromRows(
+    rows: Record<string, unknown>[],
+    tenantId: string,
+  ): Promise<ProductImportResult> {
+    const result: ProductImportResult = {
+      created: 0,
+      skipped: 0,
+      errors: [],
+    };
+    const seenSkus = new Set<string>();
+    const toCreate: ProductCreateDto[] = [];
+
+    for (let index = 0; index < rows.length; index++) {
+      const excelRow = index + 2;
+      const mapped = mapImportRow(rows[index], tenantId);
+      if (mapped.error || !mapped.dto) {
+        result.skipped += 1;
+        result.errors.push({
+          row: excelRow,
+          reason: mapped.error || 'Invalid row',
+        });
+        continue;
+      }
+
+      const skuKey = mapped.dto.sku.toLowerCase();
+      if (seenSkus.has(skuKey)) {
+        result.skipped += 1;
+        result.errors.push({
+          row: excelRow,
+          sku: mapped.dto.sku,
+          reason: 'Duplicate SKU in file',
+        });
+        continue;
+      }
+      seenSkus.add(skuKey);
+      toCreate.push(mapped.dto);
+    }
+
+    if (!toCreate.length) {
+      return result;
+    }
+
+    const existing = await this.findAll(
+      { tenantId },
+      { select: { sku: 1 } },
+    );
+    const existingSkus = new Set(
+      existing.map((item) => String(item.sku).toLowerCase()),
+    );
+    const uniqueCreates: ProductCreateDto[] = [];
+
+    for (const item of toCreate) {
+      if (existingSkus.has(item.sku.toLowerCase())) {
+        result.skipped += 1;
+        result.errors.push({
+          row: 0,
+          sku: item.sku,
+          reason: 'SKU already exists',
+        });
+        continue;
+      }
+      uniqueCreates.push(item);
+    }
+
+    if (uniqueCreates.length) {
+      await this.createMany(uniqueCreates);
+      result.created = uniqueCreates.length;
+    }
+
+    return result;
   }
 
   async _checkProduct(id: string): Promise<ProductDoc> {

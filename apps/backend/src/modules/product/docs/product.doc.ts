@@ -4,14 +4,18 @@ import {
   Doc,
   DocAuth,
   DocRequest,
+  DocRequestFile,
   DocResponse,
+  DocResponseFile,
   DocResponsePaging,
 } from 'src/common/doc/decorators/doc.decorator';
+import { ENUM_FILE_EXCEL_MIME } from 'src/common/file/constants/file.enum.constant';
 import { ResponseIdSerialization } from 'src/common/response/serializations/response.id.serialization';
 import { ProductDocParamsId } from '../constants/product.doc.constant';
 import { ProductCreateDto } from '../dtos/product.create.dto';
 import { ProductUpdateDto } from '../dtos/product.update.dto';
 import { ProductGetSerialization } from '../serializations/product.get.serialization';
+import { ProductImportSerialization } from '../serializations/product.import.serialization';
 import { ProductListSerialization } from '../serializations/product.list.serialization';
 
 export function ProductListDoc(): MethodDecorator {
@@ -89,5 +93,40 @@ export function ProductDeleteDoc(): MethodDecorator {
     DocAuth({ jwtAccessToken: true }),
     DocRequest({ params: ProductDocParamsId }),
     DocResponse('product.delete'),
+  );
+}
+
+export function ProductImportDoc(includeTenantQuery = false): MethodDecorator {
+  return applyDecorators(
+    Doc({
+      summary: 'import products from excel or csv',
+    }),
+    DocAuth({ jwtAccessToken: true }),
+    DocRequestFile({
+      file: { multiple: false },
+      queries: includeTenantQuery
+        ? [
+            {
+              name: 'tenantId',
+              required: true,
+              description: 'Tenant to import products into',
+              type: 'string',
+            },
+          ]
+        : undefined,
+    }),
+    DocResponse<ProductImportSerialization>('product.import', {
+      serialization: ProductImportSerialization,
+    }),
+  );
+}
+
+export function ProductImportTemplateDoc(): MethodDecorator {
+  return applyDecorators(
+    Doc({ summary: 'download product import csv template' }),
+    DocAuth({ jwtAccessToken: true }),
+    DocResponseFile({
+      fileType: ENUM_FILE_EXCEL_MIME.CSV,
+    }),
   );
 }

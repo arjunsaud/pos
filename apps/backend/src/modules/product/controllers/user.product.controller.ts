@@ -6,13 +6,20 @@ import {
   Param,
   Patch,
   Post,
+  UploadedFile,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
+import { FileUploadSingle } from 'src/common/file/decorators/file.decorator';
+import { IFile } from 'src/common/file/interfaces/file.interface';
+import { FileRequiredPipe } from 'src/common/file/pipes/file.required.pipe';
+import { FileSizeExcelPipe } from 'src/common/file/pipes/file.size.pipe';
+import { FileTypeExcelPipe } from 'src/common/file/pipes/file.type.pipe';
 import { PaginationQuery } from 'src/common/pagination/decorators/pagination.decorator';
 import { PaginationListDto } from 'src/common/pagination/dto/pagination.list.dto';
 import { PaginationService } from 'src/common/pagination/services/pagination.service';
 import { RequestParamGuard } from 'src/common/request/decorators/request.decorator';
 import {
+  ResponseFile,
   ResponsePaging,
   ResponseSingle,
 } from 'src/common/response/decorators/response.decorator';
@@ -35,6 +42,8 @@ import {
   ProductCreateDoc,
   ProductDeleteDoc,
   ProductGetDoc,
+  ProductImportDoc,
+  ProductImportTemplateDoc,
   ProductInactiveDoc,
   ProductListDoc,
   ProductUpdateDoc,
@@ -45,8 +54,10 @@ import { ProductUpdateDto } from '../dtos/product.update.dto';
 import { IProductEntity } from '../interfaces/product.entity.interface';
 import { ProductDoc } from '../repository/entities/product.entity';
 import { ProductGetSerialization } from '../serializations/product.get.serialization';
+import { ProductImportSerialization } from '../serializations/product.import.serialization';
 import { ProductListSerialization } from '../serializations/product.list.serialization';
 import { ProductService } from '../services/product.service';
+import { PRODUCT_IMPORT_TEMPLATE_ROWS } from '../utils/product-import.util';
 
 @ApiTags('Product')
 @Controller({ version: '1', path: '/product' })
@@ -92,6 +103,33 @@ export class UserProductController {
       _pagination: { total, totalPage },
       data: docs,
     };
+  }
+
+  @ProductImportTemplateDoc()
+  @ResponseFile()
+  @UserProtected()
+  @Get('/import/template')
+  async importTemplate() {
+    return { data: PRODUCT_IMPORT_TEMPLATE_ROWS };
+  }
+
+  @ProductImportDoc()
+  @ResponseSingle('product.import', {
+    serialization: ProductImportSerialization,
+  })
+  @FileUploadSingle('file')
+  @UserProtected()
+  @Post('/import')
+  async importProducts(
+    @GetUser() user: UserDoc,
+    @UploadedFile(FileRequiredPipe, FileSizeExcelPipe, FileTypeExcelPipe)
+    file: IFile,
+  ): Promise<IResponse> {
+    const data = await this._productService.importFromFile(
+      file,
+      String(user?.tenantId || ''),
+    );
+    return { data };
   }
 
   @ProductGetDoc()

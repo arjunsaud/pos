@@ -1,15 +1,56 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { formatNpr } from '@posnepal/shared';
-import { listResource, num, str } from '../lib/api';
+import { apiUpload, listResource, num, str } from '../lib/api';
 
 export function ProductsScreen() {
   const [rows, setRows] = useState<Record<string, unknown>[]>([]);
-  useEffect(() => {
+  const [message, setMessage] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const load = () => {
     void listResource('/v1/user/product').then(setRows).catch(() => undefined);
+  };
+
+  useEffect(() => {
+    load();
   }, []);
+
+  const importFile = async (file?: File) => {
+    if (!file) return;
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const result = await apiUpload<{ created?: number; skipped?: number }>(
+        '/v1/user/product/import',
+        formData,
+      );
+      setMessage(`${result.created ?? 0} imported, ${result.skipped ?? 0} skipped`);
+      load();
+    } catch {
+      setMessage('Could not import products');
+    } finally {
+      if (inputRef.current) inputRef.current.value = '';
+    }
+  };
+
   return (
     <div className="card">
-      <h3>Products</h3>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+        <h3>Products</h3>
+        <div>
+          <input
+            ref={inputRef}
+            type="file"
+            accept=".csv,.xlsx,.xls"
+            hidden
+            onChange={(event) => void importFile(event.target.files?.[0])}
+          />
+          <button className="ghost" type="button" onClick={() => inputRef.current?.click()}>
+            Import Excel/CSV
+          </button>
+        </div>
+      </div>
+      {message ? <p className="muted">{message}</p> : null}
       <table className="table">
         <thead><tr><th>Name</th><th>SKU</th><th>Price</th><th>Stock</th></tr></thead>
         <tbody>

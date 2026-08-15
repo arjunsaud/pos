@@ -1,4 +1,4 @@
-import { apiRequest } from './client';
+import { apiRequest, apiUpload } from './client';
 
 export function resourceApi(basePath: string) {
   return {
@@ -20,6 +20,7 @@ export function resourceApi(basePath: string) {
 
 export {
   apiRequest,
+  apiUpload,
   ApiError,
   setAccessToken,
   getAccessToken,

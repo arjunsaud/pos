@@ -50,6 +50,8 @@ import type { Product } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { npr } from '@/lib/helpers';
 import { useAuthStore } from '@/features/auth/store';
+import { ProductImportButton } from '@/components/shared/product-import-button';
+import { apiPaths } from '@/lib/api';
 
 interface ProductForm {
   name: string;
@@ -80,7 +82,7 @@ const emptyForm: ProductForm = {
 };
 
 export default function ProductManagement() {
-  const { items: mockProducts, create, update, remove } = useProducts();
+  const { items: mockProducts, create, update, remove, refetch } = useProducts();
   const mockCategories = useCategories().items;
   const mockVendors = useVendors().items;
   const tenantId = useAuthStore((s) => s.user?.tenantId || '');
@@ -278,6 +280,11 @@ export default function ProductManagement() {
   return (
     <div className="space-y-6">
       <PageHeader title="Products">
+        <ProductImportButton
+          path={`${apiPaths.user.product}/import`}
+          tenantId={tenantId}
+          onImported={() => void refetch()}
+        />
         <Button variant="outline" size="sm" onClick={exportCSV}>
           <Download className="h-4 w-4" /> Export CSV
         </Button>

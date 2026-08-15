@@ -73,6 +73,42 @@ export async function apiRequest<T>(
   return unwrap(payload) as T;
 }
 
+export async function apiUpload<T>(
+  path: string,
+  formData: FormData,
+  options: {
+    query?: Record<string, string | number | boolean | undefined>;
+    auth?: boolean;
+  } = {},
+): Promise<T> {
+  const { query, auth = true } = options;
+  const url = new URL(`${API_BASE}${path}`);
+  if (query) {
+    for (const [key, value] of Object.entries(query)) {
+      if (value !== undefined && value !== '') url.searchParams.set(key, String(value));
+    }
+  }
+  const headers: Record<string, string> = { Accept: 'application/json' };
+  if (auth) {
+    const token = getToken();
+    if (token) headers.Authorization = `Bearer ${token}`;
+  }
+  const response = await fetch(url.toString(), {
+    method: 'POST',
+    headers,
+    body: formData,
+  });
+  const payload = await response.json().catch(() => null);
+  if (!response.ok) {
+    if (response.status === 401) {
+      setToken(null);
+      window.dispatchEvent(new Event('posnepal:unauthorized'));
+    }
+    throw new ApiError(response.status, payload, messageFrom(payload));
+  }
+  return unwrap(payload) as T;
+}
+
 export function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
 }

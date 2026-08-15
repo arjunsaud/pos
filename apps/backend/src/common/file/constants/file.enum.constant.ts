@@ -8,6 +8,8 @@ export enum ENUM_FILE_EXCEL_MIME {
   XLS = 'application/vnd.ms-excel',
   XLSX = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   CSV = 'text/csv',
+  CSV_APP = 'application/csv',
+  CSV_X = 'application/x-csv',
 }
 
 export enum ENUM_FILE_AUDIO_MIME {

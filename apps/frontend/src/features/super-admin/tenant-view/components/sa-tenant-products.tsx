@@ -5,6 +5,7 @@ import { Store, Search, Package, AlertTriangle, Eye } from 'lucide-react';
 import { nprFull, formatDate, getStatusBadgeClasses, getStockBadgeClasses, getStockStatus } from '@/lib/helpers';
 import { cn } from '@/lib/utils';
 import { PageHeader } from '@/components/shared/page-header';
+import { ProductImportButton } from '@/components/shared/product-import-button';
 import { useTenantSelectorStore } from '@/features/auth/store';
 import { useTenants, useProducts, useCategories } from '@/hooks/use-api-data';
 import { Card, CardContent } from '@/components/ui/card';
@@ -14,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
+import { apiPaths } from '@/lib/api';
 import type { Product } from '@/lib/types';
 
 function TenantBanner({ name }: { name: string }) {
@@ -37,7 +39,7 @@ function NoTenantSelected() {
 
 export default function SATenantProducts() {
   const mockTenants = useTenants().items;
-  const mockProducts = useProducts().items;
+  const { items: mockProducts, refetch } = useProducts();
   const mockCategories = useCategories().items;
 
   const selectedTenantId = useTenantSelectorStore(s => s.selectedTenantId);
@@ -61,20 +63,26 @@ export default function SATenantProducts() {
         (statusFilter === 'inactive' && !p.isActive);
       return matchSearch && matchCat && matchStatus;
     });
-  }, [search, categoryFilter, statusFilter]);
+  }, [mockProducts, search, categoryFilter, statusFilter]);
 
   const summary = useMemo(() => {
     const active = mockProducts.filter(p => p.isActive).length;
     const totalValue = mockProducts.reduce((a, p) => a + p.price * p.stock, 0);
     const lowStock = mockProducts.filter(p => p.stock <= p.minStock).length;
     return { total: mockProducts.length, active, totalValue, lowStock };
-  }, []);
+  }, [mockProducts]);
 
   if (!tenant) return <NoTenantSelected />;
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Products" description="Product catalog for this tenant" />
+      <PageHeader title="Products" description="Product catalog for this tenant">
+        <ProductImportButton
+          path={`${apiPaths.admin.product}/import`}
+          tenantId={tenant.id}
+          onImported={() => void refetch()}
+        />
+      </PageHeader>
       <TenantBanner name={tenant.name} />
 
       {/* Summary Strip */}
