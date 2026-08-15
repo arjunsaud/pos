@@ -2,21 +2,6 @@ import { ProductCreateDto } from '../dtos/product.create.dto';
 
 export const PRODUCT_IMPORT_MAX_ROWS = 2000;
 
-export const PRODUCT_IMPORT_TEMPLATE_ROWS: Record<string, string | number>[] = [
-  {
-    name: 'Wai Wai Noodles',
-    sku: 'WAIWAI-1',
-    barcode: '890155200012',
-    price: 30,
-    costPrice: 22,
-    category: 'Grocery',
-    stock: 120,
-    minStock: 20,
-    unit: 'pcs',
-    vendorName: 'CG Foods',
-  },
-];
-
 const COLUMN_ALIASES: Record<string, string[]> = {
   name: ['name', 'product', 'productname', 'product_name', 'item', 'itemname'],
   sku: ['sku', 'code', 'itemcode', 'item_code', 'productcode'],
@@ -87,6 +72,13 @@ function toBoolean(value: string, fallback = true): boolean {
   return fallback;
 }
 
+export function isEmptyImportRow(row: Record<string, unknown>): boolean {
+  return Object.values(row).every(
+    (value) =>
+      value === undefined || value === null || String(value).trim() === '',
+  );
+}
+
 export function mapImportRow(
   row: Record<string, unknown>,
   tenantId: string,
@@ -125,21 +117,7 @@ export function mapImportRow(
   return { dto };
 }
 
-export function spreadsheetExtension(filename: string): string {
-  const parts = filename.toLowerCase().split('.');
-  return parts.length > 1 ? parts[parts.length - 1] : '';
-}
-
-export function isSpreadsheetFile(filename: string, mimetype?: string): boolean {
-  const ext = spreadsheetExtension(filename);
-  if (['xls', 'xlsx', 'csv'].includes(ext)) {
-    return true;
-  }
-  const mime = (mimetype || '').toLowerCase();
-  return [
-    'application/vnd.ms-excel',
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    'text/csv',
-    'application/csv',
-  ].includes(mime);
+export function isSpreadsheetFile(filename?: string): boolean {
+  const ext = (filename || '').toLowerCase().split('.').pop();
+  return ext === 'xls' || ext === 'xlsx' || ext === 'csv';
 }

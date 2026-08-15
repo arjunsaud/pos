@@ -6,10 +6,8 @@ import {
   DocRequest,
   DocRequestFile,
   DocResponse,
-  DocResponseFile,
   DocResponsePaging,
 } from 'src/common/doc/decorators/doc.decorator';
-import { ENUM_FILE_EXCEL_MIME } from 'src/common/file/constants/file.enum.constant';
 import { ResponseIdSerialization } from 'src/common/response/serializations/response.id.serialization';
 import { ProductDocParamsId } from '../constants/product.doc.constant';
 import { ProductCreateDto } from '../dtos/product.create.dto';
@@ -117,16 +115,6 @@ export function ProductImportDoc(includeTenantQuery = false): MethodDecorator {
     }),
     DocResponse<ProductImportSerialization>('product.import', {
       serialization: ProductImportSerialization,
-    }),
-  );
-}
-
-export function ProductImportTemplateDoc(): MethodDecorator {
-  return applyDecorators(
-    Doc({ summary: 'download product import csv template' }),
-    DocAuth({ jwtAccessToken: true }),
-    DocResponseFile({
-      fileType: ENUM_FILE_EXCEL_MIME.CSV,
     }),
   );
 }

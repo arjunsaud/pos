@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { formatNpr } from '@posnepal/shared';
-import { apiRequest, listResource, num, str } from '../lib/api';
+import { apiRequest, asRecord, listResource, num, str } from '../lib/api';
 import { printSale } from '../lib/print';
 import type { DesktopUser } from '../lib/types';
 
@@ -200,8 +200,4 @@ export function SettingsScreen({ user }: { user: DesktopUser }) {
       <p className="error">{message}</p>
     </div>
   );
-}
-
-function asRecord(value: unknown): Record<string, unknown> {
-  return value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
 }

@@ -50,7 +50,7 @@ export function ProductsScreen() {
           </button>
         </div>
       </div>
-      {message ? <p className="muted">{message}</p> : null}
+      {message ? <p className="sub">{message}</p> : null}
       <table className="table">
         <thead><tr><th>Name</th><th>SKU</th><th>Price</th><th>Stock</th></tr></thead>
         <tbody>

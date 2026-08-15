@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { PageHeader } from '@/components/shared/page-header';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -82,15 +82,18 @@ const emptyForm: ProductForm = {
 };
 
 export default function ProductManagement() {
-  const { items: mockProducts, create, update, remove, refetch } = useProducts();
-  const mockCategories = useCategories().items;
-  const mockVendors = useVendors().items;
+  const {
+    items: products,
+    create,
+    update,
+    remove,
+    refetch,
+    setActive,
+  } = useProducts();
+  const { items: categories, refetch: refetchCategories } = useCategories();
+  const { items: vendors } = useVendors();
   const tenantId = useAuthStore((s) => s.user?.tenantId || '');
 
-  const [products, setProducts] = useState<Product[]>([...mockProducts]);
-  useEffect(() => {
-    setProducts(mockProducts);
-  }, [mockProducts]);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -139,8 +142,8 @@ export default function ProductManagement() {
   };
 
   const handleSave = async () => {
-    if (!form.name || !form.sku || !form.price) {
-      toast.error('Please fill in required fields (Name, SKU, Price)');
+    if (!form.name || !form.sku || !form.price || !form.category) {
+      toast.error('Please fill in required fields (Name, SKU, Price, Category)');
       return;
     }
     const payload = {
@@ -234,20 +237,24 @@ export default function ProductManagement() {
     toast.success('selected-products.csv exported');
   };
 
-  const handleBulkActivate = () => {
-    setProducts((prev) =>
-      prev.map((p) => (selectedIds.includes(p.id) ? { ...p, isActive: true } : p))
-    );
-    toast.success(`${selectedIds.length} product(s) activated`);
-    setSelectedIds([]);
+  const handleBulkActivate = async () => {
+    try {
+      await Promise.all(selectedIds.map((id) => setActive(id, true)));
+      toast.success(`${selectedIds.length} product(s) activated`);
+      setSelectedIds([]);
+    } catch {
+      toast.error('Failed to activate products');
+    }
   };
 
-  const handleBulkDeactivate = () => {
-    setProducts((prev) =>
-      prev.map((p) => (selectedIds.includes(p.id) ? { ...p, isActive: false } : p))
-    );
-    toast.success(`${selectedIds.length} product(s) deactivated`);
-    setSelectedIds([]);
+  const handleBulkDeactivate = async () => {
+    try {
+      await Promise.all(selectedIds.map((id) => setActive(id, false)));
+      toast.success(`${selectedIds.length} product(s) deactivated`);
+      setSelectedIds([]);
+    } catch {
+      toast.error('Failed to deactivate products');
+    }
   };
 
   const clearSelection = () => setSelectedIds([]);
@@ -271,10 +278,12 @@ export default function ProductManagement() {
     toast.success('CSV exported successfully');
   };
 
-  const toggleActive = (id: string) => {
-    setProducts((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, isActive: !p.isActive } : p))
-    );
+  const toggleActive = async (product: Product) => {
+    try {
+      await setActive(product.id, !product.isActive);
+    } catch {
+      toast.error('Failed to update product status');
+    }
   };
 
   return (
@@ -282,8 +291,10 @@ export default function ProductManagement() {
       <PageHeader title="Products">
         <ProductImportButton
           path={`${apiPaths.user.product}/import`}
-          tenantId={tenantId}
-          onImported={() => void refetch()}
+          onImported={() => {
+            void refetch();
+            void refetchCategories();
+          }}
         />
         <Button variant="outline" size="sm" onClick={exportCSV}>
           <Download className="h-4 w-4" /> Export CSV
@@ -350,7 +361,7 @@ export default function ProductManagement() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
-                {mockCategories.map((c) => (
+                {categories.map((c) => (
                   <SelectItem key={c.id} value={c.name}>
                     {c.name}
                   </SelectItem>
@@ -428,7 +439,7 @@ export default function ProductManagement() {
                     <TableCell>
                       <Switch
                         checked={product.isActive}
-                        onCheckedChange={() => toggleActive(product.id)}
+                        onCheckedChange={() => void toggleActive(product)}
                       />
                     </TableCell>
                     <TableCell>
@@ -501,13 +512,13 @@ export default function ProductManagement() {
               </div>
             </div>
             <div className="grid gap-2">
-              <Label>Category</Label>
+              <Label>Category *</Label>
               <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
                 <SelectContent>
-                  {mockCategories.map((c) => (
+                  {categories.map((c) => (
                     <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
                   ))}
                 </SelectContent>
@@ -518,7 +529,7 @@ export default function ProductManagement() {
               <Select
                 value={form.vendorId}
                 onValueChange={(v) => {
-                  const vendor = mockVendors.find((vd) => vd.id === v);
+                  const vendor = vendors.find((vd) => vd.id === v);
                   setForm({ ...form, vendorId: v, vendorName: vendor?.name || '' });
                 }}
               >
@@ -526,7 +537,7 @@ export default function ProductManagement() {
                   <SelectValue placeholder="Select vendor (optional)" />
                 </SelectTrigger>
                 <SelectContent>
-                  {mockVendors.map((v) => (
+                  {vendors.map((v) => (
                     <SelectItem key={v.id} value={v.id}>
                       {v.name}
                     </SelectItem>

@@ -20,7 +20,6 @@ import { PaginationListDto } from 'src/common/pagination/dto/pagination.list.dto
 import { PaginationService } from 'src/common/pagination/services/pagination.service';
 import { RequestParamGuard } from 'src/common/request/decorators/request.decorator';
 import {
-  ResponseFile,
   ResponsePaging,
   ResponseSingle,
 } from 'src/common/response/decorators/response.decorator';
@@ -43,7 +42,6 @@ import {
   ProductDeleteDoc,
   ProductGetDoc,
   ProductImportDoc,
-  ProductImportTemplateDoc,
   ProductInactiveDoc,
   ProductListDoc,
   ProductUpdateDoc,
@@ -57,7 +55,6 @@ import { ProductGetSerialization } from '../serializations/product.get.serializa
 import { ProductImportSerialization } from '../serializations/product.import.serialization';
 import { ProductListSerialization } from '../serializations/product.list.serialization';
 import { ProductService } from '../services/product.service';
-import { PRODUCT_IMPORT_TEMPLATE_ROWS } from '../utils/product-import.util';
 
 @ApiTags('Product')
 @Controller({ version: '1', path: '/product' })
@@ -103,14 +100,6 @@ export class AdminProductController {
       _pagination: { total, totalPage },
       data: docs,
     };
-  }
-
-  @ProductImportTemplateDoc()
-  @ResponseFile()
-  @AdminProtected()
-  @Get('/import/template')
-  async importTemplate() {
-    return { data: PRODUCT_IMPORT_TEMPLATE_ROWS };
   }
 
   @ProductImportDoc(true)

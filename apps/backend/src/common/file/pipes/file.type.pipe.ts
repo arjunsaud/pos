@@ -115,12 +115,6 @@ export class FileTypeAudioPipe implements PipeTransform {
   }
 }
 
-const SPREADSHEET_EXTENSIONS = new Set(['xls', 'xlsx', 'csv']);
-const EXTRA_SPREADSHEET_MIME = new Set([
-  'text/plain',
-  'application/octet-stream',
-]);
-
 function spreadsheetExtension(filename?: string): string {
   if (!filename || !filename.includes('.')) {
     return '';
@@ -130,13 +124,12 @@ function spreadsheetExtension(filename?: string): string {
 
 function isAllowedSpreadsheet(file: IFile): boolean {
   const ext = spreadsheetExtension(file.originalname);
-  if (SPREADSHEET_EXTENSIONS.has(ext)) {
+  if (['xls', 'xlsx', 'csv'].includes(ext)) {
     return true;
   }
   const mime = (file.mimetype || '').toLowerCase();
-  return (
-    Object.values(ENUM_FILE_EXCEL_MIME).includes(mime as ENUM_FILE_EXCEL_MIME) ||
-    EXTRA_SPREADSHEET_MIME.has(mime)
+  return Object.values(ENUM_FILE_EXCEL_MIME).includes(
+    mime as ENUM_FILE_EXCEL_MIME,
   );
 }
 

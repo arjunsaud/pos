@@ -8,8 +8,8 @@ import { apiUpload, extractApiMessage, ApiError } from '@/lib/api';
 
 const TEMPLATE_CSV = [
   'name,sku,barcode,price,costPrice,category,stock,minStock,unit,vendorName',
-  'Wai Wai Noodles,WAIWAI-1,890155200012,30,22,Grocery,120,20,pcs,CG Foods',
-  'Amul Taaza Milk 1L,MILK-1L,890123400001,90,75,Dairy,48,10,pcs,',
+  'Sample Noodles,IMP-NOODLE-1,890000000001,30,22,Grocery,120,20,pcs,',
+  'Sample Milk 1L,IMP-MILK-1,890000000002,90,75,Dairy,48,10,pcs,',
 ].join('\n');
 
 export interface ProductImportResult {
@@ -21,12 +21,14 @@ export interface ProductImportResult {
 interface ProductImportButtonProps {
   path: string;
   tenantId?: string;
+  requireTenant?: boolean;
   onImported?: (result: ProductImportResult) => void;
 }
 
 export function ProductImportButton({
   path,
   tenantId,
+  requireTenant = false,
   onImported,
 }: ProductImportButtonProps) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -44,7 +46,7 @@ export function ProductImportButton({
 
   const handleFile = async (file?: File) => {
     if (!file) return;
-    if (path.includes('/admin/product/import') && !tenantId) {
+    if (requireTenant && !tenantId) {
       toast.error('Select a tenant before importing products');
       return;
     }

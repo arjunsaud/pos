@@ -38,22 +38,25 @@ function NoTenantSelected() {
 }
 
 export default function SATenantProducts() {
-  const mockTenants = useTenants().items;
-  const { items: mockProducts, refetch } = useProducts();
-  const mockCategories = useCategories().items;
+  const tenants = useTenants().items;
+  const { items: products, refetch } = useProducts();
+  const { items: categoryRows, refetch: refetchCategories } = useCategories();
 
   const selectedTenantId = useTenantSelectorStore(s => s.selectedTenantId);
-  const tenant = mockTenants.find(t => t.id === selectedTenantId);
+  const tenant = tenants.find(t => t.id === selectedTenantId);
 
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
-  const categories = useMemo(() => ['all', ...mockCategories.map(c => c.name)], []);
+  const categoryOptions = useMemo(
+    () => ['all', ...categoryRows.map((c) => c.name)],
+    [categoryRows],
+  );
 
   const filtered = useMemo(() => {
-    return mockProducts.filter(p => {
+    return products.filter(p => {
       const matchSearch = !search ||
         p.name.toLowerCase().includes(search.toLowerCase()) ||
         p.sku.toLowerCase().includes(search.toLowerCase());
@@ -63,14 +66,14 @@ export default function SATenantProducts() {
         (statusFilter === 'inactive' && !p.isActive);
       return matchSearch && matchCat && matchStatus;
     });
-  }, [mockProducts, search, categoryFilter, statusFilter]);
+  }, [products, search, categoryFilter, statusFilter]);
 
   const summary = useMemo(() => {
-    const active = mockProducts.filter(p => p.isActive).length;
-    const totalValue = mockProducts.reduce((a, p) => a + p.price * p.stock, 0);
-    const lowStock = mockProducts.filter(p => p.stock <= p.minStock).length;
-    return { total: mockProducts.length, active, totalValue, lowStock };
-  }, [mockProducts]);
+    const active = products.filter(p => p.isActive).length;
+    const totalValue = products.reduce((a, p) => a + p.price * p.stock, 0);
+    const lowStock = products.filter(p => p.stock <= p.minStock).length;
+    return { total: products.length, active, totalValue, lowStock };
+  }, [products]);
 
   if (!tenant) return <NoTenantSelected />;
 
@@ -80,7 +83,11 @@ export default function SATenantProducts() {
         <ProductImportButton
           path={`${apiPaths.admin.product}/import`}
           tenantId={tenant.id}
-          onImported={() => void refetch()}
+          requireTenant
+          onImported={() => {
+            void refetch();
+            void refetchCategories();
+          }}
         />
       </PageHeader>
       <TenantBanner name={tenant.name} />
@@ -119,7 +126,7 @@ export default function SATenantProducts() {
             onChange={e => setCategoryFilter(e.target.value)}
             className="h-9 rounded-md border border-input bg-background px-3 text-sm"
           >
-            {categories.map(c => <option key={c} value={c} className="capitalize">{c === 'all' ? 'All Categories' : c}</option>)}
+            {categoryOptions.map(c => <option key={c} value={c} className="capitalize">{c === 'all' ? 'All Categories' : c}</option>)}
           </select>
           <select
             value={statusFilter}

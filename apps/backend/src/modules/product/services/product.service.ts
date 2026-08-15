@@ -16,6 +16,7 @@ import {
 import { ENUM_FILE_STATUS_CODE_ERROR } from 'src/common/file/constants/file.status-code.constant';
 import { IFile } from 'src/common/file/interfaces/file.interface';
 import { HelperFileService } from 'src/common/helper/services/helper.file.service';
+import { CategoryService } from 'src/modules/category/services/category.service';
 import { ProductCreateDto } from '../dtos/product.create.dto';
 import { ProductUpdateDto } from '../dtos/product.update.dto';
 import {
@@ -24,6 +25,7 @@ import {
 } from '../repository/entities/product.entity';
 import { ProductRepository } from '../repository/repositories/product.repository';
 import {
+  isEmptyImportRow,
   isSpreadsheetFile,
   mapImportRow,
   PRODUCT_IMPORT_MAX_ROWS,
@@ -35,6 +37,7 @@ export class ProductService {
   constructor(
     private readonly _productRepo: ProductRepository,
     private readonly helperFileService: HelperFileService,
+    private readonly categoryService: CategoryService,
   ) {}
 
   async findAll(
@@ -159,7 +162,13 @@ export class ProductService {
         message: 'product.error.tenantIdRequired',
       });
     }
-    if (!file?.buffer || !isSpreadsheetFile(file.originalname, file.mimetype)) {
+    if (!file?.buffer) {
+      throw new UnsupportedMediaTypeException({
+        statusCode: ENUM_FILE_STATUS_CODE_ERROR.FILE_EXTENSION_ERROR,
+        message: 'file.error.mimeInvalid',
+      });
+    }
+    if (file.originalname && !isSpreadsheetFile(file.originalname)) {
       throw new UnsupportedMediaTypeException({
         statusCode: ENUM_FILE_STATUS_CODE_ERROR.FILE_EXTENSION_ERROR,
         message: 'file.error.mimeInvalid',
@@ -202,15 +211,19 @@ export class ProductService {
       errors: [],
     };
     const seenSkus = new Set<string>();
-    const toCreate: ProductCreateDto[] = [];
+    const toCreate: Array<{ dto: ProductCreateDto; row: number }> = [];
 
     for (let index = 0; index < rows.length; index++) {
       const excelRow = index + 2;
+      if (isEmptyImportRow(rows[index])) {
+        continue;
+      }
       const mapped = mapImportRow(rows[index], tenantId);
       if (mapped.error || !mapped.dto) {
         result.skipped += 1;
         result.errors.push({
           row: excelRow,
+          sku: mapped.dto?.sku,
           reason: mapped.error || 'Invalid row',
         });
         continue;
@@ -227,7 +240,7 @@ export class ProductService {
         continue;
       }
       seenSkus.add(skuKey);
-      toCreate.push(mapped.dto);
+      toCreate.push({ dto: mapped.dto, row: excelRow });
     }
 
     if (!toCreate.length) {
@@ -244,24 +257,53 @@ export class ProductService {
     const uniqueCreates: ProductCreateDto[] = [];
 
     for (const item of toCreate) {
-      if (existingSkus.has(item.sku.toLowerCase())) {
+      if (existingSkus.has(item.dto.sku.toLowerCase())) {
         result.skipped += 1;
         result.errors.push({
-          row: 0,
-          sku: item.sku,
+          row: item.row,
+          sku: item.dto.sku,
           reason: 'SKU already exists',
         });
         continue;
       }
-      uniqueCreates.push(item);
+      uniqueCreates.push(item.dto);
     }
 
     if (uniqueCreates.length) {
+      await this.ensureCategories(
+        tenantId,
+        uniqueCreates.map((item) => item.category),
+      );
       await this.createMany(uniqueCreates);
       result.created = uniqueCreates.length;
     }
 
     return result;
+  }
+
+  private async ensureCategories(
+    tenantId: string,
+    names: string[],
+  ): Promise<void> {
+    const uniqueNames = [
+      ...new Set(names.map((name) => name.trim()).filter(Boolean)),
+    ];
+    if (!uniqueNames.length) {
+      return;
+    }
+
+    const existing = await this.categoryService.findAll({ tenantId });
+    const existingNames = new Set(
+      existing.map((item) => item.name.toLowerCase()),
+    );
+
+    for (const name of uniqueNames) {
+      if (existingNames.has(name.toLowerCase())) {
+        continue;
+      }
+      await this.categoryService.create({ tenantId, name });
+      existingNames.add(name.toLowerCase());
+    }
   }
 
   async _checkProduct(id: string): Promise<ProductDoc> {
