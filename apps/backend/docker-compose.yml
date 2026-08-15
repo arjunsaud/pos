@@ -1,0 +1,8 @@
+services:
+  redis:
+    image: redis:7
+    container_name: redis_local
+    ports:
+      - '6380:6379'
+    command: ['redis-server', '--requirepass', 'password']
+    restart: always

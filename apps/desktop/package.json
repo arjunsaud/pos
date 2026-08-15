@@ -1,0 +1,29 @@
+{
+  "name": "@posnepal/desktop",
+  "version": "1.0.0",
+  "private": true,
+  "description": "POS Nepal desktop app (Electron)",
+  "main": "dist/presentation/main/index.js",
+  "scripts": {
+    "build:main": "tsc -p tsconfig.json",
+    "build:ui": "vite build --config ui/vite.config.ts",
+    "build": "pnpm build:main && pnpm build:ui",
+    "dev": "pnpm build:main && node scripts/dev.mjs",
+    "start": "env -u ELECTRON_RUN_AS_NODE electron .",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@posnepal/shared": "workspace:*",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^4.3.4",
+    "electron": "^33.2.1",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.7"
+  }
+}

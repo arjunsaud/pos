@@ -1,0 +1,66 @@
+:root {
+  --bg: #0f1419;
+  --text: #e8eef4;
+  --muted: #8b9aab;
+  --offline: #c44b4b;
+  --bar-h: 44px;
+  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: radial-gradient(circle at top, #1c2a38, var(--bg));
+  color: var(--text);
+}
+
+.bar {
+  height: var(--bar-h);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  background: linear-gradient(90deg, #15202b, #1c2a38);
+  border-bottom: 1px solid #243447;
+}
+
+.brand {
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.network {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: color-mix(in srgb, var(--offline) 25%, transparent);
+  color: #f0a0a0;
+}
+
+.offline-main {
+  height: calc(100% - var(--bar-h));
+  display: grid;
+  place-content: center;
+  gap: 8px;
+  text-align: center;
+  padding: 24px;
+}
+
+.offline-main h1 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.offline-main p {
+  margin: 0;
+  max-width: 28rem;
+  color: var(--muted);
+}

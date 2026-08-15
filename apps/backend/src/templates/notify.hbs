@@ -1,0 +1,90 @@
+
+<html>
+
+  <head>
+    <meta charset='UTF-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1' />
+    <title>New Booking Notification</title>
+    <style>
+      body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+      "Helvetica Neue", Arial, sans-serif; background-color: #f1f5f9; /* Muted
+      background matching frontend */ margin: 0; padding: 40px 20px; color:
+      #0f172a; -webkit-font-smoothing: antialiased; } .email-container {
+      max-width: 600px; margin: 0 auto; background-color: #ffffff;
+      border-radius: 8px; border: 1px solid #e2e8f0; /* Frontend border color */
+      box-shadow: 0 14px 34px rgba(15, 23, 42, 0.08); /* Matches .surface-card
+      */ overflow: hidden; } .header { background-color: #0054a8; /* Frontend
+      primary color: hsl(215, 100%, 33%) */ color: #ffffff; padding: 24px;
+      text-align: center; } .header h1 { margin: 0; font-size: 24px;
+      font-weight: 600; letter-spacing: -0.5px; } .content { padding: 32px 24px;
+      } .content p { font-size: 16px; line-height: 1.6; color: #334155; margin:
+      0 0 16px 0; } .booking-summary { background-color: #f8fafc; border: 1px
+      solid #e2e8f0; border-radius: 8px; padding: 24px; margin-top: 24px;
+      margin-bottom: 24px; } .booking-summary p { margin: 8px 0; font-size:
+      15px; color: #0f172a; } .table-wrapper { width: 100%; margin-top: 20px; }
+      .booking-table { width: 100%; border-collapse: separate; border-spacing:
+      0; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;
+      font-size: 14px; } .booking-table th { background-color: #f1f5f9; color:
+      #475569; font-weight: 600; text-align: left; padding: 12px 16px;
+      border-bottom: 1px solid #e2e8f0; } .booking-table td { padding: 12px
+      16px; color: #334155; border-bottom: 1px solid #e2e8f0; } .booking-table
+      tr:last-child td { border-bottom: none; } .footer { margin-top: 32px;
+      padding-top: 24px; border-top: 1px solid #e2e8f0; text-align: center; }
+      .footer p { font-size: 13px; color: #64748b; margin: 0; }
+    </style>
+  </head>
+
+  <body>
+    <div class='email-container'>
+      <div class='header'>
+        <h1>New Booking Received</h1>
+      </div>
+      <div class='content'>
+        <p>A new booking has just been made. Below are the details:</p>
+
+        <div class='booking-summary'>
+          <p><strong>Full Name:</strong> {{fullName}}</p>
+          <p><strong>Email:</strong>
+            <a
+              href='mailto:{{email}}'
+              style='color: #0054a8; text-decoration: none;'
+            >{{email}}</a></p>
+          <p><strong>Phone:</strong> {{phone}}</p>
+          <p><strong>Booking ID:</strong>
+            <span
+              style='font-weight: 600; color: #0054a8;'
+            >{{bookingId}}</span></p>
+          <p><strong>Grand Total:</strong> ${{grandTotal}}</p>
+
+          <div class='table-wrapper'>
+            <table class='booking-table' cellpadding='0' cellspacing='0'>
+              <thead>
+                <tr>
+                  <th>Trip</th>
+                  <th>Date</th>
+                  <th>Users</th>
+                  <th>Price</th>
+                </tr>
+              </thead>
+              <tbody>
+                {{#each bookingDetails}}
+                  <tr>
+                    <td><strong>{{destination}}</strong></td>
+                    <td>{{tripDate}}</td>
+                    <td>{{totalUsers}}</td>
+                    <td>{{totalPrice}}</td>
+                  </tr>
+                {{/each}}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class='footer'>
+          <p>This is an automated notification from your booking system.</p>
+        </div>
+      </div>
+    </div>
+  </body>
+
+</html>

@@ -1,0 +1,37 @@
+name: Deploy NestJS DEV (Build files only, pnpm)
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 2. Install pnpm using the official action (much faster and handles caching)
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 10 # Pin your major version to avoid breaking changes
+
+      # 3. Use Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      # 4. Install dependencies (Bypasses the build approval blocks on CI)
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      # 5. Build project
+      - name: Build project
+        run: pnpm build 

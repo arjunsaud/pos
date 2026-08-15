@@ -1,0 +1,4 @@
+export enum PAYMENT_GATEWAY {
+  PAYPAL = 'PAYPAL',
+  CYBERSOURCE = 'CYBERSOURCE',
+}

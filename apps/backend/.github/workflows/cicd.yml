@@ -1,0 +1,64 @@
+name: Deploy NestJS (Build files only, pnpm)
+
+on:
+  push:
+    tags:
+      - 'release-v*'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 2. Install pnpm using the official action (much faster and handles caching)
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 10 # Pin your major version to avoid breaking changes
+
+      # 3. Use Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      # 4. Install dependencies (Bypasses the build approval blocks on CI)
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      # 5. Build project
+      - name: Build project
+        run: pnpm build 
+
+      # 6. Setup SSH
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.HOST }} >> ~/.ssh/known_hosts
+
+      # 7. Upload only build files to VPS
+      - name: Upload build files
+        run: scp -i ~/.ssh/id_rsa -r dist package.json pnpm-lock.yaml pnpm-workspace.yaml ${{ secrets.USERNAME }}@${{ secrets.HOST }}:/root/production/backend
+
+      - name: Upload Compose file
+        run: scp -i ~/.ssh/id_rsa -r docker-compose.yaml ${{ secrets.USERNAME }}@${{ secrets.HOST }}:/root/production/backend
+
+      # 8. Deploy on VPS
+      - name: Deploy on VPS
+        run: |
+          ssh ${{ secrets.USERNAME }}@${{ secrets.HOST }} << 'EOF'
+          export PATH=$PATH:/root/.nvm/versions/node/v20.19.4/bin
+          cd /root/production/backend
+          docker-compose down
+          docker-compose up -d
+          pnpm install --prod --frozen-lockfile
+          pm2 restart ien-backend || pm2 start dist/main.js --name ien-backend
+          pm2 save
+          EOF
