@@ -5,6 +5,7 @@
   "description": "POS Nepal — multi-tenant POS, inventory, and billing workspace",
   "scripts": {
     "dev": "pnpm --filter @posnepal/shared build && pnpm --parallel --filter @posnepal/frontend --filter @posnepal/backend dev",
+    "dev:all": "node scripts/dev-all.mjs",
     "dev:frontend": "pnpm --filter @posnepal/frontend dev",
     "dev:backend": "pnpm --filter @posnepal/backend start:dev",
     "dev:desktop": "pnpm --filter @posnepal/shared build && pnpm --filter @posnepal/desktop dev",

@@ -29,14 +29,16 @@ cp apps/frontend/.env.local.example apps/frontend/.env.local
 ```
 
 ```bash
-pnpm dev                 # frontend + backend
-pnpm dev:desktop         # Electron shell (needs frontend running)
+pnpm dev                 # frontend (:3000) + backend (from .env, usually :3001)
+pnpm dev:all             # backend :4000 + frontend :3000 + desktop
+pnpm dev:desktop         # Electron only (needs API running)
 ```
 
 - Frontend: http://localhost:3000
-- Backend: http://localhost:3001/api
-- Admin swagger: http://localhost:3001/admin
-- User swagger: http://localhost:3001/user
+- Backend (`pnpm dev:all`): http://localhost:4000/api
+- Backend (`pnpm dev` / `.env`): http://localhost:3001/api
+- Admin swagger: http://localhost:4000/admin (with `dev:all`)
+- User swagger: http://localhost:4000/user (with `dev:all`)
 
 Seed the super admin:
 
