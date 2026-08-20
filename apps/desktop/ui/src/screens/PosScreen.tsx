@@ -4,6 +4,19 @@ import { apiRequest, listResource, num, str } from '../lib/api';
 import { printSale } from '../lib/print';
 import type { CartItem, DesktopUser, ProductRow } from '../lib/types';
 
+function ProductThumb({ src, name }: { src?: string; name: string }) {
+  const [failed, setFailed] = useState(!src);
+  return (
+    <div className="pimg">
+      {!failed && src ? (
+        <img src={src} alt={name} onError={() => setFailed(true)} />
+      ) : (
+        <span className="pimg-ph" aria-hidden />
+      )}
+    </div>
+  );
+}
+
 function toProduct(row: Record<string, unknown>): ProductRow {
   return {
     id: str(row, 'id', '_id'),
@@ -14,6 +27,7 @@ function toProduct(row: Record<string, unknown>): ProductRow {
     stock: num(row, 'stock', 'quantity'),
     category: str(row, 'category', 'categoryName'),
     isActive: row.isActive !== false,
+    image: str(row, 'image') || undefined,
   };
 }
 
@@ -163,6 +177,7 @@ export function PosScreen({
         <div className="plist">
           {visible.map((p) => (
             <button key={p.id} className="pitem" onClick={() => add(p)}>
+              <ProductThumb src={p.image} name={p.name} />
               <b>{p.name}</b>
               <small>{p.sku} · stock {p.stock}</small>
               <div>{formatNpr(p.price)}</div>

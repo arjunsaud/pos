@@ -7,11 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { UserAvatar } from '@/components/shared/user-avatar';
 import { Badge } from '@/components/ui/badge';
 import { Pencil, Save, User, Mail, Phone, MapPin, Calendar, Copy, Link2, Share2, Gift, Users, TrendingUp, CheckCircle2, FileText, Send } from 'lucide-react';
 import { useCurrentProfile } from '@/hooks/use-api-data';
-import { getInitials, formatDate, nprFull } from '@/lib/helpers';
+import { formatDate, nprFull } from '@/lib/helpers';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import type { UserProfile } from '@/lib/types';
@@ -41,9 +41,12 @@ export default function TenantProfile() {
         {/* Avatar Card */}
         <Card className="lg:col-span-1">
           <CardContent className="flex flex-col items-center pt-8 pb-6">
-            <Avatar className="h-24 w-24 mb-4">
-              <AvatarFallback className="bg-primary text-primary-foreground text-2xl font-bold">{getInitials(profile.name)}</AvatarFallback>
-            </Avatar>
+            <UserAvatar
+              name={profile.name}
+              src={profile.avatar}
+              className="h-24 w-24 mb-4"
+              fallbackClassName="bg-primary text-primary-foreground text-2xl font-bold"
+            />
             <h3 className="text-lg font-bold">{profile.name}</h3>
             <p className="text-sm text-muted-foreground">{profile.email}</p>
             <Badge className="mt-3 capitalize" variant="outline">Tenant Admin</Badge>

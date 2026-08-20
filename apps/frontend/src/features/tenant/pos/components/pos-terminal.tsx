@@ -17,6 +17,7 @@ import { Search, Plus, Minus, X, ShoppingCart, Banknote, CreditCard, Smartphone,
 import { useProducts, useCategories, useCustomers } from '@/hooks/use-api-data';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/shared/page-header';
+import { AppImage } from '@/components/shared/app-image';
 import type { CartItem, Product, HeldSale, Customer } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { npr, nprFull, formatDateTime } from '@/lib/helpers';
@@ -412,6 +413,11 @@ export default function POSTerminal() {
                 >
                   <CardContent className="p-3">
                     <div className="space-y-2">
+                      <AppImage
+                        src={product.image}
+                        alt={product.name}
+                        className="aspect-[4/3] w-full rounded-md"
+                      />
                       <div className="flex items-start justify-between gap-1">
                         <div className="text-sm font-medium leading-tight min-w-0">
                           {product.name}

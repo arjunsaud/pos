@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { LogOut, Settings, User } from 'lucide-react';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { UserAvatar } from '@/components/shared/user-avatar';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -15,7 +15,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAuthStore } from '@/features/auth/store';
 import { auth } from '@/lib/configs/auth';
-import { getInitials } from '@/lib/helpers';
 import { PATHS } from '@/lib/navigation/routes';
 
 export default function ProfileHeaderDropdown() {
@@ -24,7 +23,6 @@ export default function ProfileHeaderDropdown() {
 
   if (!user) return null;
 
-  const initials = getInitials(user.name);
   const roleLabel = {
     'super-admin': 'Super Admin',
     'tenant-admin': 'Tenant Admin',
@@ -35,11 +33,12 @@ export default function ProfileHeaderDropdown() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative flex items-center gap-2 px-2 hover:bg-accent">
-          <Avatar className="h-8 w-8">
-            <AvatarFallback className="bg-primary text-xs font-semibold text-primary-foreground">
-              {initials}
-            </AvatarFallback>
-          </Avatar>
+          <UserAvatar
+            name={user.name}
+            src={user.avatar}
+            className="h-8 w-8"
+            fallbackClassName="bg-primary text-xs font-semibold text-primary-foreground"
+          />
           <div className="hidden flex-col items-start text-left md:flex">
             <span className="text-sm font-medium leading-none">{user.name}</span>
             <span className="text-xs text-muted-foreground">{roleLabel}</span>

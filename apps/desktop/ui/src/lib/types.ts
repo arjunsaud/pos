@@ -38,6 +38,7 @@ export interface ProductRow {
   stock: number;
   category: string;
   isActive: boolean;
+  image?: string;
 }
 
 export interface CartItem {

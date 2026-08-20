@@ -8,11 +8,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { UserAvatar } from '@/components/shared/user-avatar';
 import { Badge } from '@/components/ui/badge';
 import { Pencil, Save, User, Mail, Phone, MapPin, Shield, Lock, KeyRound, Smartphone, ShieldCheck, Eye, EyeOff, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useCurrentProfile } from '@/hooks/use-api-data';
-import { getInitials, formatDate } from '@/lib/helpers';
+import { formatDate } from '@/lib/helpers';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { TwoFactorSettings } from '@/components/shared/two-factor-settings';
@@ -81,9 +81,12 @@ export default function SAProfile() {
         {/* Avatar Card */}
         <Card className="lg:col-span-1">
           <CardContent className="flex flex-col items-center pt-8 pb-6">
-            <Avatar className="h-24 w-24 mb-4">
-              <AvatarFallback className="bg-primary text-primary-foreground text-2xl font-bold">{getInitials(profile.name)}</AvatarFallback>
-            </Avatar>
+            <UserAvatar
+              name={profile.name}
+              src={profile.avatar}
+              className="h-24 w-24 mb-4"
+              fallbackClassName="bg-primary text-primary-foreground text-2xl font-bold"
+            />
             <h3 className="text-lg font-bold">{profile.name}</h3>
             <p className="text-sm text-muted-foreground">{profile.email}</p>
             <Badge className="mt-3 capitalize" variant="outline"><Shield className="h-3 w-3 mr-1" />{profile.role.replace('-', ' ')}</Badge>

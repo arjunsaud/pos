@@ -6,6 +6,7 @@ import { nprFull, formatDate, getStatusBadgeClasses, getStockBadgeClasses, getSt
 import { cn } from '@/lib/utils';
 import { PageHeader } from '@/components/shared/page-header';
 import { ProductImportButton } from '@/components/shared/product-import-button';
+import { AppImage } from '@/components/shared/app-image';
 import { useTenantSelectorStore } from '@/features/auth/store';
 import { useTenants, useProducts, useCategories } from '@/hooks/use-api-data';
 import { Card, CardContent } from '@/components/ui/card';
@@ -168,7 +169,16 @@ export default function SATenantProducts() {
                 ) : (
                   filtered.map(product => (
                     <TableRow key={product.id} className="transition-colors hover:bg-muted/50">
-                      <TableCell className="font-medium max-w-[150px] truncate">{product.name}</TableCell>
+                      <TableCell className="max-w-[180px]">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <AppImage
+                            src={product.image}
+                            alt={product.name}
+                            className="size-9 rounded-md"
+                          />
+                          <span className="font-medium truncate">{product.name}</span>
+                        </div>
+                      </TableCell>
                       <TableCell className="hidden sm:table-cell font-mono text-xs">{product.sku}</TableCell>
                       <TableCell className="hidden md:table-cell">{product.category}</TableCell>
                       <TableCell className="text-right font-medium">{nprFull(product.price)}</TableCell>
@@ -207,6 +217,11 @@ export default function SATenantProducts() {
                 <DialogTitle>{selectedProduct.name}</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
+                <AppImage
+                  src={selectedProduct.image}
+                  alt={selectedProduct.name}
+                  className="aspect-video w-full rounded-lg"
+                />
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div>
                     <p className="text-muted-foreground">SKU</p>

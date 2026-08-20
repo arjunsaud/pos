@@ -51,6 +51,7 @@ import { cn } from '@/lib/utils';
 import { npr } from '@/lib/helpers';
 import { useAuthStore } from '@/features/auth/store';
 import { ProductImportButton } from '@/components/shared/product-import-button';
+import { AppImage } from '@/components/shared/app-image';
 import { apiPaths } from '@/lib/api';
 
 interface ProductForm {
@@ -411,7 +412,16 @@ export default function ProductManagement() {
                         aria-label={`Select ${product.name}`}
                       />
                     </TableCell>
-                    <TableCell className="font-medium">{product.name}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-3 min-w-0">
+                        <AppImage
+                          src={product.image}
+                          alt={product.name}
+                          className="size-10 rounded-md"
+                        />
+                        <span className="font-medium truncate">{product.name}</span>
+                      </div>
+                    </TableCell>
                     <TableCell className="text-muted-foreground">{product.sku}</TableCell>
                     <TableCell className="text-right">NPR {npr(product.price)}</TableCell>
                     <TableCell className="text-right">NPR {npr(product.costPrice)}</TableCell>

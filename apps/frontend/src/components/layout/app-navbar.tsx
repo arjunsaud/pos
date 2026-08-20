@@ -2,7 +2,7 @@
 
 import { useAuthStore } from '@/features/auth/store';
 import { MobileSidebarTrigger } from '@/components/layout/app-sidebar';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { UserAvatar } from '@/components/shared/user-avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,7 +15,6 @@ import { LogOut, Moon, Sun, User, Settings, Store } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { getInitials } from '@/lib/helpers';
 import { NotificationPanel } from '@/components/layout/notification-panel';
 import { useNavStore } from '@/features/auth/store';
 
@@ -25,8 +24,6 @@ export function AppNavbar() {
   const { setCurrentSection } = useNavStore();
 
   if (!user) return null;
-
-  const initials = getInitials(user.name);
 
   const roleLabel = {
     'super-admin': 'Super Admin',
@@ -71,11 +68,12 @@ export function AppNavbar() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative flex items-center gap-2 px-2 hover:bg-accent">
-              <Avatar className="h-8 w-8">
-                <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold">
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
+              <UserAvatar
+                name={user.name}
+                src={user.avatar}
+                className="h-8 w-8"
+                fallbackClassName="bg-primary text-primary-foreground text-xs font-semibold"
+              />
               <div className="hidden flex-col items-start text-left md:flex">
                 <span className="text-sm font-medium leading-none">{user.name}</span>
                 <span className="text-xs text-muted-foreground">{roleLabel}</span>

@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { UserAvatar } from '@/components/shared/user-avatar';
 import {
   Table,
   TableBody,
@@ -36,7 +36,7 @@ import { Plus, Pencil, Power, PowerOff, X } from 'lucide-react';
 import { useTenantStaff } from '@/hooks/use-api-data';
 import { toast } from 'sonner';
 import type { StaffMember, TenantStaffRole } from '@/lib/types';
-import { getInitials, getRoleBadgeClasses, getStatusBadgeClasses } from '@/lib/helpers';
+import { getRoleBadgeClasses, getStatusBadgeClasses } from '@/lib/helpers';
 import { cn } from '@/lib/utils';
 
 function getAvatarColor(name: string): string {
@@ -229,11 +229,12 @@ export default function TenantStaffPage() {
                         'h-2 w-2 rounded-full shrink-0',
                         member.status === 'active' ? 'bg-emerald-500' : 'bg-gray-400'
                       )} />
-                      <Avatar className='h-8 w-8'>
-                        <AvatarFallback className={cn('text-xs text-white', getAvatarColor(member.name))}>
-                          {getInitials(member.name)}
-                        </AvatarFallback>
-                      </Avatar>
+                      <UserAvatar
+                        name={member.name}
+                        src={member.avatar}
+                        className='h-8 w-8'
+                        fallbackClassName={cn('text-xs text-white', getAvatarColor(member.name))}
+                      />
                       <span className='font-medium'>{member.name}</span>
                     </div>
                   </TableCell>

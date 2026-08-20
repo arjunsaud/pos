@@ -32,7 +32,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { UserAvatar } from '@/components/shared/user-avatar';
 import { Plus, Pencil, Power, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAdminStaff } from '@/hooks/use-api-data';
@@ -45,15 +45,6 @@ function getAvatarColor(name: string): string {
     'bg-cyan-500', 'bg-orange-500', 'bg-teal-500', 'bg-pink-500', 'bg-indigo-500'
   ];
   return colors[name.charCodeAt(0) % colors.length];
-}
-
-function getInitials(name: string): string {
-  return name
-    .split(' ')
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
 }
 
 const ROLE_DESCRIPTIONS: Record<SuperAdminStaffRole, string> = {
@@ -338,11 +329,12 @@ export default function SuperAdminStaff() {
                         'h-2 w-2 rounded-full shrink-0',
                         member.status === 'active' ? 'bg-emerald-500' : 'bg-gray-400'
                       )} />
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback className={cn('text-xs text-white', getAvatarColor(member.name))}>
-                          {getInitials(member.name)}
-                        </AvatarFallback>
-                      </Avatar>
+                      <UserAvatar
+                        name={member.name}
+                        src={member.avatar}
+                        className="h-8 w-8"
+                        fallbackClassName={cn('text-xs text-white', getAvatarColor(member.name))}
+                      />
                       <span className="font-medium">{member.name}</span>
                     </div>
                   </TableCell>
