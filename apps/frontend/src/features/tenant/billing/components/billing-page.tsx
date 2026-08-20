@@ -40,6 +40,7 @@ import {
 } from 'lucide-react';
 import { useSales, useProducts, useReturnRefunds } from '@/hooks/use-api-data';
 import { toast } from 'sonner';
+import { useAuthStore } from '@/features/auth/store';
 import type { Sale, ReturnRefund, ReturnStatus } from '@/lib/types';
 import { npr, nprFull, getStatusBadgeClasses } from '@/lib/helpers';
 import { printSaleDocument } from '@/lib/print/print-document';

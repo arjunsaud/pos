@@ -30,10 +30,10 @@ export function LoginScreen({
           <div className="logo">P</div>
           <div>
             <h1>POS Nepal</h1>
-            <p className="sub" style={{ margin: 0 }}>Desktop</p>
+            <p className="sub" style={{ margin: 0 }}>Desktop app</p>
           </div>
         </div>
-        <p className="sub">Sign in as tenant admin or staff. Super admin is web-only.</p>
+        <p className="sub">Sign in with your store account. Same look as the website — native desktop UI.</p>
         <div className="field">
           <label htmlFor="email">Email</label>
           <input id="email" type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} required />

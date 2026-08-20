@@ -188,7 +188,7 @@ export function PosScreen({
       <aside className="cart">
         <h3>Cart</h3>
         <div className="cart-list">
-          {cart.length === 0 && <p style={{ color: 'var(--muted)' }}>Empty</p>}
+          {cart.length === 0 && <p style={{ color: 'var(--muted-foreground)' }}>Empty</p>}
           {cart.map((item) => (
             <div key={item.product.id} className="row">
               <div>
@@ -213,7 +213,7 @@ export function PosScreen({
           <option value="khalti">Khalti</option>
         </select>
         <p className="error">{message}</p>
-        <button className="primary" disabled={cart.length === 0} onClick={() => void checkout()}>
+        <button className="cta" disabled={cart.length === 0} onClick={() => void checkout()}>
           Complete sale ({SHORTCUTS.posCheckout.keysLabel})
         </button>
       </aside>

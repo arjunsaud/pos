@@ -68,6 +68,7 @@ function buildCommands(role: UserRole): CommandItem[] {
       { label: 'Profile', section: 'tenant-profile', icon: UserCog, group: 'Pages' },
       { label: 'Settings', section: 'tenant-settings', icon: Settings, group: 'Pages' },
     );
+    actions.push(
       { label: 'New Sale', section: 'pos', icon: ShoppingCart, group: 'Actions', isAction: true, toastMessage: 'Opening POS...' },
       { label: 'Create Invoice', section: 'billing', icon: Receipt, group: 'Actions', isAction: true, toastMessage: 'Opening Billing...' },
       { label: 'Add Product', section: 'products', icon: Package, group: 'Actions', isAction: true, toastMessage: 'Opening Products...' },

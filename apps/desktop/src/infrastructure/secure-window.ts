@@ -32,7 +32,7 @@ export function createMainWindow(): BrowserWindow {
     minHeight: 680,
     show: false,
     title: 'POS Nepal Desktop',
-    backgroundColor: '#0f1419',
+    backgroundColor: '#ffffff',
     webPreferences: {
       preload,
       contextIsolation: true,

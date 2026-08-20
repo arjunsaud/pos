@@ -134,7 +134,7 @@ export async function apiRequest<T>(
     auth?: boolean;
   } = {},
 ): Promise<T> {
-  const { method = 'GET', body, query, auth = true } = options;
+  const { method = 'GET', body, query, auth: withAuth = true } = options;
   const url = new URL(`${API_BASE_URL}${path}`);
 
   if (query) {
@@ -153,7 +153,7 @@ export async function apiRequest<T>(
     headers['Content-Type'] = 'application/json';
   }
 
-  if (auth) {
+  if (withAuth) {
     const token = getAccessToken();
     if (token) {
       headers.Authorization = `Bearer ${token}`;
@@ -188,7 +188,7 @@ export async function apiUpload<T>(
     auth?: boolean;
   } = {},
 ): Promise<T> {
-  const { query, auth = true } = options;
+  const { query, auth: withAuth = true } = options;
   const url = new URL(`${API_BASE_URL}${path}`);
 
   if (query) {
@@ -203,7 +203,7 @@ export async function apiUpload<T>(
     Accept: 'application/json',
   };
 
-  if (auth) {
+  if (withAuth) {
     const token = getAccessToken();
     if (token) {
       headers.Authorization = `Bearer ${token}`;

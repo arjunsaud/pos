@@ -30,7 +30,7 @@ export function DashboardScreen({
   return (
     <div className="grid">
       <h2 style={{ margin: '0 0 4px' }}>{greeting}, {name}</h2>
-      <p style={{ margin: 0, color: 'var(--muted)' }}>Desktop workspace — same data as the web app.</p>
+      <p style={{ margin: 0, color: 'var(--muted-foreground)' }}>Desktop workspace — same data as the web app.</p>
       <div className="grid stats">
         <div className="card"><div className="stat-label">Today's sales</div><div className="stat-val">{formatNpr(stats.dailySales)}</div></div>
         <div className="card"><div className="stat-label">This month</div><div className="stat-val">{formatNpr(stats.monthlyRevenue)}</div></div>

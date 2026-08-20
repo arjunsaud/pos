@@ -203,85 +203,98 @@ export function App() {
 
   return (
     <div className="app">
-      <aside className="sidebar">
-        <div className="brand">
-          <div className="logo">P</div>
-          <div>
+      <header className="header">
+        <div className="header-left">
+          <div className="brand">
+            <div className="logo">P</div>
             <strong>POS Nepal</strong>
-            <div className="sub" style={{ margin: 0 }}>Desktop</div>
           </div>
+          {user.tenantName ? (
+            <span className="tenant-badge">{user.tenantName}</span>
+          ) : null}
         </div>
-        <nav className="nav">
-          {nav.map(([id, label]) => (
-            <button key={id} className={page === id ? 'on' : ''} onClick={() => setPage(id)}>
-              {label}
-            </button>
-          ))}
-        </nav>
-        <div className="userbox">{user.name}<br />{user.tenantName || user.email}</div>
-        <button className="ghost" onClick={logout}>Sign out</button>
-      </aside>
-      <div className="main">
-        {!online && <div className="offline-banner">You are offline. Reconnect to sync sales.</div>}
-        <header className="topbar">
-          <strong>{nav.find(([id]) => id === page)?.[1]}</strong>
-          <div className="hint">
-            <span><kbd>{SHORTCUTS.commandPalette.keysLabel}</kbd></span>
-            <span className={`pill ${online ? 'on' : 'off'}`}>{online ? 'Online' : 'Offline'}</span>
+        <div className="header-right">
+          <span className="hint">
+            <kbd>{SHORTCUTS.commandPalette.keysLabel}</kbd>
+          </span>
+          <span className={`pill ${online ? 'on' : 'off'}`}>{online ? 'Online' : 'Offline'}</span>
+          <button className="ghost" type="button" onClick={logout}>
+            Sign out
+          </button>
+        </div>
+      </header>
+      <div className="body">
+        <aside className="sidebar">
+          <nav className="nav">
+            {nav.map(([id, label]) => (
+              <button key={id} className={page === id ? 'on' : ''} onClick={() => setPage(id)}>
+                {label}
+              </button>
+            ))}
+          </nav>
+          <div className="userbox">
+            <strong>{user.name}</strong>
+            {user.tenantName || user.email}
           </div>
-        </header>
-        <main className="content">
-          {page === 'dashboard' && user.role !== 'staff' && <DashboardScreen name={user.name} onOpenPos={() => setPage('pos')} />}
-          {page === 'pos' && (
-            <PosScreen
-              user={user}
-              checkoutSignal={checkoutSignal}
-              barcodeSignal={barcodeSignal}
-              clearSignal={clearSignal}
-            />
-          )}
-          {page === 'products' && user.role !== 'staff' && <ProductsScreen />}
-          {page === 'inventory' && user.role !== 'staff' && <InventoryScreen />}
-          {page === 'billing' && user.role !== 'staff' && <BillingScreen user={user} />}
-          {page === 'categories' && user.role !== 'staff' && (
-            <ResourceTable title="Categories" path="/v1/user/category" columns={[{ key: ['name'], label: 'Name' }, { key: ['description'], label: 'Description' }]} />
-          )}
-          {page === 'vendors' && user.role !== 'staff' && (
-            <ResourceTable title="Vendors" path="/v1/user/vendor" columns={[{ key: ['name'], label: 'Name' }, { key: ['phone', 'mobileNumber'], label: 'Phone' }, { key: ['email'], label: 'Email' }]} />
-          )}
-          {page === 'purchases' && user.role !== 'staff' && (
-            <ResourceTable title="Purchases" path="/v1/user/purchase" columns={[{ key: ['invoiceNumber', 'reference'], label: 'Reference' }, { key: ['vendorName'], label: 'Vendor' }, { key: ['total'], label: 'Total', money: true }, { key: ['status'], label: 'Status' }]} />
-          )}
-          {page === 'stock-transfer' && user.role !== 'staff' && (
-            <ResourceTable title="Stock transfer" path="/v1/user/stock-transfer" columns={[{ key: ['fromOutlet', 'source'], label: 'From' }, { key: ['toOutlet', 'destination'], label: 'To' }, { key: ['status'], label: 'Status' }]} />
-          )}
-          {page === 'sales' && <SalesScreen />}
-          {page === 'customers' && user.role !== 'staff' && (
-            <ResourceTable title="Customers" path="/v1/user/customer" columns={[{ key: ['name'], label: 'Name' }, { key: ['phone', 'mobileNumber'], label: 'Phone' }, { key: ['email'], label: 'Email' }]} />
-          )}
-          {page === 'outlets' && user.role !== 'staff' && (
-            <ResourceTable title="Outlets" path="/v1/user/outlet" columns={[{ key: ['name'], label: 'Name' }, { key: ['address'], label: 'Address' }, { key: ['phone'], label: 'Phone' }]} />
-          )}
-          {page === 'staff' && user.role !== 'staff' && (
-            <ResourceTable title="Staff" path="/v1/user/staff" columns={[{ key: ['fullName', 'name'], label: 'Name' }, { key: ['email'], label: 'Email' }, { key: ['tenantStaffRole', 'role'], label: 'Role' }]} />
-          )}
-          {page === 'subscription' && user.role !== 'staff' && (
-            <ResourceTable title="Subscription" path="/v1/user/subscription" columns={[{ key: ['plan', 'packageName'], label: 'Plan' }, { key: ['status'], label: 'Status' }, { key: ['endDate', 'expiresAt'], label: 'Expires' }]} />
-          )}
-          {page === 'store-profile' && user.role !== 'staff' && (
-            <div className="card"><h3>Store profile</h3><p>{user.tenantName || user.name}</p><p className="sub">{user.email}</p></div>
-          )}
-          {page === 'notifications' && user.role !== 'staff' && (
-            <ResourceTable title="Notifications" path="/v1/user/notification" columns={[{ key: ['title'], label: 'Title' }, { key: ['message', 'body'], label: 'Message' }, { key: ['createdAt'], label: 'Date' }]} />
-          )}
-          {page === 'support' && user.role !== 'staff' && (
-            <ResourceTable title="Support" path="/v1/user/support-ticket" columns={[{ key: ['subject'], label: 'Subject' }, { key: ['status'], label: 'Status' }, { key: ['priority'], label: 'Priority' }]} />
-          )}
-          {page === 'profile' && user.role !== 'staff' && (
-            <div className="card"><h3>Profile</h3><p>{user.name}</p><p className="sub">{user.email}</p></div>
-          )}
-          {page === 'settings' && <SettingsScreen user={user} />}
-        </main>
+        </aside>
+        <div className="main">
+          {!online && <div className="offline-banner">You are offline. Reconnect to sync sales.</div>}
+          <div className="topbar">
+            <strong>{nav.find(([id]) => id === page)?.[1]}</strong>
+          </div>
+          <main className="content">
+            {page === 'dashboard' && user.role !== 'staff' && <DashboardScreen name={user.name} onOpenPos={() => setPage('pos')} />}
+            {page === 'pos' && (
+              <PosScreen
+                user={user}
+                checkoutSignal={checkoutSignal}
+                barcodeSignal={barcodeSignal}
+                clearSignal={clearSignal}
+              />
+            )}
+            {page === 'products' && user.role !== 'staff' && <ProductsScreen />}
+            {page === 'inventory' && user.role !== 'staff' && <InventoryScreen />}
+            {page === 'billing' && user.role !== 'staff' && <BillingScreen user={user} />}
+            {page === 'categories' && user.role !== 'staff' && (
+              <ResourceTable title="Categories" path="/v1/user/category" columns={[{ key: ['name'], label: 'Name' }, { key: ['description'], label: 'Description' }]} />
+            )}
+            {page === 'vendors' && user.role !== 'staff' && (
+              <ResourceTable title="Vendors" path="/v1/user/vendor" columns={[{ key: ['name'], label: 'Name' }, { key: ['phone', 'mobileNumber'], label: 'Phone' }, { key: ['email'], label: 'Email' }]} />
+            )}
+            {page === 'purchases' && user.role !== 'staff' && (
+              <ResourceTable title="Purchases" path="/v1/user/purchase" columns={[{ key: ['invoiceNumber', 'reference'], label: 'Reference' }, { key: ['vendorName'], label: 'Vendor' }, { key: ['total'], label: 'Total', money: true }, { key: ['status'], label: 'Status' }]} />
+            )}
+            {page === 'stock-transfer' && user.role !== 'staff' && (
+              <ResourceTable title="Stock transfer" path="/v1/user/stock-transfer" columns={[{ key: ['fromOutlet', 'source'], label: 'From' }, { key: ['toOutlet', 'destination'], label: 'To' }, { key: ['status'], label: 'Status' }]} />
+            )}
+            {page === 'sales' && <SalesScreen />}
+            {page === 'customers' && user.role !== 'staff' && (
+              <ResourceTable title="Customers" path="/v1/user/customer" columns={[{ key: ['name'], label: 'Name' }, { key: ['phone', 'mobileNumber'], label: 'Phone' }, { key: ['email'], label: 'Email' }]} />
+            )}
+            {page === 'outlets' && user.role !== 'staff' && (
+              <ResourceTable title="Outlets" path="/v1/user/outlet" columns={[{ key: ['name'], label: 'Name' }, { key: ['address'], label: 'Address' }, { key: ['phone'], label: 'Phone' }]} />
+            )}
+            {page === 'staff' && user.role !== 'staff' && (
+              <ResourceTable title="Staff" path="/v1/user/staff" columns={[{ key: ['fullName', 'name'], label: 'Name' }, { key: ['email'], label: 'Email' }, { key: ['tenantStaffRole', 'role'], label: 'Role' }]} />
+            )}
+            {page === 'subscription' && user.role !== 'staff' && (
+              <ResourceTable title="Subscription" path="/v1/user/subscription" columns={[{ key: ['plan', 'packageName'], label: 'Plan' }, { key: ['status'], label: 'Status' }, { key: ['endDate', 'expiresAt'], label: 'Expires' }]} />
+            )}
+            {page === 'store-profile' && user.role !== 'staff' && (
+              <div className="card"><h3>Store profile</h3><p>{user.tenantName || user.name}</p><p className="sub">{user.email}</p></div>
+            )}
+            {page === 'notifications' && user.role !== 'staff' && (
+              <ResourceTable title="Notifications" path="/v1/user/notification" columns={[{ key: ['title'], label: 'Title' }, { key: ['message', 'body'], label: 'Message' }, { key: ['createdAt'], label: 'Date' }]} />
+            )}
+            {page === 'support' && user.role !== 'staff' && (
+              <ResourceTable title="Support" path="/v1/user/support-ticket" columns={[{ key: ['subject'], label: 'Subject' }, { key: ['status'], label: 'Status' }, { key: ['priority'], label: 'Priority' }]} />
+            )}
+            {page === 'profile' && user.role !== 'staff' && (
+              <div className="card"><h3>Profile</h3><p>{user.name}</p><p className="sub">{user.email}</p></div>
+            )}
+            {page === 'settings' && <SettingsScreen user={user} />}
+          </main>
+        </div>
       </div>
       {palette && <CommandPalette role={user.role} onGo={setPage} onClose={() => setPalette(false)} />}
     </div>
