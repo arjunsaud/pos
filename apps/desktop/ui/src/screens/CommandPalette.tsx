@@ -1,27 +1,16 @@
+import { useMemo, useState } from 'react';
 import { SHORTCUTS, type ShortcutId } from '@posnepal/shared';
-import type { DesktopPage, DesktopRole } from '../lib/types';
+import type { DesktopPage, DesktopRole } from '@/lib/types';
+import { navForRole } from '@/lib/nav';
+import { Input } from '@/components/ui/input';
 
-const PAGES: Array<{ id: DesktopPage; label: string; shortcut?: ShortcutId; staff?: boolean }> = [
-  { id: 'dashboard', label: 'Dashboard', shortcut: 'goDashboard' },
-  { id: 'pos', label: 'POS', shortcut: 'goPos', staff: true },
-  { id: 'billing', label: 'Billing' },
-  { id: 'products', label: 'Products', shortcut: 'goProducts' },
-  { id: 'inventory', label: 'Inventory', shortcut: 'goInventory' },
-  { id: 'categories', label: 'Categories' },
-  { id: 'vendors', label: 'Vendors' },
-  { id: 'purchases', label: 'Purchases' },
-  { id: 'stock-transfer', label: 'Stock transfer' },
-  { id: 'sales', label: 'Sales', shortcut: 'goSales', staff: true },
-  { id: 'customers', label: 'Customers' },
-  { id: 'outlets', label: 'Outlets' },
-  { id: 'staff', label: 'Staff' },
-  { id: 'notifications', label: 'Notifications' },
-  { id: 'support', label: 'Support' },
-  { id: 'subscription', label: 'Subscription' },
-  { id: 'store-profile', label: 'Store' },
-  { id: 'profile', label: 'Profile' },
-  { id: 'settings', label: 'Settings', staff: true },
-];
+const SHORTCUT_BY_PAGE: Partial<Record<DesktopPage, ShortcutId>> = {
+  dashboard: 'goDashboard',
+  pos: 'goPos',
+  products: 'goProducts',
+  inventory: 'goInventory',
+  sales: 'goSales',
+};
 
 export function CommandPalette({
   role,
@@ -32,28 +21,53 @@ export function CommandPalette({
   onGo: (page: DesktopPage) => void;
   onClose: () => void;
 }) {
-  const items = PAGES.filter((p) => role !== 'staff' || p.staff);
+  const [query, setQuery] = useState('');
+  const items = useMemo(() => {
+    const flat = navForRole(role).flatMap((g) => g.items);
+    const q = query.trim().toLowerCase();
+    if (!q) return flat;
+    return flat.filter((item) => item.label.toLowerCase().includes(q));
+  }, [role, query]);
+
   return (
-    <div className="palette" onClick={onClose}>
-      <div className="palette-box" onClick={(e) => e.stopPropagation()}>
-        <input autoFocus placeholder={`Jump to… (${SHORTCUTS.commandPalette.keysLabel})`} onKeyDown={(e) => e.key === 'Escape' && onClose()} />
-        <ul>
-          {items.map((item) => (
-            <li key={item.id}>
-              <button
-                type="button"
-                onClick={() => {
-                  onGo(item.id);
-                  onClose();
-                }}
-              >
-                {item.label}
-                {item.shortcut ? (
-                  <kbd style={{ float: 'right' }}>{SHORTCUTS[item.shortcut].keysLabel}</kbd>
-                ) : null}
-              </button>
-            </li>
-          ))}
+    <div className="fixed inset-0 z-[100] flex items-start justify-center bg-black/40 p-4 pt-[15vh]" onClick={onClose}>
+      <div
+        className="w-full max-w-lg overflow-hidden rounded-xl border bg-popover text-popover-foreground shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="border-b p-3">
+          <Input
+            autoFocus
+            placeholder={`Jump to… (${SHORTCUTS.commandPalette.keysLabel})`}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => e.key === 'Escape' && onClose()}
+          />
+        </div>
+        <ul className="max-h-80 overflow-y-auto p-2">
+          {items.map((item) => {
+            const shortcut = SHORTCUT_BY_PAGE[item.id];
+            const Icon = item.icon;
+            return (
+              <li key={item.id}>
+                <button
+                  type="button"
+                  className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm hover:bg-accent"
+                  onClick={() => {
+                    onGo(item.id);
+                    onClose();
+                  }}
+                >
+                  <Icon className="size-4 text-muted-foreground" />
+                  <span className="flex-1">{item.label}</span>
+                  {shortcut ? <kbd>{SHORTCUTS[shortcut].keysLabel}</kbd> : null}
+                </button>
+              </li>
+            );
+          })}
+          {items.length === 0 ? (
+            <li className="px-3 py-6 text-center text-sm text-muted-foreground">No matches</li>
+          ) : null}
         </ul>
       </div>
     </div>

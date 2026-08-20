@@ -1,8 +1,21 @@
 import { useEffect, useState } from 'react';
 import { formatNpr } from '@posnepal/shared';
-import { apiRequest, asRecord, listResource, num, str } from '../lib/api';
-import { printSale } from '../lib/print';
-import type { DesktopUser } from '../lib/types';
+import { apiRequest, asRecord, listResource, num, str } from '@/lib/api';
+import { printSale } from '@/lib/print';
+import type { DesktopUser } from '@/lib/types';
+import { PageHeader } from '@/components/page-header';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 function rowsFrom(path: string) {
   return listResource(path).catch(() => [] as Record<string, unknown>[]);
@@ -21,28 +34,41 @@ export function ResourceTable({
   useEffect(() => {
     void rowsFrom(path).then(setRows);
   }, [path]);
+
   return (
-    <div className="card">
-      <h3>{title}</h3>
-      <table className="table">
-        <thead>
-          <tr>
-            {columns.map((col) => (
-              <th key={col.label}>{col.label}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row, index) => (
-            <tr key={str(row, 'id', '_id') || String(index)}>
-              {columns.map((col) => {
-                const value = col.money ? formatNpr(num(row, ...col.key)) : str(row, ...col.key) || '—';
-                return <td key={col.label}>{value}</td>;
-              })}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className="space-y-4">
+      <PageHeader title={title} description={`${rows.length} records`} />
+      <Card className="gap-0 py-0">
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                {columns.map((col) => (
+                  <TableHead key={col.label}>{col.label}</TableHead>
+                ))}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rows.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
+                    No data
+                  </TableCell>
+                </TableRow>
+              ) : (
+                rows.map((row, index) => (
+                  <TableRow key={str(row, 'id', '_id') || String(index)}>
+                    {columns.map((col) => {
+                      const value = col.money ? formatNpr(num(row, ...col.key)) : str(row, ...col.key) || '—';
+                      return <TableCell key={col.label}>{value}</TableCell>;
+                    })}
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 }
@@ -52,79 +78,86 @@ export function BillingScreen({ user }: { user: DesktopUser }) {
   useEffect(() => {
     void rowsFrom('/v1/user/sale').then(setRows);
   }, []);
+
   return (
-    <div className="card">
-      <h3>Billing</h3>
-      <table className="table">
-        <thead>
-          <tr>
-            <th>Invoice</th>
-            <th>Customer</th>
-            <th>Total</th>
-            <th>Status</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => {
-            const invoice = str(row, 'invoiceNumber');
-            return (
-              <tr key={str(row, 'id', '_id')}>
-                <td>{invoice}</td>
-                <td>{str(row, 'customerName') || 'Walk-in'}</td>
-                <td>{formatNpr(num(row, 'total'))}</td>
-                <td>{str(row, 'status')}</td>
-                <td>
-                  <button
-                    className="ghost"
-                    onClick={() =>
-                      void printSale(
-                        'invoice',
-                        {
-                          invoiceNumber: invoice,
-                          items: [],
-                          subtotal: num(row, 'subtotal'),
-                          discount: num(row, 'discount'),
-                          vat: num(row, 'vatAmount', 'vat'),
-                          total: num(row, 'total'),
-                          paymentMethod: str(row, 'paymentMethod'),
-                          customerName: str(row, 'customerName'),
-                          cashier: user.name,
-                        },
-                        user.tenantName || 'Store',
-                      )
-                    }
-                  >
-                    Invoice
-                  </button>
-                  <button
-                    className="ghost"
-                    onClick={() =>
-                      void printSale(
-                        'receipt',
-                        {
-                          invoiceNumber: invoice,
-                          items: [],
-                          subtotal: num(row, 'subtotal'),
-                          discount: num(row, 'discount'),
-                          vat: num(row, 'vatAmount', 'vat'),
-                          total: num(row, 'total'),
-                          paymentMethod: str(row, 'paymentMethod'),
-                          customerName: str(row, 'customerName'),
-                          cashier: user.name,
-                        },
-                        user.tenantName || 'Store',
-                      )
-                    }
-                  >
-                    Receipt
-                  </button>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+    <div className="space-y-4">
+      <PageHeader title="Billing" description="Invoices and receipts" />
+      <Card className="gap-0 py-0">
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Invoice</TableHead>
+                <TableHead>Customer</TableHead>
+                <TableHead>Total</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rows.map((row) => {
+                const invoice = str(row, 'invoiceNumber');
+                return (
+                  <TableRow key={str(row, 'id', '_id')}>
+                    <TableCell className="font-medium">{invoice}</TableCell>
+                    <TableCell>{str(row, 'customerName') || 'Walk-in'}</TableCell>
+                    <TableCell>{formatNpr(num(row, 'total'))}</TableCell>
+                    <TableCell className="capitalize">{str(row, 'status')}</TableCell>
+                    <TableCell className="space-x-1 text-right">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() =>
+                          void printSale(
+                            'invoice',
+                            {
+                              invoiceNumber: invoice,
+                              items: [],
+                              subtotal: num(row, 'subtotal'),
+                              discount: num(row, 'discount'),
+                              vat: num(row, 'vatAmount', 'vat'),
+                              total: num(row, 'total'),
+                              paymentMethod: str(row, 'paymentMethod'),
+                              customerName: str(row, 'customerName'),
+                              cashier: user.name,
+                            },
+                            user.tenantName || 'Store',
+                          )
+                        }
+                      >
+                        Invoice
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() =>
+                          void printSale(
+                            'receipt',
+                            {
+                              invoiceNumber: invoice,
+                              items: [],
+                              subtotal: num(row, 'subtotal'),
+                              discount: num(row, 'discount'),
+                              vat: num(row, 'vatAmount', 'vat'),
+                              total: num(row, 'total'),
+                              paymentMethod: str(row, 'paymentMethod'),
+                              customerName: str(row, 'customerName'),
+                              cashier: user.name,
+                            },
+                            user.tenantName || 'Store',
+                          )
+                        }
+                      >
+                        Receipt
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 }
@@ -174,30 +207,29 @@ export function SettingsScreen({ user }: { user: DesktopUser }) {
   };
 
   return (
-    <div className="card" style={{ maxWidth: 480 }}>
-      <h3>Settings</h3>
-      <p className="sub">Signed in as {user.email}</p>
-      <div className="row">
-        <div>
-          <strong>Two-factor authentication</strong>
-          <div className="sub" style={{ margin: 0 }}>
-            {enabled ? 'Enabled' : 'Disabled'}
+    <div className="space-y-4">
+      <PageHeader title="Settings" description={`Signed in as ${user.email}`} />
+      <Card className="max-w-lg gap-4 py-5">
+        <CardContent className="space-y-4 px-5">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="font-medium">Two-factor authentication</p>
+              <p className="text-sm text-muted-foreground">{enabled ? 'Enabled' : 'Disabled'}</p>
+            </div>
+            <Button variant="outline" onClick={() => void challenge(!enabled)}>
+              {enabled ? 'Disable' : 'Enable'}
+            </Button>
           </div>
-        </div>
-        <button className="ghost" onClick={() => void challenge(!enabled)}>
-          {enabled ? 'Disable' : 'Enable'}
-        </button>
-      </div>
-      {action ? (
-        <div className="field" style={{ marginTop: 12 }}>
-          <label>Verification code</label>
-          <input value={otp} onChange={(e) => setOtp(e.target.value)} />
-          <button className="primary" style={{ marginTop: 8 }} onClick={() => void confirm()}>
-            Confirm
-          </button>
-        </div>
-      ) : null}
-      <p className="error">{message}</p>
+          {action ? (
+            <div className="space-y-2">
+              <Label>Verification code</Label>
+              <Input value={otp} onChange={(e) => setOtp(e.target.value)} />
+              <Button onClick={() => void confirm()}>Confirm</Button>
+            </div>
+          ) : null}
+          {message ? <p className="text-sm text-muted-foreground">{message}</p> : null}
+        </CardContent>
+      </Card>
     </div>
   );
 }

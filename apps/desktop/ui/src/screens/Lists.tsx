@@ -1,6 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
 import { formatNpr } from '@posnepal/shared';
-import { apiUpload, listResource, num, str } from '../lib/api';
+import { Upload } from 'lucide-react';
+import { apiUpload, listResource, num, str } from '@/lib/api';
+import { PageHeader } from '@/components/page-header';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 export function ProductsScreen() {
   const [rows, setRows] = useState<Record<string, unknown>[]>([]);
@@ -34,36 +46,45 @@ export function ProductsScreen() {
   };
 
   return (
-    <div className="card">
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-        <h3>Products</h3>
-        <div>
-          <input
-            ref={inputRef}
-            type="file"
-            accept=".csv,.xlsx,.xls"
-            hidden
-            onChange={(event) => void importFile(event.target.files?.[0])}
-          />
-          <button className="ghost" type="button" onClick={() => inputRef.current?.click()}>
-            Import Excel/CSV
-          </button>
-        </div>
-      </div>
-      {message ? <p className="sub">{message}</p> : null}
-      <table className="table">
-        <thead><tr><th>Name</th><th>SKU</th><th>Price</th><th>Stock</th></tr></thead>
-        <tbody>
-          {rows.map((row) => (
-            <tr key={str(row, 'id', '_id')}>
-              <td>{str(row, 'name')}</td>
-              <td>{str(row, 'sku')}</td>
-              <td>{formatNpr(num(row, 'price', 'sellingPrice'))}</td>
-              <td>{num(row, 'stock', 'quantity')}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className="space-y-4">
+      <PageHeader title="Products" description={`${rows.length} products`}>
+        <input
+          ref={inputRef}
+          type="file"
+          accept=".csv,.xlsx,.xls"
+          hidden
+          onChange={(event) => void importFile(event.target.files?.[0])}
+        />
+        <Button variant="outline" className="gap-2" onClick={() => inputRef.current?.click()}>
+          <Upload className="size-4" />
+          Import Excel/CSV
+        </Button>
+      </PageHeader>
+      {message ? <p className="text-sm text-muted-foreground">{message}</p> : null}
+      <Card className="gap-0 py-0">
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>SKU</TableHead>
+                <TableHead>Price</TableHead>
+                <TableHead>Stock</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rows.map((row) => (
+                <TableRow key={str(row, 'id', '_id')}>
+                  <TableCell className="font-medium">{str(row, 'name')}</TableCell>
+                  <TableCell>{str(row, 'sku')}</TableCell>
+                  <TableCell>{formatNpr(num(row, 'price', 'sellingPrice'))}</TableCell>
+                  <TableCell>{num(row, 'stock', 'quantity')}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 }
@@ -75,22 +96,34 @@ export function InventoryScreen() {
       void listResource('/v1/user/product').then(setRows);
     });
   }, []);
+
   return (
-    <div className="card">
-      <h3>Inventory</h3>
-      <table className="table">
-        <thead><tr><th>Product</th><th>SKU</th><th>Stock</th><th>Min</th></tr></thead>
-        <tbody>
-          {rows.map((row) => (
-            <tr key={str(row, 'id', '_id', 'productId')}>
-              <td>{str(row, 'productName', 'name')}</td>
-              <td>{str(row, 'sku')}</td>
-              <td>{num(row, 'currentStock', 'stock', 'quantity')}</td>
-              <td>{num(row, 'minStock')}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className="space-y-4">
+      <PageHeader title="Inventory" description="Stock levels" />
+      <Card className="gap-0 py-0">
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Product</TableHead>
+                <TableHead>SKU</TableHead>
+                <TableHead>Stock</TableHead>
+                <TableHead>Min</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rows.map((row) => (
+                <TableRow key={str(row, 'id', '_id', 'productId')}>
+                  <TableCell className="font-medium">{str(row, 'productName', 'name')}</TableCell>
+                  <TableCell>{str(row, 'sku')}</TableCell>
+                  <TableCell>{num(row, 'currentStock', 'stock', 'quantity')}</TableCell>
+                  <TableCell>{num(row, 'minStock')}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 }
@@ -100,23 +133,36 @@ export function SalesScreen() {
   useEffect(() => {
     void listResource('/v1/user/sale').then(setRows).catch(() => undefined);
   }, []);
+
   return (
-    <div className="card">
-      <h3>Sales</h3>
-      <table className="table">
-        <thead><tr><th>Invoice</th><th>Customer</th><th>Total</th><th>Method</th><th>Status</th></tr></thead>
-        <tbody>
-          {rows.map((row) => (
-            <tr key={str(row, 'id', '_id')}>
-              <td>{str(row, 'invoiceNumber')}</td>
-              <td>{str(row, 'customerName') || 'Walk-in'}</td>
-              <td>{formatNpr(num(row, 'total'))}</td>
-              <td>{str(row, 'paymentMethod')}</td>
-              <td>{str(row, 'status')}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className="space-y-4">
+      <PageHeader title="Sales & Reports" description={`${rows.length} sales`} />
+      <Card className="gap-0 py-0">
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Invoice</TableHead>
+                <TableHead>Customer</TableHead>
+                <TableHead>Total</TableHead>
+                <TableHead>Payment</TableHead>
+                <TableHead>Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rows.map((row) => (
+                <TableRow key={str(row, 'id', '_id')}>
+                  <TableCell className="font-medium">{str(row, 'invoiceNumber')}</TableCell>
+                  <TableCell>{str(row, 'customerName') || 'Walk-in'}</TableCell>
+                  <TableCell>{formatNpr(num(row, 'total'))}</TableCell>
+                  <TableCell className="capitalize">{str(row, 'paymentMethod')}</TableCell>
+                  <TableCell className="capitalize">{str(row, 'status')}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 }

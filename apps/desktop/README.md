@@ -1,10 +1,10 @@
 # POS Nepal Desktop (`apps/desktop`)
 
-Native Electron app with **its own UI** (not the website in a webview).
+Native Electron app with **its own React UI** — designed to match the website (not embedded).
 
 ```
 src/                 Main process, preload, architecture
-ui/                  React desktop UI (Vite)
+ui/                  React desktop UI (Vite + Tailwind)
 ```
 
 Tenant admin and staff only. Super admin stays on the web app.
@@ -29,3 +29,5 @@ Tenant admin and staff only. Super admin stays on the web app.
 pnpm --filter @posnepal/backend start:dev
 pnpm --filter @posnepal/desktop dev
 ```
+
+Or `pnpm dev:all` for backend + frontend + desktop.

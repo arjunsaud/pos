@@ -3,7 +3,7 @@
  * Run the full local stack:
  * - Backend  → http://localhost:4000
  * - Frontend → http://localhost:3000
- * - Desktop  → existing Electron + Vite (API → :4000)
+ * - Desktop  → Electron + Vite UI (same design as website, not embedded)
  *
  * Usage: pnpm dev:all
  */

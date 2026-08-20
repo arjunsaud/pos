@@ -16,7 +16,7 @@ posnepal/
 
 - **frontend** — landing, login, super-admin, tenant admin, cashier POS, inventory, billing, reports
 - **backend** — NestJS API (`/api/v1/admin|user/...`)
-- **desktop** — Electron app with its own React UI (same look as the website; does not embed the web app)
+- **desktop** — Electron app with its own React UI (matches website design; does not embed the web app)
 - **shared** — `@posnepal/shared` types/enums/helpers (e.g. `OtpType`)
 
 ## Setup

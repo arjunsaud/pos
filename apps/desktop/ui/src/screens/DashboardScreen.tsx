@@ -1,6 +1,10 @@
-import { formatNpr } from '@posnepal/shared';
 import { useEffect, useState } from 'react';
-import { apiRequest, num } from '../lib/api';
+import { formatNpr } from '@posnepal/shared';
+import { ShoppingCart, Package, AlertTriangle, Receipt } from 'lucide-react';
+import { apiRequest, num } from '@/lib/api';
+import { PageHeader } from '@/components/page-header';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 
 export function DashboardScreen({
   name,
@@ -9,7 +13,12 @@ export function DashboardScreen({
   name: string;
   onOpenPos: () => void;
 }) {
-  const [stats, setStats] = useState({ dailySales: 0, monthlyRevenue: 0, lowStock: 0, pendingOrders: 0 });
+  const [stats, setStats] = useState({
+    dailySales: 0,
+    monthlyRevenue: 0,
+    lowStock: 0,
+    pendingOrders: 0,
+  });
 
   useEffect(() => {
     void apiRequest<Record<string, unknown>>('/v1/user/dashboard/total')
@@ -27,21 +36,42 @@ export function DashboardScreen({
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
 
+  const cards = [
+    { label: "Today's sales", value: formatNpr(stats.dailySales), icon: Receipt },
+    { label: 'This month', value: formatNpr(stats.monthlyRevenue), icon: ShoppingCart },
+    { label: 'Low stock', value: String(stats.lowStock), icon: AlertTriangle },
+    { label: 'Orders', value: String(stats.pendingOrders), icon: Package },
+  ];
+
   return (
-    <div className="grid">
-      <h2 style={{ margin: '0 0 4px' }}>{greeting}, {name}</h2>
-      <p style={{ margin: 0, color: 'var(--muted-foreground)' }}>Desktop workspace — same data as the web app.</p>
-      <div className="grid stats">
-        <div className="card"><div className="stat-label">Today's sales</div><div className="stat-val">{formatNpr(stats.dailySales)}</div></div>
-        <div className="card"><div className="stat-label">This month</div><div className="stat-val">{formatNpr(stats.monthlyRevenue)}</div></div>
-        <div className="card"><div className="stat-label">Low stock</div><div className="stat-val">{stats.lowStock}</div></div>
-        <div className="card"><div className="stat-label">Orders</div><div className="stat-val">{stats.pendingOrders}</div></div>
-      </div>
-      <div className="card">
-        <h3>Quick actions</h3>
-        <button className="primary" style={{ width: 'auto', paddingInline: 18 }} onClick={onOpenPos}>
-          New sale (⌘2)
-        </button>
+    <div className="space-y-6">
+      <PageHeader
+        title={`${greeting}, ${name}`}
+        description="Desktop workspace — same data and design language as the web app."
+      >
+        <Button onClick={onOpenPos} className="gap-2">
+          <ShoppingCart className="size-4" />
+          New sale
+        </Button>
+      </PageHeader>
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {cards.map((card) => {
+          const Icon = card.icon;
+          return (
+            <Card key={card.label} className="gap-3 py-4">
+              <CardContent className="flex items-start justify-between px-4">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground">{card.label}</p>
+                  <p className="mt-1 text-2xl font-bold tracking-tight">{card.value}</p>
+                </div>
+                <div className="rounded-lg bg-muted p-2 text-muted-foreground">
+                  <Icon className="size-4" />
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
     </div>
   );

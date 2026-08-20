@@ -61,7 +61,7 @@ export function isAllowedUrl(url: string): boolean {
   }
 }
 
-/** Desktop UI only — never load the Next.js website. */
+/** Desktop Vite UI only — never load the Next.js website. */
 export function getRendererUrl(): string {
   if (DEV_RENDERER) return DEV_RENDERER;
   return path.join(__dirname, '../../ui/index.html');
